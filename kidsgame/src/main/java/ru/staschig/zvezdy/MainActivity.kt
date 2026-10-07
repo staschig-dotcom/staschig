@@ -3,6 +3,8 @@ package ru.staschig.zvezdy
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.os.Bundle
+import android.os.SystemClock
+import android.webkit.JavascriptInterface
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
@@ -42,6 +44,8 @@ class MainActivity : Activity() {
                     request.url.host != "appassets.androidplatform.net"
             }
         }
+        // Монотонные часы для ограничения времени игры: перевод часов на телефоне их не меняет.
+        web.addJavascriptInterface(NativeClock(), "UhuNative")
         setContentView(web)
         hideSystemBars()
 
@@ -93,4 +97,9 @@ class MainActivity : Activity() {
         web.destroy()
         super.onDestroy()
     }
+}
+
+private class NativeClock {
+    @JavascriptInterface
+    fun uptime(): Long = SystemClock.elapsedRealtime()
 }
