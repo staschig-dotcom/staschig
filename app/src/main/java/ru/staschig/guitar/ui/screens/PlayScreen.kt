@@ -35,6 +35,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RangeSlider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -56,30 +57,34 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import kotlin.math.abs
+import kotlin.math.ceil
+import kotlin.math.roundToInt
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import ru.staschig.guitar.audio.MetronomeEngine
 import ru.staschig.guitar.audio.MicStream
 import ru.staschig.guitar.audio.Notes
+import ru.staschig.guitar.audio.TonePlayer
 import ru.staschig.guitar.data.AppStore
+import ru.staschig.guitar.play.ExampleSynth
 import ru.staschig.guitar.play.PlayDetector
 import ru.staschig.guitar.play.PlayJudge
 import ru.staschig.guitar.play.PlayResult
 import ru.staschig.guitar.play.PlayScore
 import ru.staschig.guitar.ui.theme.InTune
 import ru.staschig.guitar.ui.theme.OutOfTune
-import kotlin.math.abs
-import kotlin.math.ceil
-import kotlin.math.roundToInt
 
-private enum class PlayPhase { LOADING, SETUP, PLAYING, RESULT }
+private enum class PlayPhase { LOADING, SETUP, DEMO, PLAYING, RESULT }
 
 /** Окна попадания в реальных мс (в мс партитуры умножаются на скорость). */
 private const val EARLY_MS = 160.0
@@ -146,12 +151,19 @@ fun PlayScreen(store: AppStore, id: String, title: String, query: String, onBack
                 granted = granted,
                 requestMic = requestMic,
                 speed = speed, onSpeed = { speed = it },
-                waitMode = waitMode, onWaitMode = { waitMode = it },
                 range = range, onRange = { range = it },
                 loop = loop, onLoop = { loop = it },
                 onTrack = { track = it; phase = PlayPhase.LOADING },
-                onStart = { phase = PlayPhase.PLAYING },
+                onListen = { phase = PlayPhase.DEMO },
+                onStart = { wait -> waitMode = wait; phase = PlayPhase.PLAYING },
             )
+            PlayPhase.DEMO -> {
+                val full = score!!
+                val section = remember(range) {
+                    full.section(range.start.roundToInt(), range.endInclusive.roundToInt())
+                }
+                DemoRun(section, speed, onDone = { phase = PlayPhase.SETUP })
+            }
             PlayPhase.PLAYING -> {
                 val full = score!!
                 val section = remember(range) {
@@ -195,7 +207,7 @@ fun PlayScreen(store: AppStore, id: String, title: String, query: String, onBack
 /** Невидимый WebView: alphaTab разбирает таб и отдаёт ноты со временем в JSON (assets/alphatab/extract.html). */
 @SuppressLint("SetJavaScriptEnabled", "JavascriptInterface")
 @Composable
-private fun ScoreExtractor(query: String, onJson: (String) -> Unit) {
+internal fun ScoreExtractor(query: String, onJson: (String) -> Unit) {
     val loader = rememberAlphaTabAssetLoader()
     val scope = rememberCoroutineScope()
     var webView by remember { mutableStateOf<WebView?>(null) }
@@ -231,88 +243,132 @@ private fun SetupPanel(
     granted: Boolean,
     requestMic: () -> Unit,
     speed: Int, onSpeed: (Int) -> Unit,
-    waitMode: Boolean, onWaitMode: (Boolean) -> Unit,
     range: ClosedFloatingPointRange<Float>, onRange: (ClosedFloatingPointRange<Float>) -> Unit,
     loop: Boolean, onLoop: (Boolean) -> Unit,
     onTrack: (Int) -> Unit,
-    onStart: () -> Unit,
+    onListen: () -> Unit,
+    onStart: (waitMode: Boolean) -> Unit,
 ) {
     val best = store.playBest[id]
-    Column(
-        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Text(
-            listOf(score.artist, score.title).filter { it.isNotBlank() }.joinToString(" — "),
-            style = MaterialTheme.typography.titleLarge,
-        )
-        Text(
-            "${score.events.size} нот · ${score.bars.size} тактов · ${score.tempo.roundToInt()} BPM" +
-                (best?.let { " · рекорд ${stars(it.stars)} ${it.accuracy}% на ${it.speed}%" } ?: ""),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        if (score.tracks.size > 1) {
-            Text("Дорожка", style = MaterialTheme.typography.titleSmall)
+    var more by remember { mutableStateOf(false) }
+    val from = range.start.roundToInt() + 1
+    val to = range.endInclusive.roundToInt() + 1
+    val whole = from == 1 && to == score.bars.size
+    Column(Modifier.fillMaxSize()) {
+        Column(
+            Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(
+                listOf(score.artist, score.title).filter { it.isNotBlank() }.joinToString(" — "),
+                style = MaterialTheme.typography.titleLarge,
+            )
+            Text(
+                "${score.events.size} нот · ${score.tempo.roundToInt()} BPM" +
+                    (if (whole) "" else " · такты $from–$to") +
+                    (best?.let { " · рекорд ${stars(it.stars)}" } ?: ""),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            NumberedSteps(
+                listOf(
+                    "Послушайте пример — ноты поедут по ленте под звук.",
+                    "Разучите: лента ждёт, пока вы сыграете каждую ноту.",
+                    "Сыграйте в темпе под метроном — за точность дают звёзды.",
+                )
+            )
+            Text("Скорость: $speed%", style = MaterialTheme.typography.titleSmall)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                score.tracks.forEachIndexed { i, name ->
-                    FilterChip(score.track == i, { if (score.track != i) onTrack(i) }, { Text(name.ifBlank { "Дорожка ${i + 1}" }) })
+                listOf(40, 50, 60, 70, 80, 90, 100).forEach { v ->
+                    FilterChip(speed == v, { onSpeed(v) }, { Text("$v%") })
                 }
             }
-        }
 
-        Text("Режим", style = MaterialTheme.typography.titleSmall)
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            FilterChip(!waitMode, { onWaitMode(false) }, { Text("В темпе") })
-            FilterChip(waitMode, { onWaitMode(true) }, { Text("Ждать меня") })
-        }
-        Text(
-            if (waitMode) "Лента останавливается на каждой ноте и ждёт, пока вы её сыграете. Для разучивания."
-            else "Ноты едут под метроном — играйте вовремя. Отсчёт — один такт.",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-
-        Text("Скорость: $speed%", style = MaterialTheme.typography.titleSmall)
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            listOf(40, 50, 60, 70, 80, 90, 100).forEach { v ->
-                FilterChip(speed == v, { onSpeed(v) }, { Text("$v%") })
+            TextButton(onClick = { more = !more }) { Text(if (more) "Скрыть дополнительное ▴" else "Дополнительно: дорожка, фрагмент ▾") }
+            if (more) {
+                if (score.tracks.size > 1) {
+                    Text("Ваш инструмент (дорожка)", style = MaterialTheme.typography.titleSmall)
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        score.tracks.forEachIndexed { i, name ->
+                            FilterChip(score.track == i, { if (score.track != i) onTrack(i) }, { Text(name.ifBlank { "Дорожка ${i + 1}" }) })
+                        }
+                    }
+                }
+                if (score.bars.size > 1) {
+                    Text(if (whole) "Фрагмент: вся пьеса" else "Фрагмент: такты $from–$to", style = MaterialTheme.typography.titleSmall)
+                    RangeSlider(
+                        value = range,
+                        onValueChange = { onRange(it.start.roundToInt().toFloat()..it.endInclusive.roundToInt().toFloat()) },
+                        valueRange = 0f..(score.bars.size - 1).toFloat(),
+                        steps = (score.bars.size - 2).coerceAtLeast(0),
+                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Повторять фрагмент по кругу", Modifier.weight(1f))
+                        Switch(loop, onLoop)
+                    }
+                }
+                Text(
+                    "Играйте в тишине, телефон — рядом с гитарой, звук — через динамик. " +
+                        "Калибровка в ритм-тесте делает проверку попадания в такт точнее.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
+        // Кнопки — всегда внизу экрана, по порядку шагов.
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(onClick = onListen, modifier = Modifier.fillMaxWidth().height(48.dp)) { Text("🔊  1. Послушать пример") }
+            if (!granted) {
+                Text("Чтобы приложение слышало вашу игру, нужен микрофон.", style = MaterialTheme.typography.bodySmall)
+                BigButton("Разрешить микрофон", requestMic)
+            } else {
+                OutlinedButton(onClick = { onStart(true) }, modifier = Modifier.fillMaxWidth().height(48.dp)) { Text("🐢  2. Разучить (лента ждёт)") }
+                BigButton("▶  3. Играть в темпе", { onStart(false) })
+            }
+        }
+    }
+}
 
-        if (score.bars.size > 1) {
-            val from = range.start.roundToInt() + 1
-            val to = range.endInclusive.roundToInt() + 1
+/** «Послушать пример»: синтезированная гитара играет партию, ноты едут по ленте синхронно. */
+@Composable
+private fun DemoRun(score: PlayScore, speed: Int, onDone: () -> Unit) {
+    val s = speed / 100.0
+    val judge = remember { PlayJudge(score.events) }
+    var songMs by remember { mutableDoubleStateOf(-1e9) }
+    var ready by remember { mutableStateOf(false) }
+    DisposableEffect(Unit) { onDispose { TonePlayer.stop() } }
+    LaunchedEffect(Unit) {
+        val audio = withContext(Dispatchers.Default) { ExampleSynth.renderNotes(score.events, s) }
+        ready = true
+        TonePlayer.playSamples(audio)
+        // Небольшая поправка на задержку вывода звука, чтобы нота совпадала с линией.
+        val start = System.nanoTime() + 120_000_000L
+        while (true) {
+            withFrameNanos { now ->
+                songMs = (now - start) / 1e6 * s
+                score.events.forEachIndexed { i, ev ->
+                    if (ev.timeMs <= songMs) judge.states[i] = PlayJudge.State.HIT
+                }
+            }
+            if (songMs > score.durationMs + 500 || (!TonePlayer.isPlaying && songMs > 1000)) break
+        }
+        onDone()
+    }
+    Column(Modifier.fillMaxSize()) {
+        Row(
+            Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant).padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Text(
-                if (from == 1 && to == score.bars.size) "Фрагмент: вся пьеса" else "Фрагмент: такты $from–$to",
-                style = MaterialTheme.typography.titleSmall,
+                if (ready) "🔊 Пример · $speed% — слушайте и смотрите на ноты" else "Готовлю звук…",
+                Modifier.weight(1f),
+                fontWeight = FontWeight.Bold,
             )
-            RangeSlider(
-                value = range,
-                onValueChange = { onRange(it.start.roundToInt().toFloat()..it.endInclusive.roundToInt().toFloat()) },
-                valueRange = 0f..(score.bars.size - 1).toFloat(),
-                steps = (score.bars.size - 2).coerceAtLeast(0),
-            )
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Повторять фрагмент по кругу", Modifier.weight(1f))
-                Switch(loop, onLoop)
-            }
+            OutlinedButton(onClick = { TonePlayer.stop(); onDone() }) { Text("Стоп") }
         }
-
-        if (!granted) {
-            Text("Чтобы проверять игру, приложению нужен микрофон.")
-            Button(onClick = requestMic) { Text("Разрешить микрофон") }
-        } else {
-            Button(onClick = onStart, modifier = Modifier.fillMaxWidth().height(56.dp)) {
-                Text("🎸 Играть", style = MaterialTheme.typography.titleMedium)
-            }
+        Box(Modifier.weight(1f).fillMaxWidth()) {
+            Highway(score, judge, songMs, s, false, 0, null, Modifier.fillMaxSize())
         }
-        Text(
-            "Советы: играйте в тишине, телефон положите рядом с гитарой, звук — через динамик. " +
-                "Если ритм-тест ещё не калиброван, сделайте калибровку: тогда попадания в такт считаются точнее.",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
     }
 }
 

@@ -6,9 +6,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import org.json.JSONArray
 import org.json.JSONObject
+import ru.staschig.guitar.lessons.Curriculum
 import ru.staschig.guitar.lessons.Focus
+import ru.staschig.guitar.lessons.Lesson
 import ru.staschig.guitar.lessons.Level
 import java.time.LocalDate
+
+/** Ориентация экрана. */
+enum class ScreenMode(val title: String) {
+    LANDSCAPE("Горизонтальная"),
+    PORTRAIT("Вертикальная"),
+    AUTO("Как повернут телефон"),
+}
 
 data class Settings(
     val level: Level = Level.BEGINNER,
@@ -24,6 +33,7 @@ data class Settings(
     val reminderMinute: Int = 0,
     /** Дни недели напоминаний: 1 = понедельник … 7 = воскресенье. */
     val reminderDays: Set<Int> = setOf(1, 2, 3, 4, 5),
+    val screenMode: ScreenMode = ScreenMode.LANDSCAPE,
 )
 
 /** Лучший результат в режиме игры для пьесы/таба. */
@@ -58,6 +68,11 @@ class AppStore(context: Context) {
         private set
     var rhythmRuns by mutableStateOf(loadRhythm())
         private set
+    /** Пройдено знакомство с приложением (первый запуск). */
+    var onboarded by mutableStateOf(prefs.getBoolean("onboarded", false))
+        private set
+    private var tunedOn by mutableStateOf(prefs.getString("tuned_on", "") ?: "")
+
     /** Опыт за режим игры. */
     var xp by mutableStateOf(prefs.getInt("xp", 0))
         private set
@@ -79,8 +94,26 @@ class AppStore(context: Context) {
             .putInt("reminder_hour", s.reminderHour)
             .putInt("reminder_minute", s.reminderMinute)
             .putString("reminder_days", s.reminderDays.sorted().joinToString(","))
+            .putString("screen_mode", s.screenMode.name)
             .apply()
     }
+
+    fun finishOnboarding() {
+        onboarded = true
+        prefs.edit().putBoolean("onboarded", true).apply()
+    }
+
+    fun tunedToday(): Boolean = tunedOn == LocalDate.now().toString()
+
+    fun markTuned() {
+        tunedOn = LocalDate.now().toString()
+        prefs.edit().putString("tuned_on", tunedOn).apply()
+    }
+
+    /** Следующий урок: первый непройденный на выбранном уровне, затем — на остальных. */
+    fun nextLesson(): Lesson? =
+        Curriculum.byLevel(settings.level).firstOrNull { it.id !in completed }
+            ?: Curriculum.lessons.firstOrNull { it.id !in completed }
 
     fun completeLesson(id: String) {
         completed = completed + (id to LocalDate.now().toString())
@@ -203,6 +236,8 @@ class AppStore(context: Context) {
         reminderMinute = prefs.getInt("reminder_minute", 0),
         reminderDays = (prefs.getString("reminder_days", "1,2,3,4,5") ?: "")
             .split(',').mapNotNull { it.trim().toIntOrNull() }.toSet(),
+        screenMode = runCatching { ScreenMode.valueOf(prefs.getString("screen_mode", null)!!) }
+            .getOrDefault(ScreenMode.LANDSCAPE),
     )
 
     private fun loadMap(key: String): Map<String, String> {

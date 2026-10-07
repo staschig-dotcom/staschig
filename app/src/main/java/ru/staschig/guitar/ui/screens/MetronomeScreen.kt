@@ -14,9 +14,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Slider
@@ -41,9 +45,12 @@ import ru.staschig.guitar.audio.MetronomeEngine
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MetronomeScreen() {
+fun MetronomeScreen(onBack: (() -> Unit)? = null) {
     Column(Modifier.fillMaxSize()) {
-        TopAppBar(title = { Text("Метроном") })
+        TopAppBar(
+            title = { Text("Метроном") },
+            navigationIcon = { onBack?.let { IconButton(onClick = it) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Назад") } } },
+        )
         MetronomePanel(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp))
     }
 }

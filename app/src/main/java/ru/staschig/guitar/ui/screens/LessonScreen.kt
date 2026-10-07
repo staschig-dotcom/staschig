@@ -2,6 +2,7 @@ package ru.staschig.guitar.ui.screens
 
 import android.media.AudioManager
 import android.media.ToneGenerator
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,18 +10,18 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -31,11 +32,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -48,8 +48,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import ru.staschig.guitar.audio.GuitarSynth
 import ru.staschig.guitar.audio.MetronomeEngine
@@ -66,10 +68,12 @@ import ru.staschig.guitar.lessons.Song
 import ru.staschig.guitar.lessons.Step
 import ru.staschig.guitar.lessons.StepKind
 import ru.staschig.guitar.lessons.StepTool
+import ru.staschig.guitar.play.ExampleSynth
 
 /**
- * Урок в режиме «ведущего»: шаги — вкладки, на каждом шаге сразу открыт его инструмент
- * (метроном, тренажёр аккордов, тюнер или табы песни). Кнопка таймера запускает и метроном.
+ * Занятие — пошаговый мастер: «Шаг N из M», что делать, пример звучания, инструмент шага
+ * и одна главная кнопка внизу (Начать → Пауза/Дальше → Готово).
+ * Первый шаг дня — настройка гитары.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -88,16 +92,22 @@ fun LessonScreen(
         return
     }
     val steps = lesson.steps(store.settings.dailyMinutes, store.settings.focus)
+    val withTuning = rememberSaveable { !store.tunedToday() }
+    val offset = if (withTuning) 1 else 0
+    val total = steps.size + offset
 
-    var current by rememberSaveable { mutableIntStateOf(0) }
-    var remaining by rememberSaveable { mutableIntStateOf(steps[0].minutes * 60) }
+    var index by rememberSaveable { mutableIntStateOf(0) } // == total → итог
+    var started by rememberSaveable { mutableStateOf(false) }
     var running by rememberSaveable { mutableStateOf(false) }
+    var remaining by rememberSaveable { mutableIntStateOf(0) }
     /** Секунды практики, ещё не записанные в журнал (записываем каждую полную минуту). */
     var pendingSeconds by rememberSaveable { mutableIntStateOf(0) }
     var totalSeconds by rememberSaveable { mutableIntStateOf(0) }
+    var confirmExit by remember { mutableStateOf(false) }
+    val wide = isWide()
 
-    val step = steps[current]
-    val tool = step.tool
+    val step: Step? = (index - offset).takeIf { index in offset until total }?.let { steps[it] }
+    val tool = step?.tool
     val beeper = remember { runCatching { ToneGenerator(AudioManager.STREAM_MUSIC, 80) }.getOrNull() }
 
     LaunchedEffect(running) {
@@ -105,7 +115,7 @@ fun LessonScreen(
             delay(1000)
             totalSeconds++
             pendingSeconds++
-            // Минуты пишутся сразу, поэтому уход из урока (в браузер, за табом) ничего не теряет и не удваивает.
+            // Минуты пишутся сразу, поэтому уход из урока ничего не теряет и не удваивает.
             if (pendingSeconds >= 60) {
                 store.addPracticeMinutes(1)
                 pendingSeconds -= 60
@@ -118,9 +128,9 @@ fun LessonScreen(
     }
 
     // Метроном шага заранее выставлен на стартовый темп упражнения (или чуть ниже рекорда).
-    LaunchedEffect(current) {
+    LaunchedEffect(index) {
         val t = tool
-        if (t is StepTool.Metronome) {
+        if (t is StepTool.Metronome && step != null) {
             MetronomeEngine.stop()
             val record = store.bpmRecords[step.id]
             MetronomeEngine.bpm = maxOf(t.bpmStart, record?.minus(10) ?: 0)
@@ -130,187 +140,298 @@ fun LessonScreen(
             MetronomeEngine.trainerTarget = t.bpmTarget
             MetronomeEngine.trainerStep = 4
             MetronomeEngine.trainerBars = 4
-            if (running) MetronomeEngine.start()
         }
     }
 
     DisposableEffect(Unit) {
         onDispose {
             MetronomeEngine.stop()
+            TonePlayer.stop()
             beeper?.release()
         }
     }
 
-    fun goTo(index: Int) {
+    fun next() {
         MetronomeEngine.stop()
-        current = index
-        remaining = steps[index].minutes * 60
-    }
-
-    fun toggleTimer() {
-        running = !running
-        if (tool is StepTool.Metronome) {
-            if (running) MetronomeEngine.start() else MetronomeEngine.stop()
+        TonePlayer.stop()
+        running = false
+        started = false
+        if (index == offset - 1) store.markTuned()
+        index++
+        if (index == total) {
+            if (pendingSeconds >= 30) store.addPracticeMinutes(1)
+            pendingSeconds = 0
+            store.completeLesson(lesson.id)
+        } else {
+            remaining = steps[index - offset].minutes * 60
         }
     }
 
-    fun finish() {
-        running = false
-        if (pendingSeconds >= 30) store.addPracticeMinutes(1)
-        pendingSeconds = 0
-        store.completeLesson(lesson.id)
-        onBack()
+    fun start() {
+        started = true
+        running = true
+        if (remaining == 0) remaining = step?.minutes?.times(60) ?: 0
+        if (tool is StepTool.Metronome) MetronomeEngine.start()
     }
+
+    fun pause() {
+        running = false
+        MetronomeEngine.stop()
+    }
+
+    BackHandler { if (index in 1 until total) confirmExit = true else onBack() }
 
     Column(Modifier.fillMaxSize()) {
         TopAppBar(
             title = {
                 Column {
-                    Text("Урок ${lesson.number} · ${lesson.level.title}", maxLines = 1)
-                    Text(lesson.technique.title, style = MaterialTheme.typography.bodySmall, maxLines = 1,
-                        overflow = TextOverflow.Ellipsis)
+                    Text("Урок ${lesson.number}: ${lesson.technique.title}", maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(lesson.level.title, style = MaterialTheme.typography.bodySmall)
                 }
             },
-            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Назад") } },
+            navigationIcon = {
+                IconButton(onClick = { if (index in 1 until total) confirmExit = true else onBack() }) {
+                    Icon(Icons.Filled.Close, "Выйти из занятия")
+                }
+            },
         )
-        TabRow(selectedTabIndex = current) {
-            steps.forEachIndexed { i, st ->
-                Tab(
-                    selected = i == current,
-                    onClick = { goTo(i) },
-                    text = { Text("${shortTitle(st.kind)} ${st.minutes}′", maxLines = 1) },
-                )
+        if (index >= total) {
+            FinishView(store, lesson, totalSeconds, onHome = onBack)
+            return@Column
+        }
+        val header: @Composable () -> Unit = {
+            StepProgress(index + 1, total, Modifier.padding(horizontal = 16.dp))
+            Text(
+                if (step == null) "Настройте гитару" else "${stepName(step.kind)}: ${step.title}",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            )
+        }
+        // Одна главная кнопка внизу — что делать дальше.
+        val actions: @Composable () -> Unit = {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                when {
+                    step == null -> {
+                        BigButton("Гитара настроена — дальше", { next() })
+                        TextButton(onClick = { next() }, modifier = Modifier.fillMaxWidth()) { Text("Пропустить") }
+                    }
+                    !started -> BigButton(
+                        if (tool is StepTool.Metronome) "▶  Начать с метрономом · ${step.minutes} мин" else "▶  Начать · ${step.minutes} мин",
+                        { start() },
+                    )
+                    remaining == 0 -> BigButton(if (index == total - 1) "✓  Завершить занятие" else "Готово — дальше →", { next() })
+                    else -> Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                "%d:%02d".format(remaining / 60, remaining % 60),
+                                fontSize = 30.sp,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            Text(if (running) "идёт шаг" else "пауза", style = MaterialTheme.typography.bodySmall)
+                        }
+                        if (running) OutlinedButton(onClick = { pause() }) { Text("Пауза") }
+                        else FilledTonalButton(onClick = { start() }) { Text("Продолжить") }
+                        TextButton(onClick = { next() }) { Text(if (index == total - 1) "Завершить" else "Дальше →") }
+                    }
+                }
             }
         }
-        TimerBar(
-            remaining = remaining,
-            running = running,
-            totalMinutes = totalSeconds / 60,
-            toolHint = toolHint(tool),
-            isLast = current == steps.lastIndex,
-            onToggle = { toggleTimer() },
-            onNext = { if (current < steps.lastIndex) goTo(current + 1) else finish() },
-        )
-        HorizontalDivider()
-        Box(Modifier.weight(1f).fillMaxWidth()) {
-            when (tool) {
-                StepTool.SongTabs -> SongStep(store, lesson, step.song!!, onOpenUrl, onOpenDoc, onPlay)
-                else -> ExerciseStep(store, step, step.exercise!!, tool, onOpenPiece, onPlay)
+
+        if (wide) {
+            // Телефон лёжа: слева — шаг, указания и кнопка; справа — инструмент или таб.
+            Row(Modifier.weight(1f).fillMaxWidth()) {
+                Column(Modifier.weight(0.42f).fillMaxHeight()) {
+                    header()
+                    Column(
+                        Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        when {
+                            step == null -> TuneInfo()
+                            tool == StepTool.SongTabs -> SongInfo(step.song!!)
+                            else -> ExerciseInfo(step.exercise!!, tool!!, onOpenPiece, onPlay)
+                        }
+                    }
+                    HorizontalDivider()
+                    actions()
+                }
+                VerticalDivider()
+                Box(Modifier.weight(0.58f).fillMaxHeight()) {
+                    when {
+                        step == null -> Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
+                            TunerPanel(store, Modifier.fillMaxWidth())
+                        }
+                        tool == StepTool.SongTabs -> SongStep(store, lesson, step.song!!, onOpenUrl, onOpenDoc, onPlay)
+                        else -> Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
+                            ExerciseToolCard(store, step, tool!!)
+                        }
+                    }
+                }
             }
+        } else {
+            header()
+            Box(Modifier.weight(1f).fillMaxWidth()) {
+                when {
+                    step == null -> Column(
+                        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        TuneInfo()
+                        TunerPanel(store, Modifier.fillMaxWidth())
+                    }
+                    tool == StepTool.SongTabs -> SongStep(store, lesson, step.song!!, onOpenUrl, onOpenDoc, onPlay)
+                    else -> Column(
+                        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        ExerciseInfo(step.exercise!!, tool!!, onOpenPiece, onPlay)
+                        ExerciseToolCard(store, step, tool)
+                        Spacer(Modifier.height(8.dp))
+                    }
+                }
+            }
+            HorizontalDivider()
+            actions()
         }
+    }
+
+    if (confirmExit) {
+        AlertDialog(
+            onDismissRequest = { confirmExit = false },
+            title = { Text("Выйти из занятия?") },
+            text = { Text("Время практики уже записано. Урок можно пройти заново в любой момент.") },
+            confirmButton = { TextButton(onClick = { confirmExit = false; onBack() }) { Text("Выйти") } },
+            dismissButton = { TextButton(onClick = { confirmExit = false }) { Text("Продолжить занятие") } },
+        )
     }
 }
 
-private fun shortTitle(kind: StepKind) = when (kind) {
+private fun stepName(kind: StepKind) = when (kind) {
     StepKind.WARMUP -> "Разминка"
     StepKind.TECHNIQUE -> "Упражнение"
     StepKind.SONG -> "Песня"
 }
 
-private fun toolHint(tool: StepTool) = when (tool) {
-    is StepTool.Metronome -> "▶ запустит таймер и метроном"
-    is StepTool.ChordChanges -> "Смены аккордов: старт — внизу"
-    StepTool.Tuner -> "Сначала настройте гитару"
-    StepTool.SongTabs -> "Играйте по табу"
+/** Шаг 0: как настроить гитару (сам тюнер — рядом). */
+@Composable
+private fun TuneInfo() {
+    NumberedSteps(
+        listOf(
+            "Дёрните открытую струну — тюнер сам определит какую.",
+            "Стрелка влево — подтяните колок, вправо — ослабьте.",
+            "Зелёный цвет — струна настроена. Пройдите все 6 струн.",
+        )
+    )
 }
 
+/** Шаг-упражнение: что делать + как должно звучать + таб. */
 @Composable
-private fun TimerBar(
-    remaining: Int,
-    running: Boolean,
-    totalMinutes: Int,
-    toolHint: String,
-    isLast: Boolean,
-    onToggle: () -> Unit,
-    onNext: () -> Unit,
-) {
-    Row(
-        Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        IconButton(onClick = onToggle) {
-            Icon(if (running) Icons.Filled.Pause else Icons.Filled.PlayArrow, "Старт/пауза")
-        }
-        Column(Modifier.weight(1f)) {
-            Text(
-                if (remaining > 0) "%d:%02d".format(remaining / 60, remaining % 60) else "Время блока вышло",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = if (remaining > 0) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.primary,
-            )
-            Text(
-                "$toolHint · сегодня в уроке $totalMinutes мин",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-        if (remaining == 0 || isLast) {
-            Button(onClick = onNext) { Text(if (isLast) "Завершить" else "Дальше →") }
-        } else {
-            TextButton(onClick = onNext) { Text("Дальше →") }
-        }
-    }
-}
-
-/** Шаг-упражнение: описание + встроенный инструмент шага. */
-@Composable
-private fun ExerciseStep(
-    store: AppStore,
-    step: Step,
+private fun ExerciseInfo(
     ex: Exercise,
     tool: StepTool,
     onOpenPiece: (String) -> Unit,
     onPlay: (String, String, String) -> Unit,
 ) {
-    var showDetails by rememberSaveable(ex.id) { mutableStateOf(true) }
     val interactive = Curriculum.interactiveTab(ex.id)
-    Column(
-        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        Text(ex.title, style = MaterialTheme.typography.titleLarge)
-        Text("Школа: ${ex.school}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
-        if (showDetails) Text(ex.description)
-        TextButton(onClick = { showDetails = !showDetails }) { Text(if (showDetails) "Скрыть описание" else "Показать описание") }
-        ex.tab?.let { TabText(it) }
-        interactive?.let {
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Что делать", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+            NumberedSteps(toInstructions(ex.description))
+            Text("Методика: ${ex.school}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
+        }
+    }
+    when {
+        interactive != null -> {
+            TabExampleButton(pieceQuery(interactive))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilledTonalButton(onClick = { onOpenPiece(it) }) { Text("▶ Ноты и звук") }
-                FilledTonalButton(onClick = { onPlay(it, ex.title, pieceQuery(it)) }) { Text("🎮 Играть с проверкой") }
+                TextButton(onClick = { onOpenPiece(interactive) }) { Text("Ноты и таб") }
+                TextButton(onClick = { onPlay(interactive, ex.title, pieceQuery(interactive)) }) { Text("🎮 Играть с проверкой") }
             }
         }
+        ex.id == "t_strum" -> ExampleButton {
+            ExampleSynth.renderChords(List(4) { Chords.byName("G")!! }, (tool as? StepTool.Metronome)?.bpmStart ?: 70)
+        }
+    }
+    ex.tab?.let { TabText(it) }
+}
 
-        Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                when (tool) {
-                    is StepTool.Metronome -> {
-                        val record = store.bpmRecords[step.id]
-                        Text(
-                            "Метроном: начните с ${tool.bpmStart} BPM" +
-                                (if (tool.bpmTarget > tool.bpmStart) ", разгон до ${tool.bpmTarget}" else "") +
-                                (record?.let { " · рекорд $it" } ?: ""),
-                            style = MaterialTheme.typography.titleSmall,
-                        )
-                        MetronomePanel(
-                            Modifier.fillMaxWidth(),
-                            compact = true,
-                            onRecord = { store.recordBpm(step.id, it) },
-                        )
-                    }
-                    is StepTool.ChordChanges -> {
-                        Text("Тренажёр смен аккордов", style = MaterialTheme.typography.titleSmall)
-                        ChordChangesPanel(store, tool.pairs, Modifier.fillMaxWidth())
-                    }
-                    StepTool.Tuner -> {
-                        Text("Тюнер", style = MaterialTheme.typography.titleSmall)
-                        TunerPanel(store, Modifier.fillMaxWidth())
-                    }
-                    StepTool.SongTabs -> Unit
+/** Инструмент шага-упражнения: метроном, тренажёр смен или тюнер. */
+@Composable
+private fun ExerciseToolCard(store: AppStore, step: Step, tool: StepTool) {
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            when (tool) {
+                is StepTool.Metronome -> {
+                    val record = store.bpmRecords[step.id]
+                    Text(
+                        "Метроном: начните с ${tool.bpmStart} BPM" +
+                            (if (tool.bpmTarget > tool.bpmStart) ", он сам ускорится до ${tool.bpmTarget}" else "") +
+                            (record?.let { " · ваш рекорд $it" } ?: ""),
+                        style = MaterialTheme.typography.titleSmall,
+                    )
+                    MetronomePanel(Modifier.fillMaxWidth(), compact = true, onRecord = { store.recordBpm(step.id, it) })
+                }
+                is StepTool.ChordChanges -> {
+                    Text("Тренажёр смен аккордов", style = MaterialTheme.typography.titleSmall)
+                    ChordChangesPanel(store, tool.pairs, Modifier.fillMaxWidth())
+                }
+                StepTool.Tuner -> {
+                    Text("Тюнер", style = MaterialTheme.typography.titleSmall)
+                    TunerPanel(store, Modifier.fillMaxWidth())
+                }
+                StepTool.SongTabs -> Unit
+            }
+        }
+    }
+}
+
+/** Шаг-песня: что делать (слева в горизонтальном режиме). */
+@Composable
+private fun SongInfo(song: Song) {
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Что делать", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+            NumberedSteps(
+                listOf(
+                    "Послушайте пример — кнопка «🔊» справа.",
+                    "Сыграйте медленно по табу или по аккордам.",
+                    "Получается — включите метроном или «Играть с проверкой».",
+                )
+            )
+        }
+    }
+    Text("Ритм: ${song.strumming}", style = MaterialTheme.typography.titleSmall)
+    Text(song.description, style = MaterialTheme.typography.bodyMedium)
+}
+
+/** Итог занятия. */
+@Composable
+private fun FinishView(store: AppStore, lesson: Lesson, seconds: Int, onHome: () -> Unit) {
+    val s = store.settings
+    val next = store.nextLesson()
+    Column(
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        Text("✓", fontSize = 72.sp, color = MaterialTheme.colorScheme.tertiary)
+        Text("Занятие завершено!", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        Text(
+            "Урок ${lesson.number} пройден · ${(seconds + 30) / 60} мин в этом занятии\n" +
+                "Сегодня ${store.minutesToday()} из ${s.dailyMinutes} мин · серия ${store.streak()} дн.",
+            textAlign = TextAlign.Center,
+        )
+        next?.let {
+            Card(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp)) {
+                    Text("Следующий урок", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                    Text("Урок ${it.number}: ${it.technique.title}", style = MaterialTheme.typography.titleMedium)
                 }
             }
         }
+        Spacer(Modifier.height(8.dp))
+        BigButton("На главную", onHome)
     }
 }
 
@@ -342,7 +463,7 @@ private fun SongStep(
 
     Column(Modifier.fillMaxSize()) {
         Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("${song.artist} — ${song.title}", style = MaterialTheme.typography.titleMedium)
+            Text("Выберите, по чему играть:", style = MaterialTheme.typography.labelLarge)
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 sources.forEachIndexed { i, src ->
                     FilterChip(
@@ -376,10 +497,13 @@ private fun SongStep(
                 }
             }
             is SongSource.Piece -> Column(Modifier.fillMaxSize()) {
-                AlphaTabView(pieceQuery(selected.asset), Modifier.weight(1f).fillMaxWidth())
-                TextButton(onClick = { onPlay(selected.asset, Curriculum.pieceTitle(selected.asset), pieceQuery(selected.asset)) }) {
-                    Text("🎮 Играть с проверкой")
+                Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Box(Modifier.weight(1f)) { TabExampleButton(pieceQuery(selected.asset), label = "🔊 Пример") }
+                    OutlinedButton(onClick = { onPlay(selected.asset, Curriculum.pieceTitle(selected.asset), pieceQuery(selected.asset)) }) {
+                        Text("🎮 С проверкой")
+                    }
                 }
+                AlphaTabView(pieceQuery(selected.asset), Modifier.weight(1f).fillMaxWidth())
             }
             SongSource.ChordsAndRhythm -> Column(
                 Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
@@ -397,6 +521,8 @@ private fun SongStep(
                         }
                     }
                 }
+                val known = song.chords.mapNotNull { Chords.byName(it) }
+                if (known.isNotEmpty()) ChordsExampleButton(known, song.bpm ?: 90)
                 Text("Ритм: ${song.strumming}", style = MaterialTheme.typography.titleSmall)
                 Text(song.description)
                 song.tab?.let { TabText(it) }

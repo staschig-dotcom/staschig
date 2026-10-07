@@ -39,6 +39,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import java.time.LocalDate
+import java.util.Collections
+import kotlin.math.abs
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ru.staschig.guitar.audio.MetronomeEngine
@@ -49,9 +52,6 @@ import ru.staschig.guitar.data.AppStore
 import ru.staschig.guitar.data.RhythmRun
 import ru.staschig.guitar.ui.theme.InTune
 import ru.staschig.guitar.ui.theme.OutOfTune
-import java.time.LocalDate
-import java.util.Collections
-import kotlin.math.abs
 
 private enum class Phase { IDLE, CALIBRATING, COUNT_IN, PLAYING }
 

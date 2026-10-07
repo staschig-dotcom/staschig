@@ -67,6 +67,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.FileProvider
 import androidx.webkit.WebViewAssetLoader
+import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import ru.staschig.guitar.audio.MetronomeEngine
@@ -74,7 +75,6 @@ import ru.staschig.guitar.data.AppStore
 import ru.staschig.guitar.data.TabDoc
 import ru.staschig.guitar.data.TabKind
 import ru.staschig.guitar.lessons.Curriculum
-import java.io.File
 
 private const val ASSET_HOST = "https://appassets.androidplatform.net"
 

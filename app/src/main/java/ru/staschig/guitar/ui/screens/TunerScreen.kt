@@ -17,11 +17,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Switch
@@ -47,6 +51,9 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.sin
 import ru.staschig.guitar.audio.Notes
 import ru.staschig.guitar.audio.TonePlayer
 import ru.staschig.guitar.audio.TunerEngine
@@ -54,15 +61,15 @@ import ru.staschig.guitar.audio.Tunings
 import ru.staschig.guitar.data.AppStore
 import ru.staschig.guitar.ui.theme.InTune
 import ru.staschig.guitar.ui.theme.OutOfTune
-import kotlin.math.abs
-import kotlin.math.cos
-import kotlin.math.sin
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TunerScreen(store: AppStore) {
+fun TunerScreen(store: AppStore, onBack: (() -> Unit)? = null) {
     Column(Modifier.fillMaxSize()) {
-        TopAppBar(title = { Text("Тюнер") })
+        TopAppBar(
+            title = { Text("Тюнер") },
+            navigationIcon = { onBack?.let { IconButton(onClick = it) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Назад") } } },
+        )
         TunerPanel(store, Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp))
     }
 }

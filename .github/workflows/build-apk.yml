@@ -61,7 +61,7 @@ jobs:
       - name: Render screens
         run: |
           chmod +x gradlew
-          ./gradlew --no-daemon recordPaparazziDebug --tests '*ScreenshotTest*'
+          ./gradlew --no-daemon recordPaparazziDebug --tests '*Screenshot*'
       - name: Publish screenshots
         env:
           GH_TOKEN: ${{ github.token }}

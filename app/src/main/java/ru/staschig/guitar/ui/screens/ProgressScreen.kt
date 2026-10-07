@@ -10,9 +10,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -30,22 +34,25 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import java.time.LocalDate
 import ru.staschig.guitar.data.AppStore
 import ru.staschig.guitar.lessons.Curriculum
 import ru.staschig.guitar.lessons.Level
 import ru.staschig.guitar.play.PlayResult
-import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProgressScreen(store: AppStore) {
+fun ProgressScreen(store: AppStore, onOpenSettings: () -> Unit = {}) {
     val s = store.settings
     val weekGoal = s.dailyMinutes * s.daysPerWeek
     val week = store.minutesThisWeek()
     var confirmReset by remember { mutableStateOf(false) }
 
     Column(Modifier.fillMaxSize()) {
-        TopAppBar(title = { Text("Прогресс") })
+        TopAppBar(
+            title = { Text("Прогресс") },
+            actions = { IconButton(onClick = onOpenSettings) { Icon(Icons.Filled.Settings, "Настройки") } },
+        )
         Column(
             Modifier
                 .fillMaxSize()

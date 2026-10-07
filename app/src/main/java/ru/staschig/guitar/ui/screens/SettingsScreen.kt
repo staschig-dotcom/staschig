@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import ru.staschig.guitar.data.AppStore
+import ru.staschig.guitar.data.ScreenMode
 import ru.staschig.guitar.data.Settings
 import ru.staschig.guitar.lessons.Focus
 import ru.staschig.guitar.lessons.Level
@@ -95,6 +96,13 @@ fun SettingsScreen(store: AppStore, onBack: () -> Unit) {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+
+            Text("Ориентация экрана", style = MaterialTheme.typography.titleMedium)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                ScreenMode.entries.forEach { m ->
+                    FilterChip(s.screenMode == m, { store.updateSettings { it.copy(screenMode = m) } }, { Text(m.title) })
+                }
+            }
 
             ReminderSettings(store)
 

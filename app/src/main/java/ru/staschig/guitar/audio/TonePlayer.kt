@@ -3,14 +3,21 @@ package ru.staschig.guitar.audio
 import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioTrack
+import kotlin.concurrent.thread
 import kotlin.math.PI
 import kotlin.math.exp
 import kotlin.math.sin
 
-/** Эталонный звук струны — чтобы настраиваться на слух. */
+/** Проигрывание готового звука: эталон струны, аккорды, примеры «как должно звучать». */
 object TonePlayer {
     private const val SAMPLE_RATE = 44100
+    private const val CHUNK = 4096
+
+    @Volatile private var playing = false
+    private var worker: Thread? = null
     private var track: AudioTrack? = null
+
+    val isPlaying: Boolean get() = playing
 
     fun play(freq: Float, seconds: Float = 2f) {
         val n = (SAMPLE_RATE * seconds).toInt()
@@ -22,10 +29,11 @@ object TonePlayer {
         })
     }
 
-    /** Проигрывает готовый звук (моно, 44.1 кГц). */
+    /** Проигрывает звук (моно, 44.1 кГц) потоком — подходит и для длинных примеров. */
     fun playSamples(data: FloatArray) {
         stop()
-        val n = data.size
+        if (data.isEmpty()) return
+        val minBuf = AudioTrack.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_FLOAT)
         val t = AudioTrack.Builder()
             .setAudioAttributes(
                 AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA)
@@ -36,16 +44,33 @@ object TonePlayer {
                     .setEncoding(AudioFormat.ENCODING_PCM_FLOAT)
                     .setChannelMask(AudioFormat.CHANNEL_OUT_MONO).build()
             )
-            .setBufferSizeInBytes(n * 4)
-            .setTransferMode(AudioTrack.MODE_STATIC)
+            .setBufferSizeInBytes(maxOf(minBuf, CHUNK * 4 * 2))
+            .setTransferMode(AudioTrack.MODE_STREAM)
             .build()
-        t.write(data, 0, n, AudioTrack.WRITE_BLOCKING)
-        t.play()
         track = t
+        playing = true
+        t.play()
+        worker = thread(name = "tone", isDaemon = true) {
+            var pos = 0
+            while (playing && pos < data.size) {
+                val n = minOf(CHUNK, data.size - pos)
+                t.write(data, pos, n, AudioTrack.WRITE_BLOCKING)
+                pos += n
+            }
+            // Дать доиграть буферу, затем освободить.
+            if (playing) Thread.sleep(300)
+            playing = false
+        }
     }
 
     fun stop() {
-        track?.let { runCatching { it.stop() }; it.release() }
+        playing = false
+        worker?.join(500)
+        worker = null
+        track?.let {
+            runCatching { it.pause(); it.flush(); it.stop() }
+            it.release()
+        }
         track = null
     }
 }

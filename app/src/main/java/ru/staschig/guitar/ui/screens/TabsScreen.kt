@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Article
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Link
@@ -57,6 +58,7 @@ import ru.staschig.guitar.lessons.Curriculum
 @Composable
 fun TabsScreen(
     store: AppStore,
+    onBack: (() -> Unit)? = null,
     onOpenUrl: (String) -> Unit,
     onOpenDoc: (String) -> Unit,
     onOpenPiece: (String) -> Unit,
@@ -83,7 +85,10 @@ fun TabsScreen(
     }
 
     Column(Modifier.fillMaxSize()) {
-        TopAppBar(title = { Text("Табы") })
+        TopAppBar(
+            title = { Text("Табы") },
+            navigationIcon = { onBack?.let { IconButton(onClick = it) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Назад") } } },
+        )
         LazyColumn(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
