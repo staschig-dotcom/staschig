@@ -38,8 +38,10 @@ data class TabDoc(
 
 /** Офлайн-библиотека табов в internal storage приложения. */
 class TabLibrary(context: Context) {
-    val dir = File(context.filesDir, "tabfiles").apply { mkdirs() }
-    private val index = File(context.filesDir, "tabs_index.json")
+    // filesDir недоступен в рендере скриншотов (layoutlib) — там используем временную папку.
+    private val root: File = runCatching { context.filesDir!! }.getOrElse { File(System.getProperty("java.io.tmpdir"), "guitar") }
+    val dir = File(root, "tabfiles").apply { mkdirs() }
+    private val index = File(root, "tabs_index.json")
 
     var docs by mutableStateOf(load())
         private set

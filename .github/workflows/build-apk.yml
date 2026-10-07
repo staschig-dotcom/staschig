@@ -46,3 +46,28 @@ jobs:
             --title "ГитарПрактика — последняя сборка" \
             --notes "Сборка из коммита ${GITHUB_SHA::7}. Скачайте GuitarPractice.apk и установите на Android." \
             --latest
+
+  # Скриншоты экранов для проверки вёрстки (не релиз приложения).
+  screenshots:
+    runs-on: ubuntu-latest
+    if: github.ref_name == 'claude/guitar-learning-app-wyjqhf'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Render screens
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon recordPaparazziDebug --tests '*ScreenshotTest*'
+      - name: Publish screenshots
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd app/src/test/snapshots/images
+          ls
+          gh release delete ui-screenshots --yes --cleanup-tag || true
+          gh release create ui-screenshots *.png --target "$GITHUB_SHA" --prerelease --latest=false \
+            --title "UI screenshots" --notes "Скриншоты экранов из ${GITHUB_SHA::7} (служебное, для проверки вёрстки)"

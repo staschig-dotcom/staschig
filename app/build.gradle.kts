@@ -2,6 +2,8 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
+    // Скриншоты экранов в JVM-тестах (без эмулятора) — для проверки вёрстки в CI.
+    id("app.cash.paparazzi")
 }
 
 android {
