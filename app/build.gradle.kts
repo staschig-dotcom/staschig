@@ -53,4 +53,6 @@ dependencies {
     implementation("androidx.webkit:webkit:1.11.0")
 
     testImplementation("junit:junit:4.13.2")
+    // В JVM-тестах android.jar содержит только заглушки org.json — подключаем настоящую реализацию.
+    testImplementation("org.json:json:20240303")
 }

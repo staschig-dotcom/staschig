@@ -56,6 +56,7 @@ import ru.staschig.guitar.audio.MetronomeEngine
 import ru.staschig.guitar.audio.TonePlayer
 import ru.staschig.guitar.data.AppStore
 import ru.staschig.guitar.data.TabDoc
+import ru.staschig.guitar.data.TabKind
 import ru.staschig.guitar.lessons.Chord
 import ru.staschig.guitar.lessons.Chords
 import ru.staschig.guitar.lessons.Curriculum
@@ -79,6 +80,7 @@ fun LessonScreen(
     onOpenUrl: (url: String, lessonId: String?) -> Unit,
     onOpenPiece: (String) -> Unit,
     onOpenDoc: (String) -> Unit,
+    onPlay: (id: String, title: String, query: String) -> Unit,
 ) {
     val lesson = Curriculum.byId(lessonId)
     if (lesson == null) {
@@ -192,8 +194,8 @@ fun LessonScreen(
         HorizontalDivider()
         Box(Modifier.weight(1f).fillMaxWidth()) {
             when (tool) {
-                StepTool.SongTabs -> SongStep(store, lesson, step.song!!, onOpenUrl, onOpenDoc)
-                else -> ExerciseStep(store, step, step.exercise!!, tool, onOpenPiece)
+                StepTool.SongTabs -> SongStep(store, lesson, step.song!!, onOpenUrl, onOpenDoc, onPlay)
+                else -> ExerciseStep(store, step, step.exercise!!, tool, onOpenPiece, onPlay)
             }
         }
     }
@@ -260,6 +262,7 @@ private fun ExerciseStep(
     ex: Exercise,
     tool: StepTool,
     onOpenPiece: (String) -> Unit,
+    onPlay: (String, String, String) -> Unit,
 ) {
     var showDetails by rememberSaveable(ex.id) { mutableStateOf(true) }
     val interactive = Curriculum.interactiveTab(ex.id)
@@ -273,7 +276,10 @@ private fun ExerciseStep(
         TextButton(onClick = { showDetails = !showDetails }) { Text(if (showDetails) "Скрыть описание" else "Показать описание") }
         ex.tab?.let { TabText(it) }
         interactive?.let {
-            FilledTonalButton(onClick = { onOpenPiece(it) }) { Text("▶ Ноты, таб и звук упражнения") }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilledTonalButton(onClick = { onOpenPiece(it) }) { Text("▶ Ноты и звук") }
+                FilledTonalButton(onClick = { onPlay(it, ex.title, pieceQuery(it)) }) { Text("🎮 Играть с проверкой") }
+            }
         }
 
         Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
@@ -323,6 +329,7 @@ private fun SongStep(
     song: Song,
     onOpenUrl: (String, String?) -> Unit,
     onOpenDoc: (String) -> Unit,
+    onPlay: (String, String, String) -> Unit,
 ) {
     val docs = store.library.docs.filter { it.lessonId == lesson.id }
     val piece = Curriculum.interactiveTab(song.id)
@@ -359,9 +366,21 @@ private fun SongStep(
         when (selected) {
             is SongSource.Doc -> Column(Modifier.fillMaxSize()) {
                 DocContent(store, selected.doc, Modifier.weight(1f).fillMaxWidth())
-                TextButton(onClick = { onOpenDoc(selected.doc.id) }) { Text("Открыть на весь экран") }
+                Row {
+                    TextButton(onClick = { onOpenDoc(selected.doc.id) }) { Text("На весь экран") }
+                    if (selected.doc.kind == TabKind.GP) {
+                        TextButton(onClick = { onPlay("doc_" + selected.doc.id, selected.doc.title, docQuery(selected.doc)) }) {
+                            Text("🎮 Играть с проверкой")
+                        }
+                    }
+                }
             }
-            is SongSource.Piece -> AlphaTabView(pieceQuery(selected.asset), Modifier.fillMaxSize())
+            is SongSource.Piece -> Column(Modifier.fillMaxSize()) {
+                AlphaTabView(pieceQuery(selected.asset), Modifier.weight(1f).fillMaxWidth())
+                TextButton(onClick = { onPlay(selected.asset, Curriculum.pieceTitle(selected.asset), pieceQuery(selected.asset)) }) {
+                    Text("🎮 Играть с проверкой")
+                }
+            }
             SongSource.ChordsAndRhythm -> Column(
                 Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),

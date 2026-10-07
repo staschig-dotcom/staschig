@@ -40,6 +40,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -103,18 +104,11 @@ fun AlphaTabScreen(title: String, query: String, onBack: () -> Unit, actions: @C
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun AlphaTabView(query: String, modifier: Modifier = Modifier) {
-    val context = LocalContext.current
     DisposableEffect(Unit) {
         MetronomeEngine.stop() // у alphaTab свой метроном, синхронный с нотами
         onDispose { }
     }
-    val loader = remember {
-        WebViewAssetLoader.Builder()
-            .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(context))
-            .addPathHandler("/tabfiles/", WebViewAssetLoader.InternalStoragePathHandler(
-                context, File(context.filesDir, "tabfiles")))
-            .build()
-    }
+    val loader = rememberAlphaTabAssetLoader()
     var webView by remember { mutableStateOf<WebView?>(null) }
     DisposableEffect(Unit) { onDispose { webView?.destroy() } }
     val loadedQuery = remember { arrayOf(query) } // без состояния: смена не должна вызывать перерисовку
@@ -143,6 +137,21 @@ fun AlphaTabView(query: String, modifier: Modifier = Modifier) {
     )
 }
 
+/** Отдаёт WebView файлы alphaTab из assets и сохранённые табы — под https-адресом приложения. */
+@Composable
+fun rememberAlphaTabAssetLoader(): WebViewAssetLoader {
+    val context = LocalContext.current
+    return remember {
+        WebViewAssetLoader.Builder()
+            .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(context))
+            .addPathHandler("/tabfiles/", WebViewAssetLoader.InternalStoragePathHandler(
+                context, File(context.filesDir, "tabfiles")))
+            .build()
+    }
+}
+
+const val ALPHATAB_BASE = "$ASSET_HOST/assets/alphatab/"
+
 /** Параметры страницы alphaTab для встроенной пьесы и для сохранённого файла. */
 fun pieceQuery(asset: String) = "tex=songs/${Uri.encode(asset)}.alphatex"
 fun docQuery(doc: TabDoc) = "file=/tabfiles/${Uri.encode(doc.fileName ?: "")}"
@@ -168,14 +177,19 @@ fun DocContent(store: AppStore, doc: TabDoc, modifier: Modifier = Modifier) {
 
 /** Встроенная пьеса из песенника/урока. */
 @Composable
-fun PieceScreen(asset: String, onBack: () -> Unit) {
-    val title = Curriculum.builtInPieces.firstOrNull { it.asset == asset }?.title ?: "Интерактивный таб"
-    AlphaTabScreen(title, pieceQuery(asset), onBack)
+fun PieceScreen(asset: String, onBack: () -> Unit, onPlay: () -> Unit) {
+    AlphaTabScreen(Curriculum.pieceTitle(asset), pieceQuery(asset), onBack) { PlayButton(onPlay) }
+}
+
+/** Кнопка режима «Играть с проверкой» в шапке просмотрщика. */
+@Composable
+fun PlayButton(onPlay: () -> Unit) {
+    TextButton(onClick = onPlay) { Text("🎮 Играть") }
 }
 
 /** Открывает сохранённый таб нужным просмотрщиком. */
 @Composable
-fun TabDocScreen(store: AppStore, id: String, onBack: () -> Unit, onEdit: (String) -> Unit) {
+fun TabDocScreen(store: AppStore, id: String, onBack: () -> Unit, onEdit: (String) -> Unit, onPlay: (TabDoc) -> Unit) {
     val lib = store.library
     val doc = lib.byId(id)
     if (doc == null) {
@@ -188,7 +202,7 @@ fun TabDocScreen(store: AppStore, id: String, onBack: () -> Unit, onEdit: (Strin
     }
     when (doc.kind) {
         TabKind.GP -> AlphaTabScreen(doc.title, docQuery(doc), onBack) {
-            OpenExternallyButton(store, doc); delete()
+            PlayButton { onPlay(doc) }; OpenExternallyButton(store, doc); delete()
         }
         TabKind.PDF -> PdfScreen(store, doc, onBack) { OpenExternallyButton(store, doc); delete() }
         TabKind.TEXT -> TextTabScreen(doc, onBack) {

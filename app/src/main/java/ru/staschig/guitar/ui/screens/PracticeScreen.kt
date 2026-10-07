@@ -14,6 +14,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Hearing
+import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.TouchApp
@@ -38,6 +39,7 @@ fun PracticeScreen(onOpen: (String) -> Unit) {
             Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            Tool(Icons.Filled.SportsEsports, "Играть с проверкой", "Ноты едут по ленте, приложение слушает и ставит звёзды — как в Yousician") { onOpen("playlist") }
             Tool(Icons.Filled.Timer, "Метроном", "Точный метроном, tap tempo, тренажёр скорости") { onOpen("metronome") }
             Tool(Icons.Filled.TouchApp, "Ритм-тест", "Играйте под щелчки — приложение покажет, спешите вы или тянете") { onOpen("rhythm") }
             Tool(Icons.Filled.SwapHoriz, "Смены аккордов", "«Одноминутные смены» с автоподсчётом по микрофону и схемы аккордов") { onOpen("chords") }

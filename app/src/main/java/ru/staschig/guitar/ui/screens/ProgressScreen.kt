@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import ru.staschig.guitar.data.AppStore
 import ru.staschig.guitar.lessons.Curriculum
 import ru.staschig.guitar.lessons.Level
+import ru.staschig.guitar.play.PlayResult
 import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -87,6 +88,19 @@ fun ProgressScreen(store: AppStore) {
                         drawLine(goalColor, Offset(0f, gy), Offset(size.width, gy), strokeWidth = 3f,
                             pathEffect = PathEffect.dashPathEffect(floatArrayOf(12f, 8f)))
                     }
+                }
+            }
+
+            val (playLevel, inLevel, need) = PlayResult.level(store.xp)
+            Card {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("Игровой уровень $playLevel · ${store.xp} XP", fontWeight = FontWeight.Bold)
+                    LinearProgressIndicator(progress = { inLevel.toFloat() / need }, modifier = Modifier.fillMaxWidth())
+                    val starred = store.playBest.filterKeys { !it.contains('#') }
+                    Text(
+                        "Пройдено с проверкой: ${starred.count { it.value.stars > 0 }} · звёзд всего ${starred.values.sumOf { it.stars }}",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
                 }
             }
 

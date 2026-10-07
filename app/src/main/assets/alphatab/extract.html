@@ -1,0 +1,131 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>extract</title></head>
+<body>
+<script src="alphaTab.min.js"></script>
+<script>
+/*
+ * Достаёт из табa (alphaTex / Guitar Pro / MusicXML) список нот со временем в мс —
+ * для режима «Играть с проверкой». Время считается по MIDI-разметке alphaTab,
+ * поэтому учитываются повторы и смены темпа. Результат уходит в Android.onScore(json).
+ */
+(function () {
+  const params = new URLSearchParams(location.search);
+
+  function send(obj) {
+    const json = JSON.stringify(obj);
+    window.__extracted = obj;
+    if (window.Android && window.Android.onScore) window.Android.onScore(json);
+  }
+
+  function pickTrack(score, wanted) {
+    if (wanted != null && wanted !== '' && score.tracks[+wanted]) return +wanted;
+    const i = score.tracks.findIndex((t) => t.staves.some((s) => s.isStringed || (s.tuning && s.tuning.length >= 4)));
+    return i >= 0 ? i : 0;
+  }
+
+  function extract(score) {
+    const settings = new alphaTab.Settings();
+    const midiFile = new alphaTab.midi.MidiFile();
+    const generator = new alphaTab.midi.MidiFileGenerator(score, settings, new alphaTab.midi.AlphaSynthMidiFileHandler(midiFile));
+    generator.generate();
+    const lookup = generator.tickLookup;
+
+    const trackIndex = pickTrack(score, params.get('track'));
+    const track = score.tracks[trackIndex];
+    const staff = track.staves[0];
+    const stringCount = (staff.tuning && staff.tuning.length) || 6;
+
+    // Тики → миллисекунды с учётом смен темпа (960 тиков на четверть).
+    let ms = 0;
+    const bars = [];
+    const events = [];
+    let firstTempo = null;
+    let lastTempo = null;
+    lookup.masterBars.forEach((mb) => {
+      const changes = (mb.tempoChanges || []).slice().sort((a, b) => a.tick - b.tick);
+      const tempo = changes.length ? changes[0].tempo : (lastTempo || score.tempo);
+      if (firstTempo == null) firstTempo = tempo;
+      const barStartMs = ms;
+      // Время удара в разметке — в тиках от начала такта, смены темпа — в абсолютных тиках.
+      const rel = changes.map((c) => ({ tick: c.tick - mb.start, tempo: c.tempo }));
+      const toMs = (tick) => {
+        let t = 0, acc = 0, cur = tempo;
+        for (const c of rel) {
+          if (c.tick <= t) { cur = c.tempo; continue; }
+          if (c.tick >= tick) break;
+          acc += (c.tick - t) * 60000 / (cur * 960);
+          t = c.tick; cur = c.tempo;
+        }
+        return acc + (tick - t) * 60000 / (cur * 960);
+      };
+      bars.push(Math.round(barStartMs));
+      let bl = mb.firstBeat;
+      while (bl) {
+        for (const item of bl.highlightedBeats) {
+          const beat = item.beat;
+          if (beat.voice.bar.staff.track.index !== trackIndex || beat.isRest) continue;
+          // В highlightedBeats попадают и ноты, которые ещё звучат с прошлых долей: берём только начало.
+          if (Math.abs(item.playbackStart - bl.start) > 1) continue;
+          const notes = beat.notes
+            .filter((n) => !n.isTieDestination && !n.isDead)
+            .map((n) => ({ m: n.realValue, s: stringCount - n.string, f: n.fret }));
+          if (!notes.length) continue;
+          const t = barStartMs + toMs(bl.start);
+          const d = toMs(bl.start + beat.playbackDuration) - toMs(bl.start);
+          events.push({ t: Math.round(t), d: Math.round(d), bar: bars.length - 1, notes });
+        }
+        if (bl === mb.lastBeat) break;
+        bl = bl.nextBeat;
+      }
+      ms = barStartMs + toMs(mb.end - mb.start);
+      lastTempo = rel.length ? rel[rel.length - 1].tempo : tempo;
+    });
+    // Одновременные удары (аккорды из разных голосов) склеиваем в одно событие.
+    events.sort((a, b) => a.t - b.t);
+    const merged = [];
+    for (const e of events) {
+      const last = merged[merged.length - 1];
+      if (last && Math.abs(last.t - e.t) < 5) last.notes = last.notes.concat(e.notes);
+      else merged.push(e);
+    }
+    return {
+      title: score.title || '',
+      artist: score.artist || '',
+      tempo: firstTempo || score.tempo,
+      tracks: score.tracks.map((t) => t.name || ''),
+      track: trackIndex,
+      strings: stringCount,
+      ts: score.masterBars.length ? score.masterBars[0].timeSignatureNumerator : 4,
+      tsDen: score.masterBars.length ? score.masterBars[0].timeSignatureDenominator : 4,
+      anacrusis: score.masterBars.length ? !!score.masterBars[0].isAnacrusis : false,
+      bars: bars,
+      duration: Math.round(ms),
+      events: merged,
+    };
+  }
+
+  function run() {
+    const settings = new alphaTab.Settings();
+    const file = params.get('file');
+    const tex = params.get('tex');
+    const src = file || tex;
+    fetch(src).then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return file ? r.arrayBuffer() : r.text(); })
+      .then((data) => {
+        let score;
+        if (file) {
+          score = alphaTab.importer.ScoreLoader.loadScoreFromBytes(new Uint8Array(data), settings);
+        } else {
+          const importer = new alphaTab.importer.AlphaTexImporter();
+          importer.initFromString(data, settings);
+          score = importer.readScore();
+        }
+        send(extract(score));
+      })
+      .catch((e) => send({ error: String(e && e.message ? e.message : e) }));
+  }
+  run();
+})();
+</script>
+</body>
+</html>

@@ -26,12 +26,17 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import ru.staschig.guitar.data.AppStore
+import ru.staschig.guitar.lessons.Curriculum
 import ru.staschig.guitar.ui.screens.ChordsScreen
 import ru.staschig.guitar.ui.screens.EarScreen
 import ru.staschig.guitar.ui.screens.LessonScreen
 import ru.staschig.guitar.ui.screens.LessonsScreen
 import ru.staschig.guitar.ui.screens.MetronomeScreen
 import ru.staschig.guitar.ui.screens.PieceScreen
+import ru.staschig.guitar.ui.screens.PlayListScreen
+import ru.staschig.guitar.ui.screens.PlayScreen
+import ru.staschig.guitar.ui.screens.docQuery
+import ru.staschig.guitar.ui.screens.pieceQuery
 import ru.staschig.guitar.ui.screens.PracticeScreen
 import ru.staschig.guitar.ui.screens.ProgressScreen
 import ru.staschig.guitar.ui.screens.RhythmScreen
@@ -51,6 +56,10 @@ private val tabs = listOf(
     Tab("practice", "Практика", Icons.Filled.Timer),
     Tab("progress", "Прогресс", Icons.Filled.QueryStats),
 )
+
+fun NavHostController.openPlay(id: String, title: String, query: String) {
+    navigate("play?id=${Uri.encode(id)}&title=${Uri.encode(title)}&q=${Uri.encode(query)}")
+}
 
 fun NavHostController.openBrowser(url: String, lessonId: String? = null) {
     navigate("browser?url=${Uri.encode(url)}&lesson=${Uri.encode(lessonId ?: "")}")
@@ -103,6 +112,7 @@ fun GuitarApp(store: AppStore) {
                     onOpenUrl = { url, lessonId -> nav.openBrowser(url, lessonId) },
                     onOpenPiece = { nav.navigate("piece/$it") },
                     onOpenDoc = { nav.navigate("tabdoc/$it") },
+                    onPlay = { id, title, q -> nav.openPlay(id, title, q) },
                 )
             }
             composable("tabs") {
@@ -115,7 +125,10 @@ fun GuitarApp(store: AppStore) {
                 )
             }
             composable("piece/{asset}") { entry ->
-                PieceScreen(entry.arguments?.getString("asset").orEmpty(), onBack = { nav.popBackStack() })
+                val asset = entry.arguments?.getString("asset").orEmpty()
+                PieceScreen(asset, onBack = { nav.popBackStack() }, onPlay = {
+                    nav.openPlay(asset, Curriculum.pieceTitle(asset), pieceQuery(asset))
+                })
             }
             composable("tabdoc/{id}") { entry ->
                 TabDocScreen(
@@ -123,6 +136,7 @@ fun GuitarApp(store: AppStore) {
                     id = entry.arguments?.getString("id").orEmpty(),
                     onBack = { nav.popBackStack() },
                     onEdit = { nav.navigate("tabedit?id=$it") },
+                    onPlay = { doc -> nav.openPlay("doc_" + doc.id, doc.title, docQuery(doc)) },
                 )
             }
             composable(
@@ -152,6 +166,26 @@ fun GuitarApp(store: AppStore) {
             }
             composable("tuner") { TunerScreen(store) }
             composable("practice") { PracticeScreen(onOpen = { nav.navigate(it) }) }
+            composable("playlist") {
+                PlayListScreen(store, onPlay = { id, title, q -> nav.openPlay(id, title, q) }, onBack = { nav.popBackStack() })
+            }
+            composable(
+                "play?id={id}&title={title}&q={q}",
+                arguments = listOf(
+                    navArgument("id") { type = NavType.StringType; defaultValue = "" },
+                    navArgument("title") { type = NavType.StringType; defaultValue = "" },
+                    navArgument("q") { type = NavType.StringType; defaultValue = "" },
+                ),
+            ) { entry ->
+                val a = entry.arguments
+                PlayScreen(
+                    store,
+                    id = a?.getString("id").orEmpty(),
+                    title = a?.getString("title").orEmpty(),
+                    query = a?.getString("q").orEmpty(),
+                    onBack = { nav.popBackStack() },
+                )
+            }
             composable("metronome") { MetronomeScreen() }
             composable("rhythm") { RhythmScreen(store, onBack = { nav.popBackStack() }) }
             composable("chords") { ChordsScreen(store, onBack = { nav.popBackStack() }) }

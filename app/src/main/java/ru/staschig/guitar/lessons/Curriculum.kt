@@ -695,6 +695,24 @@ object Curriculum {
         BuiltInPiece("romance", "Романс (начало)", "анонимный", Level.INTERMEDIATE),
     )
 
+    /** Упражнения с интерактивным табом — для режима «Играть с проверкой». */
+    val builtInExercises: List<BuiltInPiece> = listOf(
+        BuiltInPiece("ex_spider", "Хроматика «паук» 1-2-3-4", "разминка", Level.BEGINNER),
+        BuiltInPiece("ex_c_major", "Гамма до мажор, I позиция", "W. Leavitt", Level.BEGINNER),
+        BuiltInPiece("ex_permutation", "Перестановки 1-3-2-4", "J. Petrucci", Level.INTERMEDIATE),
+        BuiltInPiece("ex_penta", "Пентатоника ля минор", "блюз/рок", Level.INTERMEDIATE),
+        BuiltInPiece("ex_travis", "Travis picking", "Мерл Тревис", Level.INTERMEDIATE),
+        BuiltInPiece("ex_giuliani", "Арпеджио p-i-m-a", "М. Джулиани", Level.INTERMEDIATE),
+        BuiltInPiece("ex_g_major_3nps", "Соль мажор, 3 ноты на струну", "W. Leavitt", Level.INTERMEDIATE),
+        BuiltInPiece("ex_legato", "Легато в пентатонике", "Дж. Сатриани", Level.INTERMEDIATE),
+        BuiltInPiece("ex_a_minor_3nps", "Ля минор, 3 ноты на струну", "П. Гилберт", Level.ADVANCED),
+        BuiltInPiece("ex_sweep", "Свип: арпеджио Am", "Ф. Гамбале", Level.ADVANCED),
+        BuiltInPiece("ex_string_skip", "Перескок через струну", "П. Гилберт", Level.ADVANCED),
+    )
+
+    fun pieceTitle(asset: String): String =
+        (builtInPieces + builtInExercises).firstOrNull { it.asset == asset }?.title ?: asset
+
     fun byLevel(level: Level): List<Lesson> = lessons.filter { it.level == level }
 
     fun byId(id: String): Lesson? = lessons.firstOrNull { it.id == id }

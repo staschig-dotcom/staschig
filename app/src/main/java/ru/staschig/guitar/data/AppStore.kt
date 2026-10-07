@@ -26,6 +26,9 @@ data class Settings(
     val reminderDays: Set<Int> = setOf(1, 2, 3, 4, 5),
 )
 
+/** Лучший результат в режиме игры для пьесы/таба. */
+data class PlayBest(val stars: Int, val accuracy: Int, val speed: Int)
+
 data class RhythmRun(val date: String, val bpm: Int, val accuracy: Int, val meanMs: Int, val stdMs: Int)
 
 data class SavedTab(val title: String, val url: String, val lessonId: String? = null)
@@ -54,6 +57,11 @@ class AppStore(context: Context) {
     var tabs by mutableStateOf(loadTabs())
         private set
     var rhythmRuns by mutableStateOf(loadRhythm())
+        private set
+    /** Опыт за режим игры. */
+    var xp by mutableStateOf(prefs.getInt("xp", 0))
+        private set
+    var playBest by mutableStateOf(loadPlayBest())
         private set
 
     fun updateSettings(transform: (Settings) -> Settings) {
@@ -95,6 +103,27 @@ class AppStore(context: Context) {
         if (bpm <= (bpmRecords[exerciseId] ?: 0)) return
         bpmRecords = bpmRecords + (exerciseId to bpm)
         saveIntMap("bpm_records", bpmRecords)
+    }
+
+    /** Сохраняет итог прохождения; возвращает true, если это новый рекорд. */
+    fun addPlayResult(id: String, stars: Int, accuracy: Int, speed: Int, xpGained: Int): Boolean {
+        xp += xpGained
+        val old = playBest[id]
+        val better = old == null || stars > old.stars ||
+            (stars == old.stars && (speed > old.speed || (speed == old.speed && accuracy > old.accuracy)))
+        if (better) playBest = playBest + (id to PlayBest(stars, accuracy, speed))
+        val o = JSONObject()
+        playBest.forEach { (k, v) -> o.put(k, JSONObject().put("stars", v.stars).put("acc", v.accuracy).put("speed", v.speed)) }
+        prefs.edit().putInt("xp", xp).putString("play_best", o.toString()).apply()
+        return better
+    }
+
+    private fun loadPlayBest(): Map<String, PlayBest> {
+        val o = runCatching { JSONObject(prefs.getString("play_best", "{}")!!) }.getOrNull() ?: return emptyMap()
+        return o.keys().asSequence().associateWith {
+            val v = o.getJSONObject(it)
+            PlayBest(v.optInt("stars"), v.optInt("acc"), v.optInt("speed", 100))
+        }
     }
 
     fun addRhythmRun(run: RhythmRun) {
