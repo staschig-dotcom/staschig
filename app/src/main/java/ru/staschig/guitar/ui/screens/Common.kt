@@ -116,9 +116,12 @@ fun NumberedSteps(items: List<String>, modifier: Modifier = Modifier) {
     }
 }
 
-/** Разбивает описание на короткие пункты по предложениям. */
+/**
+ * Разбивает описание на короткие пункты по предложениям. Режем только там, где новое предложение
+ * начинается с заглавной буквы, цифры или кавычки, — так «см. таб» и «т. е.» не рвутся.
+ */
 fun toInstructions(description: String, max: Int = 5): List<String> =
-    description.split(Regex("(?<=[.!?])\\s+"))
+    description.split(Regex("(?<=[.!?])\\s+(?=[\\p{Lu}\\d«\"])"))
         .map { it.trim() }
         .filter { it.isNotEmpty() }
         .take(max)

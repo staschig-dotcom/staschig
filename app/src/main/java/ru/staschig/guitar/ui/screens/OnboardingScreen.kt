@@ -7,6 +7,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -86,10 +89,10 @@ private fun LevelStep(store: AppStore) {
         Level.INTERMEDIATE to "Играю аккорды и бой, хочу баррэ, перебор и соло",
         Level.ADVANCED to "Уверенно играю, хочу скорость, импровизацию и сложные пьесы",
     )
-    options.forEach { (level, text) ->
+    val card: @Composable (Level, String, Modifier) -> Unit = { level, text, modifier ->
         val selected = store.settings.level == level
         Card(
-            modifier = Modifier.fillMaxWidth().clickable { store.updateSettings { it.copy(level = level) } },
+            modifier = modifier.clickable { store.updateSettings { it.copy(level = level) } },
             border = if (selected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
             colors = CardDefaults.cardColors(
                 containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
@@ -100,6 +103,14 @@ private fun LevelStep(store: AppStore) {
                 Text(text, style = MaterialTheme.typography.bodyMedium)
             }
         }
+    }
+    if (isWide()) {
+        // Лёжа — три карточки в ряд, чтобы все были видны сразу.
+        Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            options.forEach { (level, text) -> card(level, text, Modifier.weight(1f).fillMaxHeight()) }
+        }
+    } else {
+        options.forEach { (level, text) -> card(level, text, Modifier.fillMaxWidth()) }
     }
 }
 

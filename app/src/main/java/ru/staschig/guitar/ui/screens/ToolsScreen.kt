@@ -50,13 +50,13 @@ fun ToolsScreen(onOpen: (String) -> Unit) {
     Column(Modifier.fillMaxSize()) {
         TopAppBar(title = { Text("Инструменты") })
         LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
+            columns = GridCells.Adaptive(minSize = 170.dp), // 2 колонки в портрете, 4 — лёжа
             contentPadding = PaddingValues(16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             items(tools, key = { it.route }) { t ->
-                Card(Modifier.fillMaxWidth().height(132.dp).clickable { onOpen(t.route) }) {
+                Card(Modifier.fillMaxWidth().height(124.dp).clickable { onOpen(t.route) }) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Icon(t.icon, null, Modifier.size(34.dp), tint = MaterialTheme.colorScheme.primary)
                         Text(t.title, style = MaterialTheme.typography.titleMedium)

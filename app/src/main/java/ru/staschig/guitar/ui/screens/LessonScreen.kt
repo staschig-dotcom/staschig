@@ -203,7 +203,7 @@ fun LessonScreen(
             StepProgress(index + 1, total, Modifier.padding(horizontal = 16.dp))
             Text(
                 if (step == null) "Настройте гитару" else "${stepName(step.kind)}: ${step.title}",
-                style = MaterialTheme.typography.titleLarge,
+                style = if (wide) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             )
