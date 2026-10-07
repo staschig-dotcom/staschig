@@ -5,19 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Таб</title>
 <style>
-  :root { --bg: #1b1b1f; --panel: #2c2c33; --fg: #eee; --accent: #f4a261; }
+  :root { --bg: #1b1b1f; --panel: #2c2c33; --panel2: #3a3a44; --fg: #eee; --muted: #c9c5ca; --accent: #f4a261; --ok: #90be6d; }
   * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg);
-    font-family: system-ui, sans-serif; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); font-family: system-ui, sans-serif; }
   body { display: flex; flex-direction: column; }
-  #bar { display: flex; flex-wrap: wrap; gap: 5px; padding: 6px; background: var(--panel); align-items: center; }
-  #bar button, #bar select { background: #3a3a44; color: var(--fg); border: 0; border-radius: 8px;
-    padding: 6px 9px; font-size: 14px; min-height: 36px; }
-  #bar button.on { background: var(--accent); color: #2b1600; }
-  #bar button:disabled { opacity: .4; }
-  #play { min-width: 56px; font-size: 18px !important; }
-  #speedLabel { min-width: 52px; text-align: center; font-variant-numeric: tabular-nums; }
-  #status { padding: 6px 10px; font-size: 13px; color: #c9c5ca; }
+  button, select, input { font: inherit; }
+  .bar { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 8px; background: var(--panel); align-items: center; }
+  .bar button { background: var(--panel2); color: var(--fg); border: 0; border-radius: 10px; padding: 6px 10px; min-height: 40px; font-size: 15px; }
+  .bar button.on { background: var(--accent); color: #2b1600; }
+  .bar button:disabled { opacity: .4; }
+  #play { min-width: 64px; font-size: 20px; background: var(--accent); color: #2b1600; }
+  .speed { display: flex; align-items: center; gap: 2px; }
+  #speedLabel { min-width: 48px; text-align: center; font-variant-numeric: tabular-nums; }
+  #mixerBtn { flex: 1 1 auto; text-align: left; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 260px; }
+  #more { display: none; }
+  #more.open { display: flex; }
+  #status { padding: 4px 10px; font-size: 13px; color: var(--muted); }
   #status.error { color: #e76f51; }
   #viewport { flex: 1; overflow: auto; background: #fff; }
   #at { color: #000; }
@@ -25,25 +28,63 @@
   .at-cursor-beat { background: rgba(231, 111, 81, .85); width: 3px; }
   .at-selection div { background: rgba(142, 202, 230, .35); }
   .at-highlight * { fill: #e76f51; stroke: #e76f51; }
+
+  /* Микшер в стиле Songsterr: выезжающая панель */
+  #mixer { position: fixed; inset: auto 0 0 0; max-height: 80%; overflow: auto; background: var(--panel);
+    border-radius: 16px 16px 0 0; box-shadow: 0 -8px 24px rgba(0,0,0,.5); padding: 12px 14px 18px; transform: translateY(105%);
+    transition: transform .2s ease; z-index: 10; }
+  #mixer.open { transform: none; }
+  #mixer h3 { margin: 4px 0 8px; font-size: 17px; }
+  #mixer .hint { color: var(--muted); font-size: 13px; margin: 0 0 10px; }
+  .presets { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .presets button { background: var(--panel2); color: var(--fg); border: 0; border-radius: 18px; padding: 8px 12px; min-height: 40px; }
+  .presets button.on { background: var(--accent); color: #2b1600; }
+  .track { display: grid; grid-template-columns: 34px 1fr auto auto; grid-template-rows: auto auto; gap: 4px 8px; align-items: center;
+    padding: 8px; border-radius: 12px; background: #24242a; margin-bottom: 8px; }
+  .track.mine { outline: 2px solid var(--accent); }
+  .track .icon { font-size: 22px; grid-row: span 2; text-align: center; }
+  .track .name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .track .name small { display: block; font-weight: 400; color: var(--muted); }
+  .track button { background: var(--panel2); color: var(--fg); border: 0; border-radius: 8px; min-width: 44px; min-height: 36px; }
+  .track button.on { background: var(--accent); color: #2b1600; }
+  .track input[type=range] { grid-column: 2 / span 3; width: 100%; accent-color: var(--accent); }
+  #closeMixer { width: 100%; margin-top: 6px; background: var(--accent); color: #2b1600; border: 0; border-radius: 12px; min-height: 46px; font-size: 16px; }
 </style>
 </head>
 <body>
-<div id="bar">
+<div class="bar">
   <button id="play" disabled title="Играть/пауза">▶</button>
-  <button id="stop" disabled title="Стоп">■</button>
-  <button id="slower" title="Медленнее">−</button>
-  <span id="speedLabel">100%</span>
-  <button id="faster" title="Быстрее">+</button>
-  <button id="metro" title="Метроном">Метроном</button>
-  <button id="countin" title="Отсчёт перед началом">Отсчёт</button>
-  <button id="loop" title="Повтор (выделите такты пальцем)">Повтор</button>
-  <button id="view" title="Табы / ноты + табы">Ноты+Таб</button>
-  <button id="zoomOut" title="Мельче">A−</button>
-  <button id="zoomIn" title="Крупнее">A+</button>
-  <select id="tracks" title="Дорожка"></select>
+  <button id="stop" disabled title="В начало">⏮</button>
+  <span class="speed">
+    <button id="slower" title="Медленнее">−</button>
+    <span id="speedLabel">100%</span>
+    <button id="faster" title="Быстрее">+</button>
+  </span>
+  <button id="mixerBtn" title="Инструмент и сопровождение">🎸 Инструмент</button>
+  <button id="moreBtn" title="Ещё">⋯</button>
+</div>
+<div class="bar" id="more">
+  <button id="metro">Метроном</button>
+  <button id="countin">Отсчёт</button>
+  <button id="loop" title="Выделите такты пальцем и включите повтор">Повтор</button>
+  <button id="view">Ноты+Таб</button>
+  <button id="zoomOut">A−</button>
+  <button id="zoomIn">A+</button>
 </div>
 <div id="status">Загрузка…</div>
 <div id="viewport"><div id="at"></div></div>
+
+<div id="mixer">
+  <h3>Инструмент и сопровождение</h3>
+  <p class="hint">Нажмите на дорожку, чтобы видеть её табы — это «ваша партия». Остальные дорожки звучат как сопровождение.</p>
+  <div class="presets">
+    <button id="presetAll">Все вместе</button>
+    <button id="presetBacking">Сопровождение без меня</button>
+    <button id="presetSolo">Только моя партия</button>
+  </div>
+  <div id="trackList"></div>
+  <button id="closeMixer">Готово</button>
+</div>
 
 <script src="alphaTab.min.js"></script>
 <script>
@@ -73,34 +114,100 @@
   });
   window.__api = api;
 
+  // ---------- Микшер (дорожки) ----------
+  const mix = { mine: 0, mute: [], solo: [], volume: [] };
+  window.__mix = mix;
+
+  function kind(t) {
+    const st = t.staves[0];
+    if (st.isPercussion) return { icon: '🥁', label: 'ударные' };
+    const n = (t.name || '').toLowerCase();
+    const strings = st.tuning ? st.tuning.length : 0;
+    if (n.includes('bass') || n.includes('бас') || (st.isStringed && strings > 0 && strings <= 5 && st.tuning[0] < 50)) return { icon: '🎸', label: 'бас' };
+    if (st.isStringed || strings >= 6) return { icon: '🎸', label: 'гитара' };
+    if (n.includes('vocal') || n.includes('voice') || n.includes('вокал')) return { icon: '🎤', label: 'вокал' };
+    return { icon: '🎹', label: 'инструмент' };
+  }
+
+  function applyMix() {
+    const tr = api.score.tracks;
+    tr.forEach((t, i) => {
+      api.changeTrackMute([t], !!mix.mute[i]);
+      api.changeTrackSolo([t], !!mix.solo[i]);
+      api.changeTrackVolume([t], mix.volume[i] == null ? 1 : mix.volume[i]);
+    });
+    const preset = mix.mute[mix.mine] && tr.length > 1 ? 'presetBacking'
+      : (mix.solo[mix.mine] && tr.length > 1 ? 'presetSolo' : (!mix.mute.some(Boolean) && !mix.solo.some(Boolean) ? 'presetAll' : ''));
+    ['presetAll', 'presetBacking', 'presetSolo'].forEach((id) => $(id).classList.toggle('on', id === preset));
+    renderTrackList();
+    const t = tr[mix.mine];
+    $('mixerBtn').textContent = kind(t).icon + ' ' + (t.name || 'Дорожка ' + (mix.mine + 1)) + (preset === 'presetBacking' ? ' · без меня' : '') + ' ▾';
+  }
+
+  function selectMine(i) {
+    mix.mine = i;
+    api.renderTracks([api.score.tracks[i]]);
+    applyMix();
+  }
+
+  function renderTrackList() {
+    const list = $('trackList');
+    list.innerHTML = '';
+    api.score.tracks.forEach((t, i) => {
+      const k = kind(t);
+      const row = document.createElement('div');
+      row.className = 'track' + (i === mix.mine ? ' mine' : '');
+      row.innerHTML =
+        '<div class="icon">' + k.icon + '</div>' +
+        '<div class="name">' + (t.name || 'Дорожка ' + (i + 1)) + '<small>' + k.label + (i === mix.mine ? ' · ваша партия' : '') + '</small></div>' +
+        '<button class="mute' + (mix.mute[i] ? ' on' : '') + '" title="Заглушить">' + (mix.mute[i] ? '🔇' : '🔊') + '</button>' +
+        '<button class="solo' + (mix.solo[i] ? ' on' : '') + '" title="Только эта дорожка">S</button>' +
+        '<input type="range" min="0" max="2" step="0.1" value="' + (mix.volume[i] == null ? 1 : mix.volume[i]) + '">';
+      row.querySelector('.name').onclick = () => selectMine(i);
+      row.querySelector('.icon').onclick = () => selectMine(i);
+      row.querySelector('.mute').onclick = () => { mix.mute[i] = !mix.mute[i]; applyMix(); };
+      row.querySelector('.solo').onclick = () => { mix.solo[i] = !mix.solo[i]; applyMix(); };
+      row.querySelector('input').oninput = (e) => { mix.volume[i] = +e.target.value; api.changeTrackVolume([t], mix.volume[i]); };
+      list.appendChild(row);
+    });
+  }
+
+  $('presetAll').onclick = () => { mix.mute = []; mix.solo = []; applyMix(); };
+  $('presetBacking').onclick = () => { mix.solo = []; mix.mute = []; mix.mute[mix.mine] = true; applyMix(); };
+  $('presetSolo').onclick = () => { mix.mute = []; mix.solo = []; mix.solo[mix.mine] = true; applyMix(); };
+  $('mixerBtn').onclick = () => $('mixer').classList.add('open');
+  $('closeMixer').onclick = () => $('mixer').classList.remove('open');
+  $('moreBtn').onclick = () => { $('more').classList.toggle('open'); $('moreBtn').classList.toggle('on'); };
+
+  // ---------- Загрузка ----------
   api.error.on((e) => status('Не удалось открыть: ' + (e && e.message ? e.message : e), true));
   api.scoreLoaded.on((score) => {
-    const sel = $('tracks');
-    sel.innerHTML = '';
-    score.tracks.forEach((t, i) => {
-      const o = document.createElement('option');
-      o.value = i; o.textContent = (i + 1) + '. ' + (t.name || 'Дорожка');
-      sel.appendChild(o);
-    });
-    // Предпочитаем первую гитарную дорожку.
-    const guitar = score.tracks.findIndex((t) => t.staves.some((s) => s.isStringed || (s.tuning && s.tuning.length > 0)));
-    if (guitar > 0) { sel.value = guitar; api.renderTracks([score.tracks[guitar]]); }
-    sel.style.display = score.tracks.length > 1 ? '' : 'none';
+    // «Моя партия» по умолчанию — первая гитарная дорожка (или ?track=).
+    const wanted = params.get('track');
+    let mine = wanted != null && score.tracks[+wanted] ? +wanted
+      : score.tracks.findIndex((t) => t.staves.some((s) => !s.isPercussion && (s.isStringed || (s.tuning && s.tuning.length >= 6))));
+    if (mine < 0) mine = 0;
+    mix.mine = mine;
+    if (mine > 0) api.renderTracks([score.tracks[mine]]);
+    $('mixerBtn').style.display = '';
+    applyMix();
+    if (score.tracks.length < 2) {
+      $('presetBacking').disabled = true; $('presetSolo').disabled = true;
+    }
     const title = [score.artist, score.title].filter(Boolean).join(' — ');
-    window.__atTitle = (title || 'Таб') + ' · ' + score.tempo + ' BPM';
+    window.__atTitle = (title || 'Таб') + ' · ' + score.tempo + ' BPM' + (score.tracks.length > 1 ? ' · дорожек: ' + score.tracks.length : '');
     status(window.__atTitle + (api.isReadyForPlayback ? '' : ' · загрузка звука…'));
     window.__atLoaded = true;
   });
   api.renderFinished.on(() => { window.__atRendered = true; });
-
   api.playerReady.on(() => {
     $('play').disabled = false; $('stop').disabled = false;
+    if (api.score) applyMix(); // синтезатор готов — применяем громкости/заглушения
     status(window.__atTitle || 'Готово');
     window.__atPlayerReady = true;
   });
   api.playerStateChanged.on((e) => { $('play').textContent = e.state === 1 ? '❚❚' : '▶'; });
 
-  $('tracks').onchange = (e) => api.renderTracks([api.score.tracks[+e.target.value]]);
   $('play').onclick = () => api.playPause();
   $('stop').onclick = () => api.stop();
 

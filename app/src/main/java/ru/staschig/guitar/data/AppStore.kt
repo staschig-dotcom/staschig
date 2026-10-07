@@ -1,6 +1,7 @@
 package ru.staschig.guitar.data
 
 import android.content.Context
+import android.content.SharedPreferences
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -50,6 +51,9 @@ data class SavedTab(val title: String, val url: String, val lessonId: String? = 
 class AppStore(context: Context) {
     private val prefs = context.getSharedPreferences("guitar_practice", Context.MODE_PRIVATE)
 
+    /** В рендере скриншотов (layoutlib) edit() возвращает null — тогда изменения просто не сохраняются. */
+    private fun editor(): SharedPreferences.Editor = prefs.edit() ?: NoopEditor
+
     /** Офлайн-табы (файлы и тексты). */
     val library = TabLibrary(context)
 
@@ -82,7 +86,7 @@ class AppStore(context: Context) {
     fun updateSettings(transform: (Settings) -> Settings) {
         val s = transform(settings)
         settings = s
-        prefs.edit()
+        editor()
             .putString("level", s.level.name)
             .putInt("daily_minutes", s.dailyMinutes)
             .putInt("days_per_week", s.daysPerWeek)
@@ -100,14 +104,14 @@ class AppStore(context: Context) {
 
     fun finishOnboarding() {
         onboarded = true
-        prefs.edit().putBoolean("onboarded", true).apply()
+        editor().putBoolean("onboarded", true).apply()
     }
 
     fun tunedToday(): Boolean = tunedOn == LocalDate.now().toString()
 
     fun markTuned() {
         tunedOn = LocalDate.now().toString()
-        prefs.edit().putString("tuned_on", tunedOn).apply()
+        editor().putString("tuned_on", tunedOn).apply()
     }
 
     /** Следующий урок: первый непройденный на выбранном уровне, затем — на остальных. */
@@ -147,7 +151,7 @@ class AppStore(context: Context) {
         if (better) playBest = playBest + (id to PlayBest(stars, accuracy, speed))
         val o = JSONObject()
         playBest.forEach { (k, v) -> o.put(k, JSONObject().put("stars", v.stars).put("acc", v.accuracy).put("speed", v.speed)) }
-        prefs.edit().putInt("xp", xp).putString("play_best", o.toString()).apply()
+        editor().putInt("xp", xp).putString("play_best", o.toString()).apply()
         return better
     }
 
@@ -166,7 +170,7 @@ class AppStore(context: Context) {
             arr.put(JSONObject().put("date", it.date).put("bpm", it.bpm).put("acc", it.accuracy)
                 .put("mean", it.meanMs).put("std", it.stdMs))
         }
-        prefs.edit().putString("rhythm_log", arr.toString()).apply()
+        editor().putString("rhythm_log", arr.toString()).apply()
     }
 
     private fun loadRhythm(): List<RhythmRun> {
@@ -246,7 +250,7 @@ class AppStore(context: Context) {
     }
 
     private fun saveMap(key: String, map: Map<String, String>) {
-        prefs.edit().putString(key, JSONObject(map).toString()).apply()
+        editor().putString(key, JSONObject(map).toString()).apply()
     }
 
     private fun loadIntMap(key: String): Map<String, Int> {
@@ -255,7 +259,7 @@ class AppStore(context: Context) {
     }
 
     private fun saveIntMap(key: String, map: Map<String, Int>) {
-        prefs.edit().putString(key, JSONObject(map as Map<*, *>).toString()).apply()
+        editor().putString(key, JSONObject(map as Map<*, *>).toString()).apply()
     }
 
     private fun loadTabs(): List<SavedTab> {
@@ -275,6 +279,19 @@ class AppStore(context: Context) {
         tabs.forEach {
             arr.put(JSONObject().put("title", it.title).put("url", it.url).put("lesson", it.lessonId ?: ""))
         }
-        prefs.edit().putString("tabs", arr.toString()).apply()
+        editor().putString("tabs", arr.toString()).apply()
     }
+}
+
+private object NoopEditor : SharedPreferences.Editor {
+    override fun putString(key: String?, value: String?) = this
+    override fun putStringSet(key: String?, values: MutableSet<String>?) = this
+    override fun putInt(key: String?, value: Int) = this
+    override fun putLong(key: String?, value: Long) = this
+    override fun putFloat(key: String?, value: Float) = this
+    override fun putBoolean(key: String?, value: Boolean) = this
+    override fun remove(key: String?) = this
+    override fun clear() = this
+    override fun commit() = true
+    override fun apply() {}
 }

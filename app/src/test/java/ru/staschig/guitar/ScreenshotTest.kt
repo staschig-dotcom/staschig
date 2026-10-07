@@ -1,10 +1,16 @@
 package ru.staschig.guitar
 
+import androidx.activity.compose.LocalActivityResultRegistryOwner
+import androidx.activity.result.ActivityResultRegistry
+import androidx.activity.result.ActivityResultRegistryOwner
+import androidx.activity.result.contract.ActivityResultContract
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
+import androidx.core.app.ActivityOptionsCompat
 import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
 import com.android.resources.ScreenOrientation
@@ -32,9 +38,23 @@ abstract class ScreensBase(orientation: ScreenOrientation) {
 
     private val store by lazy { AppStore(paparazzi.context) }
 
+    /** В layoutlib нет Activity — даём пустой реестр, чтобы работали запросы разрешений. */
+    private val registryOwner = object : ActivityResultRegistryOwner {
+        override val activityResultRegistry = object : ActivityResultRegistry() {
+            override fun <I, O> onLaunch(
+                requestCode: Int,
+                contract: ActivityResultContract<I, O>,
+                input: I,
+                options: ActivityOptionsCompat?,
+            ) = Unit
+        }
+    }
+
     private fun shot(name: String, content: @Composable () -> Unit) = paparazzi.snapshot(name) {
-        GuitarTheme {
-            Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) { content() }
+        CompositionLocalProvider(LocalActivityResultRegistryOwner provides registryOwner) {
+            GuitarTheme {
+                Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) { content() }
+            }
         }
     }
 
