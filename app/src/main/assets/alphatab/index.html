@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Таб</title>
+<style>
+  :root { --bg: #1b1b1f; --panel: #2c2c33; --fg: #eee; --accent: #f4a261; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg);
+    font-family: system-ui, sans-serif; }
+  body { display: flex; flex-direction: column; }
+  #bar { display: flex; flex-wrap: wrap; gap: 5px; padding: 6px; background: var(--panel); align-items: center; }
+  #bar button, #bar select { background: #3a3a44; color: var(--fg); border: 0; border-radius: 8px;
+    padding: 6px 9px; font-size: 14px; min-height: 36px; }
+  #bar button.on { background: var(--accent); color: #2b1600; }
+  #bar button:disabled { opacity: .4; }
+  #play { min-width: 56px; font-size: 18px !important; }
+  #speedLabel { min-width: 52px; text-align: center; font-variant-numeric: tabular-nums; }
+  #status { padding: 6px 10px; font-size: 13px; color: #c9c5ca; }
+  #status.error { color: #e76f51; }
+  #viewport { flex: 1; overflow: auto; background: #fff; }
+  #at { color: #000; }
+  .at-cursor-bar { background: rgba(244, 162, 97, .18); }
+  .at-cursor-beat { background: rgba(231, 111, 81, .85); width: 3px; }
+  .at-selection div { background: rgba(142, 202, 230, .35); }
+  .at-highlight * { fill: #e76f51; stroke: #e76f51; }
+</style>
+</head>
+<body>
+<div id="bar">
+  <button id="play" disabled title="Играть/пауза">▶</button>
+  <button id="stop" disabled title="Стоп">■</button>
+  <button id="slower" title="Медленнее">−</button>
+  <span id="speedLabel">100%</span>
+  <button id="faster" title="Быстрее">+</button>
+  <button id="metro" title="Метроном">Метроном</button>
+  <button id="countin" title="Отсчёт перед началом">Отсчёт</button>
+  <button id="loop" title="Повтор (выделите такты пальцем)">Повтор</button>
+  <button id="view" title="Табы / ноты + табы">Ноты+Таб</button>
+  <button id="zoomOut" title="Мельче">A−</button>
+  <button id="zoomIn" title="Крупнее">A+</button>
+  <select id="tracks" title="Дорожка"></select>
+</div>
+<div id="status">Загрузка…</div>
+<div id="viewport"><div id="at"></div></div>
+
+<script src="alphaTab.min.js"></script>
+<script>
+(function () {
+  const params = new URLSearchParams(location.search);
+  const $ = (id) => document.getElementById(id);
+  const status = (text, isError) => {
+    $('status').textContent = text;
+    $('status').className = isError ? 'error' : '';
+    window.__atStatus = { text, isError: !!isError };
+  };
+
+  const profiles = ['ScoreTab', 'Tab'];
+  let profileIndex = params.get('view') === 'tab' ? 1 : 0;
+  let scale = parseFloat(params.get('scale') || '0.9');
+
+  const api = new alphaTab.AlphaTabApi($('at'), {
+    core: { fontDirectory: 'font/', useWorkers: true },
+    display: { staveProfile: profiles[profileIndex], scale: scale },
+    player: {
+      playerMode: 'EnabledSynthesizer',
+      soundFont: 'soundfont/sonivox.sf2',
+      scrollElement: $('viewport'),
+      enableCursor: true,
+      enableUserInteraction: true,
+    },
+  });
+  window.__api = api;
+
+  api.error.on((e) => status('Не удалось открыть: ' + (e && e.message ? e.message : e), true));
+  api.scoreLoaded.on((score) => {
+    const sel = $('tracks');
+    sel.innerHTML = '';
+    score.tracks.forEach((t, i) => {
+      const o = document.createElement('option');
+      o.value = i; o.textContent = (i + 1) + '. ' + (t.name || 'Дорожка');
+      sel.appendChild(o);
+    });
+    // Предпочитаем первую гитарную дорожку.
+    const guitar = score.tracks.findIndex((t) => t.staves.some((s) => s.isStringed || (s.tuning && s.tuning.length > 0)));
+    if (guitar > 0) { sel.value = guitar; api.renderTracks([score.tracks[guitar]]); }
+    sel.style.display = score.tracks.length > 1 ? '' : 'none';
+    const title = [score.artist, score.title].filter(Boolean).join(' — ');
+    window.__atTitle = (title || 'Таб') + ' · ' + score.tempo + ' BPM';
+    status(window.__atTitle + (api.isReadyForPlayback ? '' : ' · загрузка звука…'));
+    window.__atLoaded = true;
+  });
+  api.renderFinished.on(() => { window.__atRendered = true; });
+
+  api.playerReady.on(() => {
+    $('play').disabled = false; $('stop').disabled = false;
+    status(window.__atTitle || 'Готово');
+    window.__atPlayerReady = true;
+  });
+  api.playerStateChanged.on((e) => { $('play').textContent = e.state === 1 ? '❚❚' : '▶'; });
+
+  $('tracks').onchange = (e) => api.renderTracks([api.score.tracks[+e.target.value]]);
+  $('play').onclick = () => api.playPause();
+  $('stop').onclick = () => api.stop();
+
+  const speeds = [0.25, 0.4, 0.5, 0.6, 0.7, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5];
+  let speedIndex = speeds.indexOf(1);
+  const applySpeed = () => { api.playbackSpeed = speeds[speedIndex]; $('speedLabel').textContent = Math.round(speeds[speedIndex] * 100) + '%'; };
+  $('slower').onclick = () => { speedIndex = Math.max(0, speedIndex - 1); applySpeed(); };
+  $('faster').onclick = () => { speedIndex = Math.min(speeds.length - 1, speedIndex + 1); applySpeed(); };
+  const initialSpeed = parseFloat(params.get('speed') || '1');
+  speedIndex = speeds.reduce((best, s, i) => Math.abs(s - initialSpeed) < Math.abs(speeds[best] - initialSpeed) ? i : best, 0);
+  applySpeed();
+
+  const toggle = (id, get, set) => { $(id).onclick = () => { set(!get()); $(id).classList.toggle('on', get()); }; };
+  toggle('metro', () => api.metronomeVolume > 0, (v) => api.metronomeVolume = v ? 1 : 0);
+  toggle('countin', () => api.countInVolume > 0, (v) => api.countInVolume = v ? 1 : 0);
+  toggle('loop', () => api.isLooping, (v) => api.isLooping = v);
+
+  const rerender = () => { api.settings.display.staveProfile = profiles[profileIndex]; api.settings.display.scale = scale; api.updateSettings(); api.render(); };
+  $('view').textContent = profileIndex === 0 ? 'Ноты+Таб' : 'Только таб';
+  $('view').onclick = () => { profileIndex = 1 - profileIndex; $('view').textContent = profileIndex === 0 ? 'Ноты+Таб' : 'Только таб'; rerender(); };
+  $('zoomIn').onclick = () => { scale = Math.min(2, scale + 0.15); rerender(); };
+  $('zoomOut').onclick = () => { scale = Math.max(0.5, scale - 0.15); rerender(); };
+
+  // Источник: ?file=<url файла GP/MusicXML> или ?tex=<url alphaTex-файла>.
+  const file = params.get('file');
+  const tex = params.get('tex');
+  const fail = (e) => status('Не удалось загрузить файл: ' + e, true);
+  if (file) {
+    fetch(file).then((r) => { if (!r.ok) throw r.status; return r.arrayBuffer(); })
+      .then((buf) => api.load(new Uint8Array(buf))).catch(fail);
+  } else if (tex) {
+    fetch(tex).then((r) => { if (!r.ok) throw r.status; return r.text(); })
+      .then((t) => api.tex(t)).catch(fail);
+  } else {
+    status('Файл не указан', true);
+  }
+})();
+</script>
+</body>
+</html>

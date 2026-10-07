@@ -2,6 +2,7 @@ package ru.staschig.guitar.audio
 
 import android.media.AudioAttributes
 import android.media.AudioFormat
+import android.media.AudioTimestamp
 import android.media.AudioTrack
 import kotlin.concurrent.thread
 import kotlin.math.PI
@@ -33,6 +34,12 @@ object MetronomeEngine {
     @Volatile var isRunning: Boolean = false
         private set
 
+    /** Щелчок 4 кГц с мягкой огибающей — для ритм-теста (не мешает слышать гитару). */
+    @Volatile var rhythmClick: Boolean = false
+
+    /** Кадры (позиции в аудиопотоке) всех щелчков с момента старта — для ритм-теста. */
+    private val history = ArrayList<Long>()
+
     private var worker: Thread? = null
     private var track: AudioTrack? = null
 
@@ -43,6 +50,8 @@ object MetronomeEngine {
     private val accentClick = click(1760.0, 0.035)
     private val beatClick = click(1175.0, 0.03)
     private val subClick = click(880.0, 0.02, gain = 0.45)
+    private val testClick = RhythmClick.samples(SAMPLE_RATE).map { it * 0.7f }.toFloatArray()
+    private val testAccent = RhythmClick.samples(SAMPLE_RATE)
 
     private fun click(freq: Double, seconds: Double, gain: Double = 1.0): FloatArray {
         val n = (SAMPLE_RATE * seconds).toInt()
@@ -56,6 +65,7 @@ object MetronomeEngine {
         if (isRunning) return
         isRunning = true
         synchronized(ticks) { ticks.clear(); lastHeard = Tick(0, -1, bpm) }
+        synchronized(history) { history.clear() }
         val minBuf = AudioTrack.getMinBufferSize(
             SAMPLE_RATE, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_FLOAT
         )
@@ -120,11 +130,13 @@ object MetronomeEngine {
                     val isBeat = tickIndex % sub == 0
                     val beat = tickIndex / sub
                     currentClick = when {
+                        rhythmClick -> if (isBeat && beat == 0) testAccent else testClick
                         !isBeat -> subClick
                         beat == 0 && accentFirst -> accentClick
                         else -> beatClick
                     }
                     clickPos = 0
+                    synchronized(history) { history.add(nextTick) }
                     if (isBeat) synchronized(ticks) {
                         ticks.addLast(Tick(nextTick, beat, bpm))
                         while (ticks.size > 64) ticks.removeFirst()
@@ -139,6 +151,20 @@ object MetronomeEngine {
             frame += CHUNK
             t.write(buf, 0, CHUNK, AudioTrack.WRITE_BLOCKING)
         }
+    }
+
+    /**
+     * Моменты (System.nanoTime) всех прозвучавших щелчков. Пересчёт из позиции в потоке
+     * делается по AudioTimestamp — это учитывает буферы и задержку вывода звука.
+     */
+    fun clickTimesNanos(): List<Long> {
+        val t = track ?: return emptyList()
+        val frames = synchronized(history) { history.toList() }
+        val ts = AudioTimestamp()
+        val ok = runCatching { t.getTimestamp(ts) }.getOrDefault(false)
+        val (refFrame, refNanos) = if (ok) ts.framePosition to ts.nanoTime
+        else t.playbackHeadPosition.toLong() to System.nanoTime()
+        return frames.map { refNanos + (it - refFrame) * 1_000_000_000L / SAMPLE_RATE }
     }
 
     /**

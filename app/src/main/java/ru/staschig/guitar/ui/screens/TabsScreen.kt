@@ -1,17 +1,29 @@
 package ru.staschig.guitar.ui.screens
 
+import android.net.Uri
+import android.provider.OpenableColumns
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Article
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.PictureAsPdf
+import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -25,37 +37,103 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import ru.staschig.guitar.data.AppStore
 import ru.staschig.guitar.data.SavedTab
+import ru.staschig.guitar.data.TabKind
 import ru.staschig.guitar.lessons.Curriculum
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TabsScreen(store: AppStore, onOpenUrl: (String) -> Unit) {
+fun TabsScreen(
+    store: AppStore,
+    onOpenUrl: (String) -> Unit,
+    onOpenDoc: (String) -> Unit,
+    onOpenPiece: (String) -> Unit,
+    onNewText: () -> Unit,
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var url by rememberSaveable { mutableStateOf("") }
     var title by rememberSaveable { mutableStateOf("") }
+
+    val importer = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            runCatching {
+                val name = context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
+                    ?.use { c -> if (c.moveToFirst()) c.getString(0) else null } ?: "tab"
+                val bytes = withContext(Dispatchers.IO) {
+                    context.contentResolver.openInputStream(uri)!!.use { it.readBytes() }
+                }
+                store.library.importStream(name, bytes.inputStream())
+            }.onSuccess { onOpenDoc(it.id) }
+                .onFailure { Toast.makeText(context, "Не удалось импортировать: ${it.message}", Toast.LENGTH_LONG).show() }
+        }
+    }
 
     Column(Modifier.fillMaxSize()) {
         TopAppBar(title = { Text("Табы") })
         LazyColumn(
             contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             item {
                 Button(onClick = { onOpenUrl(Curriculum.TABS_LIBRARY_URL) }, modifier = Modifier.fillMaxWidth()) {
-                    Text("Открыть библиотеку GuitarMaestro")
+                    Text("Найти таб на GuitarMaestro")
                 }
                 Text(
-                    "В браузере нажмите ★, чтобы сохранить таб сюда, или «Прикрепить», если открыли его из урока.",
+                    "На странице таба нажмите ⬇ — текст таба сохранится в приложение. Файлы Guitar Pro и PDF " +
+                        "скачиваются в приложение автоматически и открываются без интернета.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 8.dp),
+                    modifier = Modifier.padding(top = 6.dp),
                 )
+                Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(onClick = { importer.launch(arrayOf("*/*")) }) { Text("Импорт файла") }
+                    OutlinedButton(onClick = onNewText) { Text("Вставить текст") }
+                }
+            }
+
+            item { Header("Встроенные пьесы — ноты, таб и звук") }
+            items(Curriculum.builtInPieces, key = { "p_" + it.asset }) { p ->
+                Entry(Icons.Filled.QueueMusic, p.title, "${p.artist} · ${p.level.title}") { onOpenPiece(p.asset) }
+            }
+
+            item { Header("Мои табы (офлайн)") }
+            if (store.library.docs.isEmpty()) {
+                item { Text("Пока пусто. Сохраните таб с сайта или импортируйте файл.") }
+            }
+            items(store.library.docs.sortedByDescending { it.created }, key = { "d_" + it.id }) { d ->
+                val icon = when (d.kind) {
+                    TabKind.GP -> Icons.Filled.MusicNote
+                    TabKind.PDF -> Icons.Filled.PictureAsPdf
+                    else -> Icons.Filled.Article
+                }
+                val lesson = d.lessonId?.let { Curriculum.byId(it) }
+                val subtitle = listOfNotNull(
+                    d.kind.title,
+                    d.artist.ifBlank { null },
+                    lesson?.let { "${it.level.title}, урок ${it.number}" },
+                ).joinToString(" · ")
+                Entry(icon, d.title, subtitle, onDelete = { store.library.delete(d) }) { onOpenDoc(d.id) }
+            }
+
+            item { Header("Ссылки") }
+            items(store.tabs, key = { "l_" + it.url + it.lessonId }) { tab ->
+                val lesson = tab.lessonId?.let { Curriculum.byId(it) }
+                Entry(Icons.Filled.Link, tab.title, lesson?.let { "${it.level.title}, урок ${it.number}" } ?: tab.url,
+                    onDelete = { store.removeTab(tab) }) { onOpenUrl(tab.url) }
             }
             item {
                 Card {
@@ -75,25 +153,34 @@ fun TabsScreen(store: AppStore, onOpenUrl: (String) -> Unit) {
                     }
                 }
             }
-            if (store.tabs.isEmpty()) {
-                item { Text("Сохранённых табов пока нет.") }
+        }
+    }
+}
+
+@Composable
+private fun Header(text: String) {
+    Text(text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
+}
+
+@Composable
+private fun Entry(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    onDelete: (() -> Unit)? = null,
+    onClick: () -> Unit,
+) {
+    Card(Modifier.fillMaxWidth().clickable(onClick = onClick)) {
+        Row(Modifier.padding(start = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(icon, null, tint = MaterialTheme.colorScheme.primary)
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f).padding(vertical = 12.dp)) {
+                Text(title, style = MaterialTheme.typography.titleSmall, maxLines = 2)
+                Text(subtitle, style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
             }
-            items(store.tabs, key = { it.url + it.lessonId }) { tab ->
-                Card(Modifier.fillMaxWidth().clickable { onOpenUrl(tab.url) }) {
-                    Row(Modifier.padding(start = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Column(Modifier.weight(1f).padding(vertical = 12.dp)) {
-                            Text(tab.title, style = MaterialTheme.typography.titleSmall, maxLines = 2)
-                            val lesson = tab.lessonId?.let { Curriculum.byId(it) }
-                            if (lesson != null) {
-                                Text("${lesson.level.title} · урок ${lesson.number}",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.secondary)
-                            }
-                        }
-                        IconButton(onClick = { store.removeTab(tab) }) { Icon(Icons.Filled.Delete, "Удалить") }
-                    }
-                }
-            }
+            if (onDelete != null) IconButton(onClick = onDelete) { Icon(Icons.Filled.Delete, "Удалить") }
+            else Spacer(Modifier.width(16.dp))
         }
     }
 }

@@ -105,13 +105,32 @@ fun ProgressScreen(store: AppStore) {
                 }
             }
 
-            if (store.bpmRecords.isNotEmpty()) {
+            val (changes, tempos) = store.bpmRecords.entries.sortedBy { it.key }.partition { it.key.startsWith("changes_") }
+            if (tempos.isNotEmpty()) {
                 Card {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text("Рекорды темпа (сыграно чисто)", fontWeight = FontWeight.Bold)
-                        store.bpmRecords.entries.sortedBy { it.key }.forEach { (id, bpm) ->
-                            Text("${exerciseTitle(id)}: $bpm BPM")
+                        tempos.forEach { (id, bpm) -> Text("${exerciseTitle(id)}: $bpm BPM") }
+                    }
+                }
+            }
+            if (changes.isNotEmpty()) {
+                Card {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("Смены аккордов за минуту", fontWeight = FontWeight.Bold)
+                        changes.forEach { (id, n) ->
+                            Text("${id.removePrefix("changes_").replace("_", " ↔ ")}: $n")
                         }
+                    }
+                }
+            }
+            store.rhythmRuns.lastOrNull()?.let { last ->
+                Card {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("Ритм", fontWeight = FontWeight.Bold)
+                        Text("Последний тест: ${last.accuracy}% точных ударов при ${last.bpm} BPM, смещение ${last.meanMs} мс")
+                        val best = store.rhythmRuns.maxBy { it.accuracy }
+                        Text("Лучший: ${best.accuracy}% (${best.bpm} BPM, ${best.date})")
                     }
                 }
             }

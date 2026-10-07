@@ -17,7 +17,16 @@ data class Settings(
     val focus: Focus = Focus.BALANCED,
     val tuningId: String = "standard",
     val a4: Int = 440,
+    /** Задержка «звук → динамик → микрофон», мс (null — не откалибровано). */
+    val latencyMs: Int? = null,
+    val reminderOn: Boolean = false,
+    val reminderHour: Int = 19,
+    val reminderMinute: Int = 0,
+    /** Дни недели напоминаний: 1 = понедельник … 7 = воскресенье. */
+    val reminderDays: Set<Int> = setOf(1, 2, 3, 4, 5),
 )
+
+data class RhythmRun(val date: String, val bpm: Int, val accuracy: Int, val meanMs: Int, val stdMs: Int)
 
 data class SavedTab(val title: String, val url: String, val lessonId: String? = null)
 
@@ -27,6 +36,9 @@ data class SavedTab(val title: String, val url: String, val lessonId: String? = 
  */
 class AppStore(context: Context) {
     private val prefs = context.getSharedPreferences("guitar_practice", Context.MODE_PRIVATE)
+
+    /** Офлайн-табы (файлы и тексты). */
+    val library = TabLibrary(context)
 
     var settings by mutableStateOf(loadSettings())
         private set
@@ -41,6 +53,8 @@ class AppStore(context: Context) {
         private set
     var tabs by mutableStateOf(loadTabs())
         private set
+    var rhythmRuns by mutableStateOf(loadRhythm())
+        private set
 
     fun updateSettings(transform: (Settings) -> Settings) {
         val s = transform(settings)
@@ -52,6 +66,11 @@ class AppStore(context: Context) {
             .putString("focus", s.focus.name)
             .putString("tuning", s.tuningId)
             .putInt("a4", s.a4)
+            .putInt("latency_ms", s.latencyMs ?: Int.MIN_VALUE)
+            .putBoolean("reminder_on", s.reminderOn)
+            .putInt("reminder_hour", s.reminderHour)
+            .putInt("reminder_minute", s.reminderMinute)
+            .putString("reminder_days", s.reminderDays.sorted().joinToString(","))
             .apply()
     }
 
@@ -76,6 +95,24 @@ class AppStore(context: Context) {
         if (bpm <= (bpmRecords[exerciseId] ?: 0)) return
         bpmRecords = bpmRecords + (exerciseId to bpm)
         saveIntMap("bpm_records", bpmRecords)
+    }
+
+    fun addRhythmRun(run: RhythmRun) {
+        rhythmRuns = (rhythmRuns + run).takeLast(50)
+        val arr = JSONArray()
+        rhythmRuns.forEach {
+            arr.put(JSONObject().put("date", it.date).put("bpm", it.bpm).put("acc", it.accuracy)
+                .put("mean", it.meanMs).put("std", it.stdMs))
+        }
+        prefs.edit().putString("rhythm_log", arr.toString()).apply()
+    }
+
+    private fun loadRhythm(): List<RhythmRun> {
+        val arr = runCatching { JSONArray(prefs.getString("rhythm_log", "[]")!!) }.getOrNull() ?: return emptyList()
+        return (0 until arr.length()).map {
+            val o = arr.getJSONObject(it)
+            RhythmRun(o.optString("date"), o.optInt("bpm"), o.optInt("acc"), o.optInt("mean"), o.optInt("std"))
+        }
     }
 
     fun addTab(tab: SavedTab) {
@@ -131,6 +168,12 @@ class AppStore(context: Context) {
         focus = runCatching { Focus.valueOf(prefs.getString("focus", null)!!) }.getOrDefault(Focus.BALANCED),
         tuningId = prefs.getString("tuning", "standard") ?: "standard",
         a4 = prefs.getInt("a4", 440),
+        latencyMs = prefs.getInt("latency_ms", Int.MIN_VALUE).takeIf { it != Int.MIN_VALUE },
+        reminderOn = prefs.getBoolean("reminder_on", false),
+        reminderHour = prefs.getInt("reminder_hour", 19),
+        reminderMinute = prefs.getInt("reminder_minute", 0),
+        reminderDays = (prefs.getString("reminder_days", "1,2,3,4,5") ?: "")
+            .split(',').mapNotNull { it.trim().toIntOrNull() }.toSet(),
     )
 
     private fun loadMap(key: String): Map<String, String> {

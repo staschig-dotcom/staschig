@@ -13,14 +13,19 @@ object TonePlayer {
     private var track: AudioTrack? = null
 
     fun play(freq: Float, seconds: Float = 2f) {
-        stop()
         val n = (SAMPLE_RATE * seconds).toInt()
-        val data = FloatArray(n) { i ->
+        playSamples(FloatArray(n) { i ->
             val t = i.toDouble() / SAMPLE_RATE
             val env = minOf(1.0, t * 50) * exp(-t * 1.2)
             // основной тон + обертоны, звучит ближе к струне, чем чистый синус
             (env * 0.5 * (sin(2 * PI * freq * t) + 0.5 * sin(4 * PI * freq * t) + 0.25 * sin(6 * PI * freq * t))).toFloat()
-        }
+        })
+    }
+
+    /** Проигрывает готовый звук (моно, 44.1 кГц). */
+    fun playSamples(data: FloatArray) {
+        stop()
+        val n = data.size
         val t = AudioTrack.Builder()
             .setAudioAttributes(
                 AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA)

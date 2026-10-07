@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -48,8 +49,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
+import ru.staschig.guitar.audio.GuitarSynth
 import ru.staschig.guitar.audio.MetronomeEngine
+import ru.staschig.guitar.audio.TonePlayer
 import ru.staschig.guitar.data.AppStore
+import ru.staschig.guitar.lessons.Chord
+import ru.staschig.guitar.lessons.Chords
 import ru.staschig.guitar.lessons.Curriculum
 import ru.staschig.guitar.lessons.Lesson
 import ru.staschig.guitar.lessons.Step
@@ -62,6 +67,8 @@ fun LessonScreen(
     lessonId: String,
     onBack: () -> Unit,
     onOpenUrl: (url: String, lessonId: String?) -> Unit,
+    onOpenPiece: (String) -> Unit,
+    onOpenDoc: (String) -> Unit,
 ) {
     val lesson = Curriculum.byId(lessonId)
     if (lesson == null) {
@@ -156,6 +163,8 @@ fun LessonScreen(
                     active = index == current,
                     onSelect = { goTo(index) },
                     onOpenUrl = onOpenUrl,
+                    onOpenPiece = onOpenPiece,
+                    onOpenDoc = onOpenDoc,
                 )
             }
 
@@ -188,7 +197,11 @@ private fun StepCard(
     active: Boolean,
     onSelect: () -> Unit,
     onOpenUrl: (String, String?) -> Unit,
+    onOpenPiece: (String) -> Unit,
+    onOpenDoc: (String) -> Unit,
 ) {
+    var shownChord by remember { mutableStateOf<Chord?>(null) }
+    val interactive = Curriculum.interactiveTab(step.id)
     Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onSelect),
         border = if (active) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
@@ -206,6 +219,7 @@ private fun StepCard(
                     color = MaterialTheme.colorScheme.secondary)
                 Text(ex.description)
                 ex.tab?.let { TabText(it) }
+                interactive?.let { InteractiveButton { onOpenPiece(it) } }
                 if (ex.bpmStart != null) {
                     BpmControls(store, ex.id, ex.bpmStart, ex.bpmTarget ?: ex.bpmStart)
                 }
@@ -213,18 +227,27 @@ private fun StepCard(
 
             step.song?.let { song ->
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    song.chords.forEach { AssistChip(onClick = {}, label = { Text(it) }) }
+                    song.chords.forEach { name ->
+                        AssistChip(onClick = { shownChord = Chords.byName(name) }, label = { Text(name) })
+                    }
                 }
                 Text("Ритм: ${song.strumming}", style = MaterialTheme.typography.bodyMedium)
                 Text(song.description)
                 song.tab?.let { TabText(it) }
+                interactive?.let { InteractiveButton { onOpenPiece(it) } }
                 song.bpm?.let { BpmControls(store, song.id, (it * 0.7).toInt(), it) }
 
                 Text("Табы для разбора", style = MaterialTheme.typography.titleSmall)
+                val offline = store.library.docs.filter { it.lessonId == lesson.id }
+                offline.forEach { doc ->
+                    FilledTonalButton(onClick = { onOpenDoc(doc.id) }, modifier = Modifier.fillMaxWidth()) {
+                        Text("📥 ${doc.title} (${doc.kind.title})", maxLines = 1)
+                    }
+                }
                 val attached = store.tabs.filter { it.lessonId == lesson.id }
-                if (attached.isEmpty()) {
+                if (attached.isEmpty() && offline.isEmpty()) {
                     Text(
-                        "Найдите таб песни в библиотеке и нажмите «Прикрепить к уроку» — он появится здесь.",
+                        "Найдите таб песни и нажмите ⬇ — он сохранится в приложение и появится здесь (работает без интернета).",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -248,6 +271,21 @@ private fun StepCard(
             }
         }
     }
+    shownChord?.let { c ->
+        AlertDialog(
+            onDismissRequest = { shownChord = null },
+            confirmButton = { TextButton(onClick = { shownChord = null }) { Text("Закрыть") } },
+            dismissButton = {
+                TextButton(onClick = { TonePlayer.playSamples(GuitarSynth.render(c.midi)) }) { Text("🔊 Послушать") }
+            },
+            text = { ChordDiagram(c, Modifier.fillMaxWidth(), width = 160.dp) },
+        )
+    }
+}
+
+@Composable
+private fun InteractiveButton(onClick: () -> Unit) {
+    FilledTonalButton(onClick = onClick) { Text("▶ Ноты, таб и звук") }
 }
 
 @Composable

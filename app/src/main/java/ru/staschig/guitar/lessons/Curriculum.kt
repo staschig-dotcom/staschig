@@ -460,12 +460,11 @@ object Curriculum {
     """.trimIndent()
 
     private val romanceTab = """
-        «Романс» (анонимный, ми минор) — начало
-        e|-7--7--7--|-7--5--3--|-3--2--0--|-0--3--7--|
-        B|---0--0--0|---0--0--0|---0--0--0|---0--0--0|
-        G|----0--0--|----0--0--|----0--0--|----0--0--|
-        E|-0--------|-0--------|-0--------|-0--------|
-        (триоли: мелодия на 1-й струне большим пальцем a, открытые 2-я и 3-я — m, i)
+        «Романс» (анонимный, ми минор) — начало, триоли a-m-i
+        e|-7-----7-----7-----|-7-----5-----3-----|-3-----2-----0-----|-0-----3-----7-----|
+        B|---0-----0-----0---|---0-----0-----0---|---0-----0-----0---|---0-----0-----0---|
+        G|-----0-----0-----0-|-----0-----0-----0-|-----0-----0-----0-|-----0-----0-----0-|
+        E|-0-----------------|-0-----------------|-0-----------------|-0-----------------|
     """.trimIndent()
 
     private val songs: Map<Level, List<Song>> = mapOf(
@@ -639,6 +638,32 @@ object Curriculum {
             )
         }
     }
+
+    /** Интерактивные табы (alphaTex в assets/alphatab/songs) для упражнений и песен уроков. */
+    private val interactive: Map<String, String> = mapOf(
+        "w_stretch" to "ex_spider", "w_spider" to "ex_spider", "w_spider_mid" to "ex_spider",
+        "w_perm" to "ex_permutation", "w_perm_adv" to "ex_permutation",
+        "t_alt" to "ex_c_major", "t_penta" to "ex_penta", "t_travis" to "ex_travis",
+        "t_giuliani" to "ex_giuliani", "t_major" to "ex_g_major_3nps", "t_legato" to "ex_legato",
+        "t_3nps" to "ex_a_minor_3nps", "t_sweep" to "ex_sweep", "t_skip" to "ex_string_skip",
+        "s_ode" to "ode_to_joy", "s_greensleeves" to "greensleeves", "s_greensleeves_adv" to "greensleeves",
+        "s_risingsun" to "rising_sun", "s_romance" to "romance", "s_romance_full" to "romance",
+    )
+
+    fun interactiveTab(id: String): String? = interactive[id]
+
+    data class BuiltInPiece(val asset: String, val title: String, val artist: String, val level: Level)
+
+    /** Встроенный песенник: мелодии в общественном достоянии с нотами, табом и звуком. */
+    val builtInPieces: List<BuiltInPiece> = listOf(
+        BuiltInPiece("ode_to_joy", "Ода к радости", "Л. ван Бетховен", Level.BEGINNER),
+        BuiltInPiece("amazing_grace", "Amazing Grace", "народная", Level.BEGINNER),
+        BuiltInPiece("rising_sun", "House of the Rising Sun — перебор", "народная", Level.BEGINNER),
+        BuiltInPiece("greensleeves", "Greensleeves", "народная", Level.INTERMEDIATE),
+        BuiltInPiece("fur_elise", "К Элизе (начало)", "Л. ван Бетховен", Level.INTERMEDIATE),
+        BuiltInPiece("canon", "Канон ре мажор — перебор", "И. Пахельбель", Level.INTERMEDIATE),
+        BuiltInPiece("romance", "Романс (начало)", "анонимный", Level.INTERMEDIATE),
+    )
 
     fun byLevel(level: Level): List<Lesson> = lessons.filter { it.level == level }
 

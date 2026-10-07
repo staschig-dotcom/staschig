@@ -26,12 +26,19 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import ru.staschig.guitar.data.AppStore
+import ru.staschig.guitar.ui.screens.ChordsScreen
+import ru.staschig.guitar.ui.screens.EarScreen
 import ru.staschig.guitar.ui.screens.LessonScreen
 import ru.staschig.guitar.ui.screens.LessonsScreen
 import ru.staschig.guitar.ui.screens.MetronomeScreen
+import ru.staschig.guitar.ui.screens.PieceScreen
+import ru.staschig.guitar.ui.screens.PracticeScreen
 import ru.staschig.guitar.ui.screens.ProgressScreen
+import ru.staschig.guitar.ui.screens.RhythmScreen
 import ru.staschig.guitar.ui.screens.SettingsScreen
 import ru.staschig.guitar.ui.screens.TabBrowserScreen
+import ru.staschig.guitar.ui.screens.TabDocScreen
+import ru.staschig.guitar.ui.screens.TabEditScreen
 import ru.staschig.guitar.ui.screens.TabsScreen
 import ru.staschig.guitar.ui.screens.TunerScreen
 
@@ -41,7 +48,7 @@ private val tabs = listOf(
     Tab("lessons", "Уроки", Icons.Filled.School),
     Tab("tabs", "Табы", Icons.Filled.LibraryMusic),
     Tab("tuner", "Тюнер", Icons.Filled.GraphicEq),
-    Tab("metronome", "Метроном", Icons.Filled.Timer),
+    Tab("practice", "Практика", Icons.Filled.Timer),
     Tab("progress", "Прогресс", Icons.Filled.QueryStats),
 )
 
@@ -94,10 +101,38 @@ fun GuitarApp(store: AppStore) {
                     lessonId = entry.arguments?.getString("id").orEmpty(),
                     onBack = { nav.popBackStack() },
                     onOpenUrl = { url, lessonId -> nav.openBrowser(url, lessonId) },
+                    onOpenPiece = { nav.navigate("piece/$it") },
+                    onOpenDoc = { nav.navigate("tabdoc/$it") },
                 )
             }
             composable("tabs") {
-                TabsScreen(store = store, onOpenUrl = { nav.openBrowser(it) })
+                TabsScreen(
+                    store = store,
+                    onOpenUrl = { nav.openBrowser(it) },
+                    onOpenDoc = { nav.navigate("tabdoc/$it") },
+                    onOpenPiece = { nav.navigate("piece/$it") },
+                    onNewText = { store.library.draft = null; nav.navigate("tabedit") },
+                )
+            }
+            composable("piece/{asset}") { entry ->
+                PieceScreen(entry.arguments?.getString("asset").orEmpty(), onBack = { nav.popBackStack() })
+            }
+            composable("tabdoc/{id}") { entry ->
+                TabDocScreen(
+                    store = store,
+                    id = entry.arguments?.getString("id").orEmpty(),
+                    onBack = { nav.popBackStack() },
+                    onEdit = { nav.navigate("tabedit?id=$it") },
+                )
+            }
+            composable(
+                "tabedit?id={id}",
+                arguments = listOf(navArgument("id") { type = NavType.StringType; nullable = true; defaultValue = null }),
+            ) { entry ->
+                TabEditScreen(store, entry.arguments?.getString("id")) { savedId ->
+                    nav.popBackStack()
+                    if (savedId != null && entry.arguments?.getString("id") == null) nav.navigate("tabdoc/$savedId")
+                }
             }
             composable(
                 "browser?url={url}&lesson={lesson}",
@@ -111,10 +146,16 @@ fun GuitarApp(store: AppStore) {
                     startUrl = entry.arguments?.getString("url").orEmpty(),
                     lessonId = entry.arguments?.getString("lesson")?.ifEmpty { null },
                     onBack = { nav.popBackStack() },
+                    onOpenDoc = { nav.navigate("tabdoc/$it") },
+                    onEditDraft = { nav.navigate("tabedit") },
                 )
             }
             composable("tuner") { TunerScreen(store) }
+            composable("practice") { PracticeScreen(onOpen = { nav.navigate(it) }) }
             composable("metronome") { MetronomeScreen() }
+            composable("rhythm") { RhythmScreen(store, onBack = { nav.popBackStack() }) }
+            composable("chords") { ChordsScreen(store, onBack = { nav.popBackStack() }) }
+            composable("ear") { EarScreen(onBack = { nav.popBackStack() }) }
             composable("progress") { ProgressScreen(store) }
             composable("settings") { SettingsScreen(store, onBack = { nav.popBackStack() }) }
         }
