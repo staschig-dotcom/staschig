@@ -16,6 +16,17 @@ android {
         versionName = "0.1.0"
     }
 
+    // Постоянный ключ подписи: без него каждая сборка в CI подписывалась бы новым
+    // случайным ключом, и новая версия не ставилась бы поверх старой.
+    signingConfigs {
+        getByName("debug") {
+            storeFile = rootProject.file("keystore/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
