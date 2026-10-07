@@ -26,12 +26,33 @@ jobs:
           chmod +x gradlew
           ./gradlew --no-daemon testDebugUnitTest assembleDebug
           cp app/build/outputs/apk/debug/app-debug.apk GuitarPractice.apk
+          cp kidsgame/build/outputs/apk/debug/kidsgame-debug.apk SovenokUhu.apk
 
       - uses: actions/upload-artifact@v4
         with:
           name: GuitarPractice-apk
           path: GuitarPractice.apk
           if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SovenokUhu-apk
+          path: SovenokUhu.apk
+          if-no-files-found: error
+
+      # Детская игра, постоянная ссылка:
+      # https://github.com/<owner>/<repo>/releases/download/kids-apk-latest/SovenokUhu.apk
+      - name: Publish kids game release
+        if: github.ref_name == 'claude/wizardly-lamport-o0mqtg' || github.ref_name == github.event.repository.default_branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete kids-apk-latest --yes --cleanup-tag || true
+          gh release create kids-apk-latest SovenokUhu.apk \
+            --target "$GITHUB_SHA" \
+            --title "Совёнок Уху — последняя сборка" \
+            --notes "Детская игра. Сборка из коммита ${GITHUB_SHA::7}. Скачайте SovenokUhu.apk и установите на Android." \
+            --latest=false
 
       # Постоянная ссылка для телефона:
       # https://github.com/<owner>/<repo>/releases/latest/download/GuitarPractice.apk

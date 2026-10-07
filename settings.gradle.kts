@@ -14,3 +14,4 @@ dependencyResolutionManagement {
 }
 rootProject.name = "GuitarPractice"
 include(":app")
+include(":kidsgame")

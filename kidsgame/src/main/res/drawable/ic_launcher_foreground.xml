@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Совёнок на фоне звезды. Холст 108dp, видимая зона ~66dp в центре. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#FFD45C"
+        android:pathData="M76,22 L79,30 L87.5,30.5 L81,36 L83.5,44 L76,39.5 L68.5,44 L71,36 L64.5,30.5 L73,30 Z" />
+    <path android:fillColor="#7D4F36" android:pathData="M36,44 L40,28 L49,38 Z" />
+    <path android:fillColor="#7D4F36" android:pathData="M72,44 L68,28 L59,38 Z" />
+    <path android:fillColor="#A2694A"
+        android:pathData="M54,36 C68,36 76,46 76,60 C76,74 66,84 54,84 C42,84 32,74 32,60 C32,46 40,36 54,36 Z" />
+    <path android:fillColor="#ECC99D"
+        android:pathData="M54,60 C62,60 67,66 67,72 C67,79 61,82 54,82 C47,82 41,79 41,72 C41,66 46,60 54,60 Z" />
+    <path android:fillColor="#FFF6E0" android:pathData="M36.5,50 a8.5,8.5 0 1,0 17.0,0 a8.5,8.5 0 1,0 -17.0,0 Z" />
+    <path android:fillColor="#FFF6E0" android:pathData="M54.5,50 a8.5,8.5 0 1,0 17.0,0 a8.5,8.5 0 1,0 -17.0,0 Z" />
+    <path android:fillColor="#2A2140" android:pathData="M41.8,51 a4.2,4.2 0 1,0 8.4,0 a4.2,4.2 0 1,0 -8.4,0 Z" />
+    <path android:fillColor="#2A2140" android:pathData="M57.8,51 a4.2,4.2 0 1,0 8.4,0 a4.2,4.2 0 1,0 -8.4,0 Z" />
+    <path android:fillColor="#F0A91C" android:pathData="M50.5,57 L57.5,57 L54,63 Z" />
+</vector>

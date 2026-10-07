@@ -1,0 +1,7 @@
+<resources>
+    <style name="Theme.Zvezdy" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/sky</item>
+        <item name="android:statusBarColor">@color/sky</item>
+        <item name="android:navigationBarColor">@color/sky</item>
+    </style>
+</resources>
