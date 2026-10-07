@@ -73,12 +73,31 @@ private class ChordListener(onResult: (List<ChordRecognizer.Match>?) -> Unit) {
     fun stop() = mic.stop()
 }
 
-/** «Одноминутные смены» (Justin Guitar) с автоматическим подсчётом смен по микрофону. */
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChordsScreen(store: AppStore, onBack: () -> Unit) {
+    Column(Modifier.fillMaxSize()) {
+        TopAppBar(
+            title = { Text("Смены аккордов") },
+            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Назад") } },
+        )
+        ChordChangesPanel(
+            store, Chords.changePairs,
+            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+        )
+    }
+}
+
+/** «Одноминутные смены» (Justin Guitar) с автоматическим подсчётом смен по микрофону. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun ChordChangesPanel(
+    store: AppStore,
+    pairs: List<Pair<String, String>>,
+    modifier: Modifier = Modifier,
+) {
     val (granted, requestMic) = rememberMicPermission()
-    var pair by remember { mutableStateOf(Chords.changePairs.first()) }
+    var pair by remember(pairs) { mutableStateOf(pairs.first()) }
     var heard by remember { mutableStateOf<String?>(null) }
     var running by remember { mutableStateOf(false) }
     var secondsLeft by remember { mutableIntStateOf(60) }
@@ -134,71 +153,65 @@ fun ChordsScreen(store: AppStore, onBack: () -> Unit) {
         store.addPracticeMinutes(1)
     }
 
-    Column(Modifier.fillMaxSize()) {
-        TopAppBar(
-            title = { Text("Смены аккордов") },
-            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Назад") } },
+    Column(
+        modifier,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(
+            "Метод Justin Guitar: за минуту меняйте два аккорда как можно больше раз. Приложение считает " +
+                "смены по звуку; если пропустило — нажмите «+1». Записывайте рекорд и повторяйте каждый день.",
+            style = MaterialTheme.typography.bodyMedium,
         )
-        Column(
-            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Text(
-                "Метод Justin Guitar: за минуту меняйте два аккорда как можно больше раз. Приложение считает " +
-                    "смены по звуку; если пропустило — нажмите «+1». Записывайте рекорд и повторяйте каждый день.",
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Chords.changePairs.forEach { p ->
-                    FilterChip(pair == p, { if (!running) { pair = p; changes = 0 } }, { Text("${p.first}↔${p.second}") })
-                }
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            if (pairs.size > 1) pairs.forEach { p ->
+                FilterChip(pair == p, { if (!running) { pair = p; changes = 0 } }, { Text("${p.first}↔${p.second}") })
             }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                ChordDiagram(a)
-                ChordDiagram(b)
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = { TonePlayer.playSamples(GuitarSynth.render(a.midi)) }) { Text("🔊 ${a.name}") }
-                OutlinedButton(onClick = { TonePlayer.playSamples(GuitarSynth.render(b.midi)) }) { Text("🔊 ${b.name}") }
-            }
-
-            if (!granted) {
-                Button(onClick = requestMic) { Text("Разрешить микрофон для автоподсчёта") }
-            } else {
-                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-                    Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text("Слышу:", Modifier.padding(end = 12.dp))
-                        Text(
-                            heard ?: "—",
-                            fontSize = 32.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (heard == a.name || heard == b.name) InTune else MaterialTheme.colorScheme.onSurface,
-                        )
-                    }
-                }
-            }
-
-            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
-                Column(Modifier.fillMaxWidth().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("$changes", fontSize = 64.sp, fontWeight = FontWeight.Bold)
-                    Text(if (running) "смен · осталось $secondsLeft с" else "смен" + (best?.let { " · рекорд $it" } ?: ""))
-                }
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(
-                    onClick = {
-                        if (running) running = false
-                        else { changes = 0; tracker.confirmed = null; running = true }
-                    },
-                    modifier = Modifier.weight(1f).height(52.dp),
-                ) { Text(if (running) "Стоп" else "Старт: 1 минута") }
-                OutlinedButton(onClick = { changes++ }, modifier = Modifier.height(52.dp)) { Text("+1") }
-            }
-            Text(
-                "Распознавание по микрофону приблизительное: лучше всего работает в тишине и при чётком ударе по всем струнам.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
         }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+            ChordDiagram(a)
+            ChordDiagram(b)
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(onClick = { TonePlayer.playSamples(GuitarSynth.render(a.midi)) }) { Text("🔊 ${a.name}") }
+            OutlinedButton(onClick = { TonePlayer.playSamples(GuitarSynth.render(b.midi)) }) { Text("🔊 ${b.name}") }
+        }
+
+        if (!granted) {
+            Button(onClick = requestMic) { Text("Разрешить микрофон для автоподсчёта") }
+        } else {
+            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("Слышу:", Modifier.padding(end = 12.dp))
+                    Text(
+                        heard ?: "—",
+                        fontSize = 32.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (heard == a.name || heard == b.name) InTune else MaterialTheme.colorScheme.onSurface,
+                    )
+                }
+            }
+        }
+
+        Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
+            Column(Modifier.fillMaxWidth().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("$changes", fontSize = 64.sp, fontWeight = FontWeight.Bold)
+                Text(if (running) "смен · осталось $secondsLeft с" else "смен" + (best?.let { " · рекорд $it" } ?: ""))
+            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(
+                onClick = {
+                    if (running) running = false
+                    else { changes = 0; tracker.confirmed = null; running = true }
+                },
+                modifier = Modifier.weight(1f).height(52.dp),
+            ) { Text(if (running) "Стоп" else "Старт: 1 минута") }
+            OutlinedButton(onClick = { changes++ }, modifier = Modifier.height(52.dp)) { Text("+1") }
+        }
+        Text(
+            "Распознавание по микрофону приблизительное: лучше всего работает в тишине и при чётком ударе по всем струнам.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }

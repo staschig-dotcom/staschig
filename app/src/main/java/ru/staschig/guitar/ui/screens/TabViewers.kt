@@ -77,20 +77,36 @@ import java.io.File
 
 private const val ASSET_HOST = "https://appassets.androidplatform.net"
 
+/** Ноты + таб + воспроизведение через alphaTab на весь экран. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AlphaTabScreen(title: String, query: String, onBack: () -> Unit, actions: @Composable () -> Unit = {}) {
+    val view = LocalView.current
+    DisposableEffect(Unit) {
+        view.keepScreenOn = true
+        onDispose { view.keepScreenOn = false }
+    }
+    Column(Modifier.fillMaxSize()) {
+        TopAppBar(
+            title = { Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Назад") } },
+            actions = { actions() },
+        )
+        AlphaTabView(query, Modifier.fillMaxSize())
+    }
+}
+
 /**
  * Ноты + таб + воспроизведение через alphaTab (assets/alphatab), полностью офлайн.
  * [query] — параметры страницы: "tex=songs/x.alphatex" или "file=/tabfiles/имя".
  */
 @SuppressLint("SetJavaScriptEnabled")
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AlphaTabScreen(title: String, query: String, onBack: () -> Unit, actions: @Composable () -> Unit = {}) {
+fun AlphaTabView(query: String, modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    val view = LocalView.current
     DisposableEffect(Unit) {
-        view.keepScreenOn = true
-        MetronomeEngine.stop()
-        onDispose { view.keepScreenOn = false }
+        MetronomeEngine.stop() // у alphaTab свой метроном, синхронный с нотами
+        onDispose { }
     }
     val loader = remember {
         WebViewAssetLoader.Builder()
@@ -101,30 +117,52 @@ fun AlphaTabScreen(title: String, query: String, onBack: () -> Unit, actions: @C
     }
     var webView by remember { mutableStateOf<WebView?>(null) }
     DisposableEffect(Unit) { onDispose { webView?.destroy() } }
-
-    Column(Modifier.fillMaxSize()) {
-        TopAppBar(
-            title = { Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Назад") } },
-            actions = { actions() },
-        )
-        AndroidView(
-            modifier = Modifier.fillMaxSize(),
-            factory = { ctx ->
-                WebView(ctx).apply {
-                    settings.javaScriptEnabled = true
-                    settings.domStorageEnabled = true
-                    settings.mediaPlaybackRequiresUserGesture = false
-                    settings.allowFileAccess = false
-                    webViewClient = object : WebViewClient() {
-                        override fun shouldInterceptRequest(v: WebView, request: WebResourceRequest): WebResourceResponse? =
-                            loader.shouldInterceptRequest(request.url)
-                    }
-                    loadUrl("$ASSET_HOST/assets/alphatab/index.html?$query")
-                    webView = this
+    val loadedQuery = remember { arrayOf(query) } // без состояния: смена не должна вызывать перерисовку
+    AndroidView(
+        modifier = modifier,
+        factory = { ctx ->
+            WebView(ctx).apply {
+                settings.javaScriptEnabled = true
+                settings.domStorageEnabled = true
+                settings.mediaPlaybackRequiresUserGesture = false
+                settings.allowFileAccess = false
+                webViewClient = object : WebViewClient() {
+                    override fun shouldInterceptRequest(v: WebView, request: WebResourceRequest): WebResourceResponse? =
+                        loader.shouldInterceptRequest(request.url)
                 }
-            },
-        )
+                loadUrl("$ASSET_HOST/assets/alphatab/index.html?$query")
+                webView = this
+            }
+        },
+        update = { w ->
+            if (loadedQuery[0] != query) {
+                loadedQuery[0] = query
+                w.loadUrl("$ASSET_HOST/assets/alphatab/index.html?$query")
+            }
+        },
+    )
+}
+
+/** Параметры страницы alphaTab для встроенной пьесы и для сохранённого файла. */
+fun pieceQuery(asset: String) = "tex=songs/${Uri.encode(asset)}.alphatex"
+fun docQuery(doc: TabDoc) = "file=/tabfiles/${Uri.encode(doc.fileName ?: "")}"
+
+/**
+ * Содержимое сохранённого таба без своей шапки — для встраивания в урок.
+ * Для неподдерживаемых форматов показывает кнопку «открыть во внешнем приложении».
+ */
+@Composable
+fun DocContent(store: AppStore, doc: TabDoc, modifier: Modifier = Modifier) {
+    when (doc.kind) {
+        TabKind.GP -> AlphaTabView(docQuery(doc), modifier)
+        TabKind.PDF -> PdfPages(store, doc, modifier)
+        TabKind.TEXT -> TextTabContent(doc, modifier)
+        TabKind.OTHER -> {
+            val context = LocalContext.current
+            Column(modifier.padding(16.dp)) {
+                OutlinedButton(onClick = { openExternally(context, store, doc) }) { Text("Открыть «${doc.title}»") }
+            }
+        }
     }
 }
 
@@ -132,7 +170,7 @@ fun AlphaTabScreen(title: String, query: String, onBack: () -> Unit, actions: @C
 @Composable
 fun PieceScreen(asset: String, onBack: () -> Unit) {
     val title = Curriculum.builtInPieces.firstOrNull { it.asset == asset }?.title ?: "Интерактивный таб"
-    AlphaTabScreen(title, "tex=songs/${Uri.encode(asset)}.alphatex", onBack)
+    AlphaTabScreen(title, pieceQuery(asset), onBack)
 }
 
 /** Открывает сохранённый таб нужным просмотрщиком. */
@@ -149,7 +187,7 @@ fun TabDocScreen(store: AppStore, id: String, onBack: () -> Unit, onEdit: (Strin
         IconButton(onClick = { lib.delete(doc); onBack() }) { Icon(Icons.Filled.Delete, "Удалить") }
     }
     when (doc.kind) {
-        TabKind.GP -> AlphaTabScreen(doc.title, "file=/tabfiles/${Uri.encode(doc.fileName ?: "")}", onBack) {
+        TabKind.GP -> AlphaTabScreen(doc.title, docQuery(doc), onBack) {
             OpenExternallyButton(store, doc); delete()
         }
         TabKind.PDF -> PdfScreen(store, doc, onBack) { OpenExternallyButton(store, doc); delete() }
@@ -200,6 +238,11 @@ private fun SimpleBack(title: String, onBack: () -> Unit, actions: @Composable (
 /** PDF-таб: страницы рендерятся системным PdfRenderer. */
 @Composable
 private fun PdfScreen(store: AppStore, doc: TabDoc, onBack: () -> Unit, actions: @Composable () -> Unit) {
+    SimpleBack(doc.title, onBack, actions) { PdfPages(store, doc, Modifier.fillMaxSize()) }
+}
+
+@Composable
+fun PdfPages(store: AppStore, doc: TabDoc, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val view = LocalView.current
     DisposableEffect(Unit) { view.keepScreenOn = true; onDispose { view.keepScreenOn = false } }
@@ -225,14 +268,12 @@ private fun PdfScreen(store: AppStore, doc: TabDoc, onBack: () -> Unit, actions:
             }.getOrDefault(emptyList())
         }
     }
-    SimpleBack(doc.title, onBack, actions) {
-        when {
-            pages == null -> Text("Открываю…", Modifier.padding(16.dp))
-            pages!!.isEmpty() -> Text("Не удалось открыть PDF", Modifier.padding(16.dp))
-            else -> LazyColumn(Modifier.fillMaxSize().background(Color.White)) {
-                items(pages!!) { bmp ->
-                    Image(bmp.asImageBitmap(), null, Modifier.fillMaxWidth(), contentScale = ContentScale.FillWidth)
-                }
+    when {
+        pages == null -> Text("Открываю…", modifier.padding(16.dp))
+        pages!!.isEmpty() -> Text("Не удалось открыть PDF", modifier.padding(16.dp))
+        else -> LazyColumn(modifier.background(Color.White)) {
+            items(pages!!) { bmp ->
+                Image(bmp.asImageBitmap(), null, Modifier.fillMaxWidth(), contentScale = ContentScale.FillWidth)
             }
         }
     }
@@ -241,6 +282,11 @@ private fun PdfScreen(store: AppStore, doc: TabDoc, onBack: () -> Unit, actions:
 /** Текстовый таб: моноширинный шрифт, масштаб, автопрокрутка. */
 @Composable
 private fun TextTabScreen(doc: TabDoc, onBack: () -> Unit, actions: @Composable () -> Unit) {
+    SimpleBack(doc.title, onBack, actions) { TextTabContent(doc, Modifier.fillMaxSize()) }
+}
+
+@Composable
+fun TextTabContent(doc: TabDoc, modifier: Modifier = Modifier) {
     val view = LocalView.current
     DisposableEffect(Unit) { view.keepScreenOn = true; onDispose { view.keepScreenOn = false } }
     var fontSize by rememberSaveable { mutableFloatStateOf(13f) }
@@ -262,33 +308,31 @@ private fun TextTabScreen(doc: TabDoc, onBack: () -> Unit, actions: @Composable 
         }
     }
 
-    SimpleBack(doc.title, onBack, actions) {
-        Column(Modifier.fillMaxSize()) {
-            Row(
-                Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                OutlinedButton(onClick = { fontSize = (fontSize - 1).coerceAtLeast(8f) }) { Text("A−") }
-                OutlinedButton(onClick = { fontSize = (fontSize + 1).coerceAtMost(24f) }) { Text("A+") }
-                FilterChip(autoScroll, { autoScroll = !autoScroll }, { Text("Прокрутка") })
-            }
-            if (autoScroll) {
-                Slider(speed, { speed = it }, valueRange = 5f..120f, modifier = Modifier.padding(horizontal = 16.dp))
-            }
-            Text(
-                doc.text.orEmpty(),
-                fontFamily = FontFamily.Monospace,
-                fontSize = fontSize.sp,
-                lineHeight = (fontSize * 1.3f).sp,
-                softWrap = false,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(vScroll)
-                    .horizontalScroll(rememberScrollState())
-                    .padding(12.dp),
-            )
+    Column(modifier) {
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            OutlinedButton(onClick = { fontSize = (fontSize - 1).coerceAtLeast(8f) }) { Text("A−") }
+            OutlinedButton(onClick = { fontSize = (fontSize + 1).coerceAtMost(24f) }) { Text("A+") }
+            FilterChip(autoScroll, { autoScroll = !autoScroll }, { Text("Прокрутка") })
         }
+        if (autoScroll) {
+            Slider(speed, { speed = it }, valueRange = 5f..120f, modifier = Modifier.padding(horizontal = 16.dp))
+        }
+        Text(
+            doc.text.orEmpty(),
+            fontFamily = FontFamily.Monospace,
+            fontSize = fontSize.sp,
+            lineHeight = (fontSize * 1.3f).sp,
+            softWrap = false,
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(vScroll)
+                .horizontalScroll(rememberScrollState())
+                .padding(12.dp),
+        )
     }
 }
 

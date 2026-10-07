@@ -44,6 +44,14 @@ data class Song(
     val bpm: Int? = null,
 )
 
+/** Инструмент, который открывается на шаге урока. */
+sealed interface StepTool {
+    data class Metronome(val bpmStart: Int, val bpmTarget: Int) : StepTool
+    data class ChordChanges(val pairs: List<Pair<String, String>>) : StepTool
+    data object Tuner : StepTool
+    data object SongTabs : StepTool
+}
+
 data class Step(
     val kind: StepKind,
     val minutes: Int,
@@ -52,6 +60,8 @@ data class Step(
 ) {
     val title: String get() = exercise?.title ?: song?.let { "${it.artist} — ${it.title}" } ?: ""
     val id: String get() = exercise?.id ?: song?.id ?: ""
+
+    val tool: StepTool get() = Curriculum.toolFor(this)
 }
 
 data class Lesson(
@@ -651,6 +661,26 @@ object Curriculum {
     )
 
     fun interactiveTab(id: String): String? = interactive[id]
+
+    /** Упражнения на аккорды → тренажёр смен с нужными парами. */
+    private val chordDrills: Map<String, List<Pair<String, String>>> = mapOf(
+        "t_ade" to listOf("A" to "D", "D" to "E", "A" to "E"),
+        "t_emcg" to listOf("Am" to "C", "Em" to "G", "C" to "G"),
+        "t_fmaj7" to listOf("C" to "Fmaj7", "C" to "F"),
+        "t_barre" to listOf("F" to "G", "D" to "Bm", "Am" to "F"),
+    )
+
+    /** Посадка (сначала настроить гитару) и бенды (проверять высоту подтяжки) → тюнер. */
+    private val tunerSteps = setOf("t_posture", "t_bend")
+
+    fun toolFor(step: Step): StepTool {
+        if (step.song != null) return StepTool.SongTabs
+        val ex = step.exercise ?: return StepTool.Metronome(60, 60)
+        chordDrills[ex.id]?.let { return StepTool.ChordChanges(it) }
+        if (ex.id in tunerSteps) return StepTool.Tuner
+        val start = ex.bpmStart ?: 60
+        return StepTool.Metronome(start, ex.bpmTarget ?: start)
+    }
 
     data class BuiltInPiece(val asset: String, val title: String, val artist: String, val level: Level)
 

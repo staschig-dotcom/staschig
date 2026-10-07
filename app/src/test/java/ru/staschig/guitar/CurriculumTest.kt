@@ -7,6 +7,8 @@ import ru.staschig.guitar.lessons.Curriculum
 import ru.staschig.guitar.lessons.Focus
 import ru.staschig.guitar.lessons.Level
 import ru.staschig.guitar.lessons.StepKind
+import ru.staschig.guitar.lessons.StepTool
+import ru.staschig.guitar.lessons.Chords
 
 class CurriculumTest {
     @Test
@@ -36,5 +38,27 @@ class CurriculumTest {
                 assertTrue("$focus $minutes -> $total", kotlin.math.abs(total - minutes) <= 1)
             }
         }
+    }
+}
+
+class StepToolTest {
+    @Test
+    fun songsOpenTabsAndChordDrillsUseKnownChords() {
+        Curriculum.lessons.forEach { lesson ->
+            val steps = lesson.steps(20, Focus.BALANCED)
+            assertEquals(StepTool.SongTabs, steps.last().tool)
+            steps.map { it.tool }.filterIsInstance<StepTool.ChordChanges>().forEach { t ->
+                t.pairs.forEach { (a, b) ->
+                    assertTrue(a, Chords.recognizable.any { it.name == a })
+                    assertTrue(b, Chords.recognizable.any { it.name == b })
+                }
+            }
+        }
+    }
+
+    @Test
+    fun rhythmExercisesOpenMetronomeAtTheirTempo() {
+        val strum = Curriculum.lessons.first { it.technique.id == "t_strum" }.steps(20, Focus.BALANCED)[1]
+        assertEquals(StepTool.Metronome(60, 90), strum.tool)
     }
 }
