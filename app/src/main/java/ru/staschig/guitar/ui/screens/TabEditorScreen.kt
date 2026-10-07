@@ -187,7 +187,7 @@ fun TabEditorScreen(store: AppStore, docId: String?, onBack: () -> Unit, onOpenD
                     ) { Text("$f", fontWeight = FontWeight.Bold) }
                 }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 OutlinedButton(onClick = { if (sel > 0) sel-- }) { Text("◀ Назад") }
                 Button(onClick = { next() }) { Text("Следующий удар ▶") }
                 OutlinedButton(onClick = { setBeat(b.withoutNote(string)) }) { Text("Стереть ноту") }
@@ -312,7 +312,7 @@ private fun TabStrip(
             Modifier.width(totalWidth).fillMaxHeight().pointerInput(score.beats.size, xs.contentHashCode()) {
                 detectTapGestures { p ->
                     val top = 26.dp.toPx()
-                    val gap = (size.height - top - 18.dp.toPx()) / 5
+                    val gap = (size.height - top - 34.dp.toPx()) / 5
                     val s = ((p.y - top) / gap).let { Math.round(it) }.coerceIn(0, 5) + 1
                     val idx = xs.indices.minByOrNull { kotlin.math.abs(xs[it] + colPx / 2 - p.x) } ?: 0
                     onSelect(idx, s)
@@ -320,7 +320,7 @@ private fun TabStrip(
             },
         ) {
             val top = 26.dp.toPx()
-            val gap = (size.height - top - 18.dp.toPx()) / 5
+            val gap = (size.height - top - 34.dp.toPx()) / 5
             fun y(s: Int) = top + (s - 1) * gap
             // курсор
             if (selected in xs.indices) {
@@ -354,7 +354,7 @@ private fun TabStrip(
                     drawText(t, topLeft = Offset(cx - t.size.width / 2f, y(n.string) - t.size.height / 2f))
                 }
                 val d = measurer.measure(durationMark(b), smallStyle)
-                drawText(d, topLeft = Offset(cx - d.size.width / 2f, y(6) + 4f))
+                drawText(d, topLeft = Offset(cx - d.size.width / 2f, y(6) + 14.dp.toPx()))
             }
         }
     }

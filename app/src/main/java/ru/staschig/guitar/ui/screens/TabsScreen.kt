@@ -150,7 +150,7 @@ fun TabsScreen(
                 }
                 val lesson = d.lessonId?.let { Curriculum.byId(it) }
                 val subtitle = listOfNotNull(
-                    d.kind.title,
+                    if (store.library.isEditable(d)) "мой таб (редактор)" else d.kind.title,
                     d.artist.ifBlank { null },
                     lesson?.let { "${it.level.title}, урок ${it.number}" },
                 ).joinToString(" · ")
