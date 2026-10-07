@@ -54,6 +54,11 @@ class AppStore(context: Context) {
     /** В рендере скриншотов (layoutlib) edit() возвращает null — тогда изменения просто не сохраняются. */
     private fun editor(): SharedPreferences.Editor = prefs.edit() ?: NoopEditor
 
+    /** Запись настроек; в layoutlib методы редактора возвращают null — там запись пропускается. */
+    private inline fun save(block: () -> Unit) {
+        runCatching(block)
+    }
+
     /** Офлайн-табы (файлы и тексты). */
     val library = TabLibrary(context)
 
@@ -86,32 +91,38 @@ class AppStore(context: Context) {
     fun updateSettings(transform: (Settings) -> Settings) {
         val s = transform(settings)
         settings = s
-        editor()
-            .putString("level", s.level.name)
-            .putInt("daily_minutes", s.dailyMinutes)
-            .putInt("days_per_week", s.daysPerWeek)
-            .putString("focus", s.focus.name)
-            .putString("tuning", s.tuningId)
-            .putInt("a4", s.a4)
-            .putInt("latency_ms", s.latencyMs ?: Int.MIN_VALUE)
-            .putBoolean("reminder_on", s.reminderOn)
-            .putInt("reminder_hour", s.reminderHour)
-            .putInt("reminder_minute", s.reminderMinute)
-            .putString("reminder_days", s.reminderDays.sorted().joinToString(","))
-            .putString("screen_mode", s.screenMode.name)
-            .apply()
+        save {
+            editor()
+                .putString("level", s.level.name)
+                .putInt("daily_minutes", s.dailyMinutes)
+                .putInt("days_per_week", s.daysPerWeek)
+                .putString("focus", s.focus.name)
+                .putString("tuning", s.tuningId)
+                .putInt("a4", s.a4)
+                .putInt("latency_ms", s.latencyMs ?: Int.MIN_VALUE)
+                .putBoolean("reminder_on", s.reminderOn)
+                .putInt("reminder_hour", s.reminderHour)
+                .putInt("reminder_minute", s.reminderMinute)
+                .putString("reminder_days", s.reminderDays.sorted().joinToString(","))
+                .putString("screen_mode", s.screenMode.name)
+                .apply()
+        }
     }
 
     fun finishOnboarding() {
         onboarded = true
-        editor().putBoolean("onboarded", true).apply()
+        save {
+            editor().putBoolean("onboarded", true).apply()
+        }
     }
 
     fun tunedToday(): Boolean = tunedOn == LocalDate.now().toString()
 
     fun markTuned() {
         tunedOn = LocalDate.now().toString()
-        editor().putString("tuned_on", tunedOn).apply()
+        save {
+            editor().putString("tuned_on", tunedOn).apply()
+        }
     }
 
     /** Следующий урок: первый непройденный на выбранном уровне, затем — на остальных. */
@@ -151,7 +162,9 @@ class AppStore(context: Context) {
         if (better) playBest = playBest + (id to PlayBest(stars, accuracy, speed))
         val o = JSONObject()
         playBest.forEach { (k, v) -> o.put(k, JSONObject().put("stars", v.stars).put("acc", v.accuracy).put("speed", v.speed)) }
-        editor().putInt("xp", xp).putString("play_best", o.toString()).apply()
+        save {
+            editor().putInt("xp", xp).putString("play_best", o.toString()).apply()
+        }
         return better
     }
 
@@ -170,7 +183,9 @@ class AppStore(context: Context) {
             arr.put(JSONObject().put("date", it.date).put("bpm", it.bpm).put("acc", it.accuracy)
                 .put("mean", it.meanMs).put("std", it.stdMs))
         }
-        editor().putString("rhythm_log", arr.toString()).apply()
+        save {
+            editor().putString("rhythm_log", arr.toString()).apply()
+        }
     }
 
     private fun loadRhythm(): List<RhythmRun> {
@@ -250,7 +265,9 @@ class AppStore(context: Context) {
     }
 
     private fun saveMap(key: String, map: Map<String, String>) {
-        editor().putString(key, JSONObject(map).toString()).apply()
+        save {
+            editor().putString(key, JSONObject(map).toString()).apply()
+        }
     }
 
     private fun loadIntMap(key: String): Map<String, Int> {
@@ -259,7 +276,9 @@ class AppStore(context: Context) {
     }
 
     private fun saveIntMap(key: String, map: Map<String, Int>) {
-        editor().putString(key, JSONObject(map as Map<*, *>).toString()).apply()
+        save {
+            editor().putString(key, JSONObject(map as Map<*, *>).toString()).apply()
+        }
     }
 
     private fun loadTabs(): List<SavedTab> {
@@ -279,7 +298,9 @@ class AppStore(context: Context) {
         tabs.forEach {
             arr.put(JSONObject().put("title", it.title).put("url", it.url).put("lesson", it.lessonId ?: ""))
         }
-        editor().putString("tabs", arr.toString()).apply()
+        save {
+            editor().putString("tabs", arr.toString()).apply()
+        }
     }
 }
 
