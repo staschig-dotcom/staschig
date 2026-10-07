@@ -17,10 +17,17 @@ import com.android.resources.ScreenOrientation
 import org.junit.Rule
 import org.junit.Test
 import ru.staschig.guitar.data.AppStore
+import ru.staschig.guitar.tabedit.EdBeat
+import ru.staschig.guitar.tabedit.EdNote
+import ru.staschig.guitar.tabedit.EdScore
+import ru.staschig.guitar.tabedit.NoteEffect
+import ru.staschig.guitar.ui.screens.BackingScreen
 import ru.staschig.guitar.ui.screens.CourseScreen
 import ru.staschig.guitar.ui.screens.LessonScreen
 import ru.staschig.guitar.ui.screens.OnboardingScreen
 import ru.staschig.guitar.ui.screens.ProgressScreen
+import ru.staschig.guitar.ui.screens.TabEditorScreen
+import ru.staschig.guitar.ui.screens.TabsScreen
 import ru.staschig.guitar.ui.screens.TodayScreen
 import ru.staschig.guitar.ui.screens.ToolsScreen
 import ru.staschig.guitar.ui.theme.GuitarTheme
@@ -84,6 +91,34 @@ abstract class ScreensBase(orientation: ScreenOrientation) {
 
     @Test
     fun progress() = shot("progress") { ProgressScreen(store) }
+
+    @Test
+    fun tabsAdd() = shot("tabs") { TabsScreen(store, {}, {}, {}, {}, {}) }
+
+    @Test
+    fun tabEditor() = shot("tab_editor") {
+        // Заполненный таб: открываем редактор с моделью из библиотеки.
+        val doc = store.library.saveEdited(
+            null, "Мой риф", "Я", sampleScore().toAlphaTex(), sampleScore().toJson(),
+        )
+        TabEditorScreen(store, doc.id, {}, {})
+    }
+
+    @Test
+    fun backing() = shot("backing") { BackingScreen(store) {} }
+
+    private fun sampleScore() = EdScore(
+        title = "Мой риф",
+        beats = listOf(
+            EdBeat(8, notes = listOf(EdNote(6, 0))),
+            EdBeat(8, notes = listOf(EdNote(6, 3, NoteEffect.HAMMER))),
+            EdBeat(8, notes = listOf(EdNote(5, 2, NoteEffect.SLIDE))),
+            EdBeat(8, notes = listOf(EdNote(5, 5))),
+            EdBeat(2, notes = listOf(EdNote(5, 0), EdNote(4, 2), EdNote(3, 2), EdNote(2, 1), EdNote(1, 0))),
+            EdBeat(4, notes = listOf(EdNote(3, 7, NoteEffect.BEND))),
+            EdBeat(4),
+        ),
+    )
 }
 
 class ScreenshotPortraitTest : ScreensBase(ScreenOrientation.PORTRAIT)

@@ -53,6 +53,8 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.navigation:navigation-compose:2.8.2")
     implementation("androidx.webkit:webkit:1.11.0")
+    // Минусовки: MP3, AAC/M4A, OGG/Opus, FLAC, WAV; скорость и высота тона.
+    implementation("androidx.media3:media3-exoplayer:1.4.1")
 
     testImplementation("junit:junit:4.13.2")
     // В JVM-тестах android.jar содержит только заглушки org.json — подключаем настоящую реализацию.

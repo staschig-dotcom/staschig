@@ -439,6 +439,7 @@ private sealed interface SongSource {
     data class Doc(val doc: TabDoc) : SongSource
     data class Piece(val asset: String) : SongSource
     data object ChordsAndRhythm : SongSource
+    data object Backing : SongSource
 }
 
 /** Шаг-песня: сразу открыт таб (сохранённый файл → встроенный таб → аккорды и ритм). */
@@ -452,11 +453,11 @@ private fun SongStep(
     onOpenDoc: (String) -> Unit,
     onPlay: (String, String, String) -> Unit,
 ) {
-    val docs = store.library.docs.filter { it.lessonId == lesson.id }
+    val docs = store.library.docs.filter { it.lessonId == lesson.id && it.kind != TabKind.AUDIO }
     val piece = Curriculum.interactiveTab(song.id)
     val sources = docs.map { SongSource.Doc(it) } +
         listOfNotNull(piece?.let { SongSource.Piece(it) }) +
-        SongSource.ChordsAndRhythm
+        SongSource.ChordsAndRhythm + SongSource.Backing
     var selectedIndex by rememberSaveable(lesson.id) { mutableIntStateOf(0) }
     val selected = sources[selectedIndex.coerceIn(0, sources.lastIndex)]
     var shownChord by remember { mutableStateOf<Chord?>(null) }
@@ -475,6 +476,7 @@ private fun SongStep(
                                     is SongSource.Doc -> "📥 ${src.doc.title}"
                                     is SongSource.Piece -> "🎼 Интерактивный таб"
                                     SongSource.ChordsAndRhythm -> "Аккорды и ритм"
+                                    SongSource.Backing -> "🎧 Минусовка"
                                 },
                                 maxLines = 1,
                             )
@@ -504,6 +506,18 @@ private fun SongStep(
                     }
                 }
                 AlphaTabView(pieceQuery(selected.asset), Modifier.weight(1f).fillMaxWidth())
+            }
+            SongSource.Backing -> Column(
+                Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text(
+                    "Загрузите минусовку этой песни (MP3, M4A, OGG, FLAC, WAV) — она привяжется к уроку. " +
+                        "Начните на 70% скорости и повторяйте трудное место через A–B.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                BackingPanel(store, Modifier.fillMaxWidth(), lessonId = lesson.id)
             }
             SongSource.ChordsAndRhythm -> Column(
                 Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),

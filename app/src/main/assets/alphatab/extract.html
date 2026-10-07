@@ -120,7 +120,15 @@
           importer.initFromString(data, settings);
           score = importer.readScore();
         }
-        send(extract(score));
+        if (params.get('export') === 'gp') {
+          // Экспорт в формат Guitar Pro 7+ (.gp) — для открытия в Guitar Pro / Songsterr и т.п.
+          const bytes = new alphaTab.exporter.Gp7Exporter().export(score, settings);
+          let bin = '';
+          for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+          send({ gp: btoa(bin) });
+        } else {
+          send(extract(score));
+        }
       })
       .catch((e) => send({ error: String(e && e.message ? e.message : e) }));
   }

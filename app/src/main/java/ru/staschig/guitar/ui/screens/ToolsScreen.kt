@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.GraphicEq
+import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material.icons.filled.Hearing
 import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.SportsEsports
@@ -38,6 +39,7 @@ private val tools = listOf(
     ToolItem("metronome", Icons.Filled.Timer, "Метроном", "Темп, разгон, tap"),
     ToolItem("playlist", Icons.Filled.SportsEsports, "Играть с проверкой", "Ноты на ленте, звёзды"),
     ToolItem("tabs", Icons.Filled.LibraryMusic, "Табы и песни", "Найти, сохранить, открыть"),
+    ToolItem("backing", Icons.Filled.Headphones, "Минусовки", "Аудио: скорость, тон, повтор"),
     ToolItem("chords", Icons.Filled.SwapHoriz, "Смены аккордов", "Минута на пару аккордов"),
     ToolItem("rhythm", Icons.Filled.TouchApp, "Ритм-тест", "Спешите или тянете?"),
     ToolItem("ear", Icons.Filled.Hearing, "Слух", "Узнать аккорд на слух"),

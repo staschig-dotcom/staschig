@@ -27,6 +27,9 @@ import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.runtime.remember
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -63,7 +66,9 @@ fun TabsScreen(
     onOpenDoc: (String) -> Unit,
     onOpenPiece: (String) -> Unit,
     onNewText: () -> Unit,
+    onNewTab: () -> Unit = {},
 ) {
+    var addMenu by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var url by rememberSaveable { mutableStateOf("") }
@@ -84,6 +89,30 @@ fun TabsScreen(
         }
     }
 
+    if (addMenu) {
+        AlertDialog(
+            onDismissRequest = { addMenu = false },
+            title = { Text("Добавить таб") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    AddOption("✏️  Создать таб вручную", "Редактор: лады, длительности, приёмы. Можно сохранить как .gp") {
+                        addMenu = false; onNewTab()
+                    }
+                    AddOption("📁  Файл с телефона", "Guitar Pro (.gp, .gp5, .gpx…), MusicXML, PDF, текст") {
+                        addMenu = false; importer.launch(arrayOf("*/*"))
+                    }
+                    AddOption("🌐  Найти на GuitarMaestro", "Откроется сайт; на странице таба нажмите ⬇") {
+                        addMenu = false; onOpenUrl(Curriculum.TABS_LIBRARY_URL)
+                    }
+                    AddOption("📋  Вставить текст таба", "Скопированный откуда-то таб буквами") {
+                        addMenu = false; onNewText()
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { addMenu = false }) { Text("Отмена") } },
+        )
+    }
+
     Column(Modifier.fillMaxSize()) {
         TopAppBar(
             title = { Text("Табы") },
@@ -94,20 +123,13 @@ fun TabsScreen(
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             item {
-                Button(onClick = { onOpenUrl(Curriculum.TABS_LIBRARY_URL) }, modifier = Modifier.fillMaxWidth()) {
-                    Text("Найти таб на GuitarMaestro")
-                }
+                BigButton("＋  Добавить таб", { addMenu = true })
                 Text(
-                    "На странице таба нажмите ⬇ — текст таба сохранится в приложение. Файлы Guitar Pro и PDF " +
-                        "скачиваются в приложение автоматически и открываются без интернета.",
+                    "Создайте таб сами, загрузите файл Guitar Pro с телефона или сохраните с GuitarMaestro (кнопка ⬇ на странице таба).",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 6.dp),
                 )
-                Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = { importer.launch(arrayOf("*/*")) }) { Text("Импорт файла") }
-                    OutlinedButton(onClick = onNewText) { Text("Вставить текст") }
-                }
             }
 
             item { Header("Встроенные пьесы — ноты, таб и звук") }
@@ -116,10 +138,11 @@ fun TabsScreen(
             }
 
             item { Header("Мои табы (офлайн)") }
-            if (store.library.docs.isEmpty()) {
+            val myDocs = store.library.docs.filter { it.kind != TabKind.AUDIO }
+            if (myDocs.isEmpty()) {
                 item { Text("Пока пусто. Сохраните таб с сайта или импортируйте файл.") }
             }
-            items(store.library.docs.sortedByDescending { it.created }, key = { "d_" + it.id }) { d ->
+            items(myDocs.sortedByDescending { it.created }, key = { "d_" + it.id }) { d ->
                 val icon = when (d.kind) {
                     TabKind.GP -> Icons.Filled.MusicNote
                     TabKind.PDF -> Icons.Filled.PictureAsPdf
@@ -186,6 +209,16 @@ private fun Entry(
             }
             if (onDelete != null) IconButton(onClick = onDelete) { Icon(Icons.Filled.Delete, "Удалить") }
             else Spacer(Modifier.width(16.dp))
+        }
+    }
+}
+
+@Composable
+private fun AddOption(title: String, subtitle: String, onClick: () -> Unit) {
+    Card(Modifier.fillMaxWidth().clickable(onClick = onClick)) {
+        Column(Modifier.padding(14.dp)) {
+            Text(title, style = MaterialTheme.typography.titleSmall)
+            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

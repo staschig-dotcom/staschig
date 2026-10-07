@@ -154,7 +154,11 @@ const val ALPHATAB_BASE = "$ASSET_HOST/assets/alphatab/"
 
 /** Параметры страницы alphaTab для встроенной пьесы и для сохранённого файла. */
 fun pieceQuery(asset: String) = "tex=songs/${Uri.encode(asset)}.alphatex"
-fun docQuery(doc: TabDoc) = "file=/tabfiles/${Uri.encode(doc.fileName ?: "")}"
+fun docQuery(doc: TabDoc): String {
+    val name = Uri.encode(doc.fileName ?: "")
+    // Табы из редактора хранятся текстом alphaTex, файлы Guitar Pro / MusicXML — двоичные.
+    return if (doc.fileName?.endsWith(".alphatex") == true) "tex=/tabfiles/$name" else "file=/tabfiles/$name"
+}
 
 /**
  * Содержимое сохранённого таба без своей шапки — для встраивания в урок.
@@ -166,6 +170,7 @@ fun DocContent(store: AppStore, doc: TabDoc, modifier: Modifier = Modifier) {
         TabKind.GP -> AlphaTabView(docQuery(doc), modifier)
         TabKind.PDF -> PdfPages(store, doc, modifier)
         TabKind.TEXT -> TextTabContent(doc, modifier)
+        TabKind.AUDIO -> BackingPanel(store, modifier.padding(16.dp), initialId = doc.id)
         TabKind.OTHER -> {
             val context = LocalContext.current
             Column(modifier.padding(16.dp)) {
@@ -189,7 +194,14 @@ fun PlayButton(onPlay: () -> Unit) {
 
 /** Открывает сохранённый таб нужным просмотрщиком. */
 @Composable
-fun TabDocScreen(store: AppStore, id: String, onBack: () -> Unit, onEdit: (String) -> Unit, onPlay: (TabDoc) -> Unit) {
+fun TabDocScreen(
+    store: AppStore,
+    id: String,
+    onBack: () -> Unit,
+    onEdit: (String) -> Unit,
+    onPlay: (TabDoc) -> Unit,
+    onEditTab: (String) -> Unit = {},
+) {
     val lib = store.library
     val doc = lib.byId(id)
     if (doc == null) {
@@ -202,12 +214,18 @@ fun TabDocScreen(store: AppStore, id: String, onBack: () -> Unit, onEdit: (Strin
     }
     when (doc.kind) {
         TabKind.GP -> AlphaTabScreen(doc.title, docQuery(doc), onBack) {
-            PlayButton { onPlay(doc) }; OpenExternallyButton(store, doc); delete()
+            PlayButton { onPlay(doc) }
+            if (lib.isEditable(doc)) IconButton(onClick = { onEditTab(doc.id) }) { Icon(Icons.Filled.Edit, "Редактировать таб") }
+            else OpenExternallyButton(store, doc)
+            delete()
         }
         TabKind.PDF -> PdfScreen(store, doc, onBack) { OpenExternallyButton(store, doc); delete() }
         TabKind.TEXT -> TextTabScreen(doc, onBack) {
             IconButton(onClick = { onEdit(doc.id) }) { Icon(Icons.Filled.Edit, "Редактировать") }
             delete()
+        }
+        TabKind.AUDIO -> SimpleBack(doc.title, onBack, { delete() }) {
+            BackingPanel(store, Modifier.padding(16.dp), initialId = doc.id)
         }
         TabKind.OTHER -> {
             LaunchedEffect(doc.id) { openExternally(context, store, doc) }

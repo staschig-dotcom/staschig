@@ -31,6 +31,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import ru.staschig.guitar.data.AppStore
 import ru.staschig.guitar.lessons.Curriculum
+import ru.staschig.guitar.ui.screens.BackingScreen
 import ru.staschig.guitar.ui.screens.ChordsScreen
 import ru.staschig.guitar.ui.screens.CourseScreen
 import ru.staschig.guitar.ui.screens.EarScreen
@@ -46,6 +47,7 @@ import ru.staschig.guitar.ui.screens.SettingsScreen
 import ru.staschig.guitar.ui.screens.TabBrowserScreen
 import ru.staschig.guitar.ui.screens.TabDocScreen
 import ru.staschig.guitar.ui.screens.TabEditScreen
+import ru.staschig.guitar.ui.screens.TabEditorScreen
 import ru.staschig.guitar.ui.screens.TabsScreen
 import ru.staschig.guitar.ui.screens.TodayScreen
 import ru.staschig.guitar.ui.screens.ToolsScreen
@@ -157,6 +159,7 @@ fun GuitarApp(store: AppStore) {
                         onOpenDoc = { nav.navigate("tabdoc/$it") },
                         onOpenPiece = { nav.navigate("piece/$it") },
                         onNewText = { store.library.draft = null; nav.navigate("tabedit") },
+                        onNewTab = { nav.navigate("tabeditor") },
                     )
                 }
                 composable("piece/{asset}") { entry ->
@@ -172,6 +175,20 @@ fun GuitarApp(store: AppStore) {
                         onBack = { nav.popBackStack() },
                         onEdit = { nav.navigate("tabedit?id=$it") },
                         onPlay = { doc -> nav.openPlay("doc_" + doc.id, doc.title, docQuery(doc)) },
+                        onEditTab = { nav.navigate("tabeditor?id=$it") },
+                    )
+                }
+                composable(
+                    "tabeditor?id={id}",
+                    arguments = listOf(navArgument("id") { type = NavType.StringType; nullable = true; defaultValue = null }),
+                ) { entry ->
+                    TabEditorScreen(
+                        store = store,
+                        docId = entry.arguments?.getString("id"),
+                        onBack = back,
+                        onOpenDoc = { id ->
+                            nav.navigate("tabdoc/$id") { popUpTo("tabeditor?id={id}") { inclusive = true } }
+                        },
                     )
                 }
                 composable(
@@ -221,6 +238,7 @@ fun GuitarApp(store: AppStore) {
                     )
                 }
                 composable("metronome") { MetronomeScreen(onBack = back) }
+                composable("backing") { BackingScreen(store, onBack = back) }
                 composable("rhythm") { RhythmScreen(store, onBack = { nav.popBackStack() }) }
                 composable("chords") { ChordsScreen(store, onBack = { nav.popBackStack() }) }
                 composable("ear") { EarScreen(onBack = { nav.popBackStack() }) }
