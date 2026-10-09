@@ -284,6 +284,87 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
 .btools .tool{height:40px;padding:0 10px;font-size:14px}
 #bPos{width:100%;accent-color:var(--star)}
 #build .bar .btn2{padding:10px 14px;font-size:15px}
+
+/* ===== landscape layout (the app is locked to landscape) ===== */
+.screen{padding:10px max(14px,env(safe-area-inset-right,0px)) 10px max(14px,env(safe-area-inset-left,0px));gap:10px}
+.col{display:flex;flex-direction:column;gap:10px;min-width:0;min-height:0}
+.scroll{overflow-y:auto}
+.split{flex:1;min-height:0;display:flex;gap:14px}
+.split>.col{flex:1}
+.panel{flex:0 0 clamp(220px,34%,320px)!important}
+.bar{min-height:44px}
+.icon-btn{width:44px;height:44px}
+.icon-btn svg{width:22px;height:22px}
+#start,#reward,#lock{flex-direction:row;align-items:center;justify-content:center;gap:clamp(18px,5vw,48px);text-align:left}
+#start .col,#reward .col,#lock .col{align-items:flex-start;max-width:420px}
+#start .owl{width:auto;height:min(62vh,230px)}
+#start h1{font-size:clamp(26px,6.5vh,40px)}
+#reward .bigstar{width:auto;height:min(58vh,220px)}
+#reward h2{font-size:clamp(24px,7vh,34px)}
+#reward p{font-size:17px}
+#lock .owl{width:auto;height:min(56vh,200px)}
+#lock h1{font-size:clamp(26px,7vh,38px)}
+#lock .clock{font-size:clamp(32px,10vh,48px)}
+#map{flex-direction:row;gap:14px}
+.mapL{flex:1.05;display:flex;flex-direction:column;gap:8px;min-width:0;min-height:0}
+.mapL .sky-wrap{min-height:90px}
+.mapL .owl-row .owl{width:56px}
+.mapL .bubble{font-size:14px;padding:8px 12px;line-height:1.3}
+#map .places{flex:1;grid-template-columns:repeat(3,1fr);grid-template-rows:1fr 1fr;align-content:stretch;gap:10px}
+#map .places .place{min-height:0;padding:10px}
+#map .places .place b{font-size:16px;line-height:1.15}
+#map .places .place small{font-size:12px}
+#map .places .place .glyph{font-size:26px}
+#run{flex-direction:row;gap:12px}
+#run .qcard{flex:0 0 40%;height:100%;padding:8px 12px 10px}
+.qbar{min-height:44px;gap:8px}
+.qbar .dots i{width:12px;height:12px}
+.qcard .prompt{font-size:16px}
+.qcard .letter{font-size:min(26vh,15vw)}
+.qcard .word{font-size:clamp(32px,11vh,56px)}
+.qcard .pic{font-size:min(22vh,12vw)}
+.qcard .riddle{font-size:clamp(17px,5vh,24px)}
+.qcard .grp{font-size:clamp(20px,6vh,30px)}
+.qcard .expr{font-size:clamp(28px,10vh,46px)}
+.qcard .shadow-card{width:min(36vh,22vw)}
+.qcard .sil{font-size:min(22vh,13vw)}
+.qcard .row .cell{width:min(10vh,5.5vw,46px)}
+.qcard .row.mem .cell{width:min(13vh,7vw,58px);font-size:min(8vh,4.5vw,34px)}
+.qcard .slot{min-width:60px;height:46px;font-size:22px}
+#run .stage{flex:1;height:100%;min-height:0}
+.portals{width:44%;top:4%;bottom:15%;gap:6px}
+.portal{min-height:40px;max-height:92px}
+.portal .emo{font-size:clamp(26px,8vh,40px)}
+.portal .num{font-size:clamp(24px,8vh,36px)}
+.portal .wd{font-size:clamp(15px,4.6vh,22px)}
+.hud .attempt{position:static;font-size:16px;white-space:nowrap;min-width:6.5em;text-align:center}
+.hud{padding:8px max(14px,env(safe-area-inset-right,0px)) 8px max(14px,env(safe-area-inset-left,0px))}
+.chcard{max-width:420px}
+#chsel .levels{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));align-content:start}
+#chsel #modeHelp{margin:0}
+.wscroll .skins,.skins{grid-template-columns:repeat(auto-fill,minmax(104px,1fr))}
+.skin canvas{width:54px;height:54px}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;overflow-y:auto;min-height:0;align-content:start;padding-bottom:10px}
+#parents{overflow:hidden}
+#pin{flex-direction:row;gap:clamp(24px,6vw,60px)}
+#pin .col{align-items:center;text-align:center;max-width:260px}
+.pinpad{grid-template-columns:repeat(3,58px);gap:10px}
+.pinpad button{width:58px;height:58px;font-size:24px}
+#studio .gallery{grid-template-columns:repeat(3,1fr)}
+#studio .owl-row .owl{width:64px}
+.studio-cards .place{min-height:100px}
+#draw .split{gap:12px}
+#draw .canvas-wrap{flex:1}
+#draw .panel{justify-content:center}
+#draw .sw{width:34px;height:34px}
+#draw .stamps button{width:38px;height:38px;font-size:24px}
+#draw .tool{height:38px}
+#draw .bar .prompt{font-size:16px}
+#build .bstage{flex:1;min-height:0}
+#build .btools{justify-content:flex-start}
+#build .seg button{padding:6px 10px;font-size:14px}
+.toast{bottom:16px}
+.banner{top:calc(env(safe-area-inset-top,0px) + 12px)}
 </style>
 </head>
 <body>
@@ -324,12 +405,15 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
 <div id="app">
   <section class="screen" id="start">
     <svg class="owl"><use href="#owl"/></svg>
-    <h1>Совёнок Уху<br>и потерянные звёзды</h1>
-    <p>Буквы, числа, загадки и рисунки. Помоги Уху вернуть звёзды на небо!</p>
-    <button class="big-btn" id="playBtn">Играть</button>
+    <div class="col">
+      <h1>Совёнок Уху<br>и потерянные звёзды</h1>
+      <p>Буквы, числа, загадки и рисунки. Помоги Уху вернуть звёзды на небо!</p>
+      <button class="big-btn" id="playBtn">Играть</button>
+    </div>
   </section>
 
   <section class="screen" id="map" hidden>
+    <div class="mapL">
     <div class="bar">
       <div class="grow"><h2 id="skyTitle" style="font-size:20px">Небо № 1</h2></div>
       <button class="icon-btn music-btn" aria-label="Музыка"><svg><use href="#i-music"/></svg></button>
@@ -340,6 +424,7 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
     <div class="owl-row">
       <svg class="owl"><use href="#owl"/></svg>
       <div class="bubble" id="bubble"></div>
+    </div>
     </div>
     <div class="places">
       <button class="place" data-go="read" style="--g:#4dffa8"><span class="glyph">Аа</span><b>Лес букв</b><span class="lvl" data-lvl="read"></span></button>
@@ -352,12 +437,14 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
   </section>
 
   <section class="screen" id="run" hidden>
-    <div class="bar">
-      <button class="icon-btn" data-home aria-label="На карту"><svg><use href="#i-home"/></svg></button>
-      <div class="grow dots" id="dots"></div>
-      <button class="icon-btn music-btn" aria-label="Музыка"><svg><use href="#i-music"/></svg></button>
+    <div class="qcard">
+      <div class="bar qbar">
+        <button class="icon-btn" data-home aria-label="На карту"><svg><use href="#i-home"/></svg></button>
+        <div class="grow dots" id="dots"></div>
+        <button class="icon-btn music-btn" aria-label="Музыка"><svg><use href="#i-music"/></svg></button>
+      </div>
+      <div class="prompt" id="prompt"></div><div class="q" id="q"></div>
     </div>
-    <div class="qcard"><div class="prompt" id="prompt"></div><div class="q" id="q"></div></div>
     <div class="stage" id="runStage"><canvas id="runCanvas"></canvas><div class="portals" id="portals"></div></div>
   </section>
 
@@ -378,9 +465,9 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
       <button class="icon-btn" id="chHome" aria-label="Выйти"><svg><use href="#i-home"/></svg></button>
       <div class="pbar"><i id="chBar"></i></div>
       <span class="pct" id="chPct">0%</span>
+      <span class="attempt" id="chAttempt"></span>
       <button class="icon-btn music-btn" aria-label="Музыка"><svg><use href="#i-music"/></svg></button>
     </div>
-    <div class="attempt" id="chAttempt"></div>
     <div class="chover" id="chOver" hidden>
       <div class="chcard">
         <h2 id="chOverTitle">Уровень пройден!</h2>
@@ -410,26 +497,39 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
       <button class="btn2" id="bTest">Проверить</button>
       <button class="btn2 main" id="bSave">Сохранить</button>
     </div>
-    <div class="seg modes" id="bModes"></div>
-    <div class="stage bstage"><canvas id="bCanvas"></canvas></div>
-    <input type="range" id="bPos" min="-1" max="294" step="1" value="-1" aria-label="Прокрутка уровня">
-    <div class="tools btools" id="bTools"></div>
-    <div class="btnrow" style="justify-content:space-between;align-items:center"><span class="note" style="font-size:13px">Тап по клетке — поставить или убрать. Двигай поле пальцем.</span><button class="btn2" id="bClear">Очистить</button></div>
+    <div class="split">
+      <div class="col">
+        <div class="stage bstage"><canvas id="bCanvas"></canvas></div>
+        <input type="range" id="bPos" min="-1" max="294" step="1" value="-1" aria-label="Прокрутка уровня">
+      </div>
+      <div class="col panel scroll">
+        <div class="label">Старт</div>
+        <div class="seg" id="bModes"></div>
+        <div class="label">Что ставим</div>
+        <div class="tools btools" id="bTools"></div>
+        <p class="note" style="font-size:13px;margin:0">Тап по клетке — поставить или убрать. Двигай поле пальцем.</p>
+        <div><button class="btn2" id="bClear">Очистить</button></div>
+      </div>
+    </div>
   </section>
 
   <section class="screen" id="lock" hidden>
     <svg class="owl"><use href="#owl-sleep"/></svg>
+    <div class="col">
     <h1>Уху спит</h1>
     <p id="lockText">Время игры закончилось. Отдохни, погуляй, а потом возвращайся!</p>
     <div class="clock" id="lockClock"></div>
     <p id="lockAt"></p>
     <button class="linkbtn hold" id="lockAdult">Для взрослых</button>
+    </div>
   </section>
 
   <section class="screen" id="pin" hidden>
-    <h2 id="pinTitle">Код для взрослых</h2>
-    <div class="pindots" id="pinDots"><i></i><i></i><i></i><i></i></div>
-    <p id="pinMsg"></p>
+    <div class="col">
+      <h2 id="pinTitle">Код для взрослых</h2>
+      <div class="pindots" id="pinDots"><i></i><i></i><i></i><i></i></div>
+      <p id="pinMsg"></p>
+    </div>
     <div class="pinpad" id="pinPad">
       <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button>
       <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button>
@@ -443,6 +543,7 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
       <button class="icon-btn" id="parentsBack" aria-label="Назад"><svg><use href="#i-home"/></svg></button>
       <h2 class="grow" style="font-size:22px">Для взрослых</h2>
     </div>
+    <div class="pgrid">
     <div class="pcard">
       <div class="ptitle">Время игры</div>
       <div class="seg" id="limitSeg"></div>
@@ -464,13 +565,16 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
       <p class="note">Раунд — 5 заданий. Ответ с первой попытки даёт 1 очко, со второй — ½. Звезда — от 4 очков. Уровень растёт сам после двух раундов подряд почти без ошибок и снижается, если ошибок много. Прогресс хранится только в этом телефоне.</p>
       <div><button class="danger" id="resetBtn">Сбросить прогресс</button></div>
     </div>
+    </div>
   </section>
 
   <section class="screen" id="reward" hidden>
     <svg class="bigstar" id="rewStar"><use href="#star"/></svg>
-    <h2 id="rewTitle">Звезда найдена!</h2>
-    <p id="rewText"></p>
-    <div class="btnrow"><button class="btn2" id="rewAgain" hidden>Ещё раз</button><button class="big-btn" id="rewBtn">Дальше</button></div>
+    <div class="col">
+      <h2 id="rewTitle">Звезда найдена!</h2>
+      <p id="rewText"></p>
+      <div class="btnrow"><button class="btn2" id="rewAgain" hidden>Ещё раз</button><button class="big-btn" id="rewBtn">Дальше</button></div>
+    </div>
   </section>
 
   <section class="screen" id="studio" hidden>
@@ -478,15 +582,21 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
       <button class="icon-btn" data-home aria-label="На карту"><svg><use href="#i-home"/></svg></button>
       <h2 class="grow" style="font-size:22px">Мастерская</h2>
     </div>
-    <div class="owl-row">
-      <svg class="owl"><use href="#owl"/></svg>
-      <div class="bubble">Здесь нет правильных ответов. Придумывай что хочешь!</div>
+    <div class="split">
+      <div class="col">
+        <div class="owl-row">
+          <svg class="owl"><use href="#owl"/></svg>
+          <div class="bubble">Здесь нет правильных ответов. Придумывай что хочешь!</div>
+        </div>
+        <div class="studio-cards">
+          <button class="place" id="goDraw" style="--g:#ffb36b"><span class="glyph">✎</span><b>Рисунок</b><small>Уху даст тему</small></button>
+        </div>
+      </div>
+      <div class="col scroll">
+        <div class="label">Твои рисунки</div>
+        <div class="gallery" id="gallery"></div>
+      </div>
     </div>
-    <div class="studio-cards">
-      <button class="place" id="goDraw" style="--g:#ffb36b"><span class="glyph">✎</span><b>Рисунок</b><small>Уху даст тему</small></button>
-    </div>
-    <div class="label">Твои рисунки</div>
-    <div class="gallery" id="gallery"></div>
   </section>
 
   <section class="screen" id="draw" hidden>
@@ -494,7 +604,9 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
       <button class="icon-btn" id="drawBack" aria-label="Назад"><svg><use href="#i-home"/></svg></button>
       <div class="grow prompt" id="drawPrompt" style="text-align:left;color:var(--ink)"></div>
     </div>
+    <div class="split">
     <div class="canvas-wrap" id="canvasWrap"><canvas id="paint"></canvas></div>
+    <div class="col panel">
     <div class="tools" id="colors"></div>
     <div class="stamps" id="stamps"></div>
     <div class="tools">
@@ -505,6 +617,8 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
       <button class="tool" id="undo">Назад</button>
       <button class="tool" id="clear">Чисто</button>
       <button class="tool on" id="drawDone">Готово</button>
+    </div>
+    </div>
     </div>
   </section>
 
@@ -1234,9 +1348,10 @@ function drawTrail(g,dt){trail=trail.filter(p=>(p.life-=dt)>0);trail.forEach(p=>
 function view(cv,mode,camX,ceil){
   const {g,w,h}=fitCanvas(cv);
   let T,floorY;
-  if(mode==='run'){T=Math.min(w/8.5,h/4.4);floorY=h-T*.85;}
-  else if(ceil!=null){T=Math.min(w/9,(h-150)/(ceil+1.5));floorY=Math.min(h-T*1.2,(h+ceil*T)/2+40);}
-  else{T=Math.min(w/9,h/6.5);floorY=h*.74;}
+  if(mode==='run'){T=Math.min(w/9,h/4.6);floorY=h-T*.85;}
+  else if(mode==='build'){T=Math.min(w/12,h/(ceil+.9));floorY=h-T*.45;}
+  else if(ceil!=null){T=Math.min(w/16,(h-58)/(ceil+.8));floorY=h-Math.max(T*.4,(h-58-ceil*T)/2);}
+  else{T=Math.min(w/16,h/6.2);floorY=h*.8;}
   return {g,w,h,T,floorY,camX:camX||0,ceil:ceil==null?null:ceil};
 }
 
@@ -1645,7 +1760,7 @@ function openBuilder(idx,keep){
 function cellsToObjs(){return levelFromCustom(B.level).objs;}
 function drawBuilder(){
   if(cur!=='build'||!B)return;
-  const V=view($('#bCanvas'),'chal',B.camX,BUILD_CEIL);B.V=V;
+  const V=view($('#bCanvas'),'build',B.camX,BUILD_CEIL);B.V=V;
   drawWorld(V,cellsToObjs(),TH_GREEN,performance.now()/1000,{grid:true});
   const sx=(0-V.camX)*V.T+V.T/2,sy=V.floorY-V.T/2;
   drawHero(V.g,{mode:B.level.mode,rot:0},sx,sy,V.T*.9,1,TH_GREEN);
