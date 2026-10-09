@@ -125,7 +125,7 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
 #reward p{margin:0;color:var(--muted);font-size:19px;max-width:28ch;line-height:1.4}
 
 /* studio */
-.studio-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.studio-cards{display:grid;grid-template-columns:1fr;gap:12px}
 .gallery{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .gallery img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;background:var(--paper)}
 .label{font-size:14px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
@@ -141,11 +141,6 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
 .stamps{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
 .stamps button{font-size:28px;width:44px;height:44px;border-radius:12px;background:var(--card)}
 .stamps button.on{background:var(--star)}
-.story-pics{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
-.story-pics div{background:var(--card);border-radius:var(--r);padding:12px 8px;width:30%;min-width:90px;text-align:center}
-.story-pics span{display:block;font-size:56px;line-height:1.1}
-.story-pics b{font-size:17px}
-.ring{font-family:var(--f-display);color:var(--muted);text-align:center;font-size:16px;min-height:1.3em}
 
 /* parents */
 #parents{background:var(--sky);overflow-y:auto}
@@ -271,6 +266,24 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
 .seg button.on{background:var(--star);color:var(--paper-ink)}
 .ptitle{font-weight:900;font-size:17px}
 
+
+/* v3: attempts, friends, modes, builder */
+.dots i.gold{background:var(--star);transform:scale(1.15)}
+.dots i.half{background:#c9d2ff;transform:scale(1.05)}
+.dots i.miss{background:var(--no)}
+.tries{margin-left:.5em;color:var(--no);letter-spacing:2px;font-size:.95em}
+.portals.cool .portal:not(.ok){opacity:.55;pointer-events:none}
+.bigstar.dim{filter:grayscale(1) brightness(.6);animation:pop .9s cubic-bezier(.2,1.6,.4,1) both}
+.modes{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;flex:none}
+.modes button{white-space:nowrap}
+.wscroll{overflow-y:auto;min-height:0;display:flex;flex-direction:column;gap:10px;padding-bottom:10px}
+.wscroll .skins{overflow:visible;flex:none;min-height:auto}
+#bName{font-size:17px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.bstage{min-height:240px}
+.btools{flex:none}
+.btools .tool{height:40px;padding:0 10px;font-size:14px}
+#bPos{width:100%;accent-color:var(--star)}
+#build .bar .btn2{padding:10px 14px;font-size:15px}
 </style>
 </head>
 <body>
@@ -332,7 +345,7 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
       <button class="place" data-go="read" style="--g:#4dffa8"><span class="glyph">Аа</span><b>Лес букв</b><span class="lvl" data-lvl="read"></span></button>
       <button class="place" data-go="math" style="--g:#29e3ff"><span class="glyph">2+3</span><b>Река чисел</b><span class="lvl" data-lvl="math"></span></button>
       <button class="place" data-go="logic" style="--g:#c78bff"><span class="glyph">?!</span><b>Пещера загадок</b><span class="lvl" data-lvl="logic"></span></button>
-      <button class="place" data-go="chal" style="--g:#ff4fd8"><span class="glyph">▲▲</span><b>Испытание</b><small>шипы и прыжки</small></button>
+      <button class="place" data-go="chal" style="--g:#ff4fd8"><span class="glyph">▲▲</span><b>Испытание</b><small>5 режимов и строитель</small></button>
       <button class="place" data-go="art" style="--g:#ffb36b"><span class="glyph">✎</span><b>Мастерская</b><small>рисуем и сочиняем</small></button>
       <button class="place" data-go="ward" style="--g:#ffd45c"><span class="glyph">◆</span><b>Гардероб</b><small id="wardNote">наряды Уху</small></button>
     </div>
@@ -354,7 +367,8 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
       <h2 class="grow" style="font-size:22px">Испытание</h2>
       <button class="icon-btn music-btn" aria-label="Музыка"><svg><use href="#i-music"/></svg></button>
     </div>
-    <p class="note" style="font-size:15px">Тап или держи палец — Уху прыгает. Шип — начинаешь сначала. В тренировке есть зелёные точки сохранения. Новые уровни открываются за звёзды из Леса, Реки и Пещеры.</p>
+    <div class="seg modes" id="modeTabs"></div>
+    <p class="note" id="modeHelp" style="font-size:15px"></p>
     <div class="levels" id="levels"></div>
   </section>
 
@@ -379,10 +393,28 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
   <section class="screen" id="wardrobe" hidden>
     <div class="bar">
       <button class="icon-btn" data-home aria-label="На карту"><svg><use href="#i-home"/></svg></button>
-      <h2 class="grow" style="font-size:22px">Гардероб Уху</h2>
+      <h2 class="grow" style="font-size:22px">Гардероб</h2>
     </div>
-    <p class="note" style="font-size:15px">Наряды открываются за звёзды и за пройденные уровни Испытания.</p>
-    <div class="skins" id="skins"></div>
+    <div class="wscroll">
+      <div class="label">Друзья Уху — выбери, кто бежит</div>
+      <div class="skins" id="heroes"></div>
+      <div class="label">Наряды совёнка</div>
+      <div class="skins" id="skins"></div>
+    </div>
+  </section>
+
+  <section class="screen" id="build" hidden>
+    <div class="bar">
+      <button class="icon-btn" id="bBack" aria-label="Назад"><svg><use href="#i-home"/></svg></button>
+      <h2 class="grow" style="font-size:20px" id="bName">Мой уровень</h2>
+      <button class="btn2" id="bTest">Проверить</button>
+      <button class="btn2 main" id="bSave">Сохранить</button>
+    </div>
+    <div class="seg modes" id="bModes"></div>
+    <div class="stage bstage"><canvas id="bCanvas"></canvas></div>
+    <input type="range" id="bPos" min="-1" max="294" step="1" value="-1" aria-label="Прокрутка уровня">
+    <div class="tools btools" id="bTools"></div>
+    <div class="btnrow" style="justify-content:space-between;align-items:center"><span class="note" style="font-size:13px">Тап по клетке — поставить или убрать. Двигай поле пальцем.</span><button class="btn2" id="bClear">Очистить</button></div>
   </section>
 
   <section class="screen" id="lock" hidden>
@@ -428,17 +460,17 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
       <div class="prow"><div class="grow">Звуки</div><button class="toggle" id="tSound"></button></div>
     </div>
     <div class="pcard">
-      <p class="note">Голоса в игре нет, поэтому в первый раз объясните ребёнку задания. У каждого типа задания своя иконка. После двух ошибок правильный портал начинает светиться, а вверху появляется совет для взрослого.</p>
-      <p class="note">Раунд — 5 порталов-заданий и одна звезда. Уровень растёт сам после двух раундов подряд почти без ошибок и снижается, если ошибок много. Прогресс хранится только в этом телефоне.</p>
+      <p class="note">Голоса в игре нет, поэтому в первый раз объясните ребёнку задания. У каждого типа задания своя иконка. На каждое задание две попытки. После первой ошибки вверху появляется подсказка, а порталы на 1,5 секунды блокируются, чтобы нельзя было быстро перебирать ответы. После второй ошибки правильный портал светится, и Уху проходит через него без очка.</p>
+      <p class="note">Раунд — 5 заданий. Ответ с первой попытки даёт 1 очко, со второй — ½. Звезда — от 4 очков. Уровень растёт сам после двух раундов подряд почти без ошибок и снижается, если ошибок много. Прогресс хранится только в этом телефоне.</p>
       <div><button class="danger" id="resetBtn">Сбросить прогресс</button></div>
     </div>
   </section>
 
   <section class="screen" id="reward" hidden>
-    <svg class="bigstar"><use href="#star"/></svg>
+    <svg class="bigstar" id="rewStar"><use href="#star"/></svg>
     <h2 id="rewTitle">Звезда найдена!</h2>
     <p id="rewText"></p>
-    <button class="big-btn" id="rewBtn">Дальше</button>
+    <div class="btnrow"><button class="btn2" id="rewAgain" hidden>Ещё раз</button><button class="big-btn" id="rewBtn">Дальше</button></div>
   </section>
 
   <section class="screen" id="studio" hidden>
@@ -452,7 +484,6 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
     </div>
     <div class="studio-cards">
       <button class="place" id="goDraw" style="--g:#ffb36b"><span class="glyph">✎</span><b>Рисунок</b><small>Уху даст тему</small></button>
-      <button class="place" id="goStory" style="--g:#ff8fc7"><span class="glyph">«…»</span><b>Сказка</b><small>расскажи взрослому</small></button>
     </div>
     <div class="label">Твои рисунки</div>
     <div class="gallery" id="gallery"></div>
@@ -477,22 +508,6 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
     </div>
   </section>
 
-  <section class="screen" id="story" hidden>
-    <div class="bar">
-      <button class="icon-btn" id="storyBack" aria-label="Назад"><svg><use href="#i-home"/></svg></button>
-      <h2 class="grow" style="font-size:22px">Сказка</h2>
-    </div>
-    <div class="q">
-      <div class="riddle" id="storyText" style="font-size:24px"></div>
-      <div class="story-pics" id="storyPics"></div>
-      <p class="note" style="max-width:32ch;text-align:center">Расскажи сказку маме, папе или другу. С чего всё началось? Что случилось потом? Чем кончилось?</p>
-    </div>
-    <div class="ring" id="storyRing"></div>
-    <div class="tools">
-      <button class="tool" id="storyNew">Другие картинки</button>
-    </div>
-    <button class="big-btn" id="storyDone" disabled>Сказка готова!</button>
-  </section>
 </div>
 
 <script>
@@ -580,12 +595,44 @@ const SKINS=[
  {id:'gold',name:'Золотой',body:'#f0a91c',belly:'#ffe9a6',ear:'#c07f0c',line:'#ffd45c',glow:'#ffd45c',need:20},
  {id:'fire',name:'Огонь',body:'#ff5a1f',belly:'#ffc04d',ear:'#c2330a',line:'#ffd45c',glow:'#ff7a2a',trail:'#ff9a3c',ch:0},
  {id:'ghost',name:'Призрак',body:'rgba(225,232,255,.7)',belly:'#ffffff',ear:'#c9d2ff',line:'#ffffff',glow:'#ffffff',ch:1},
- {id:'rainbow',name:'Радуга',rainbow:true,belly:'#ffffff',line:'#ffffff',glow:'#ffffff',ch:2}
+ {id:'rainbow',name:'Радуга',rainbow:true,belly:'#ffffff',line:'#ffffff',glow:'#ffffff',ch:2},
+ {id:'cosmos',name:'Космос',body:'#0d0b2e',belly:'#ff4fd8',ear:'#3a2a8a',line:'#ff4fd8',glow:'#ff4fd8',ch:4},
+ {id:'ice',name:'Лёд',body:'#9fe3ff',belly:'#ffffff',ear:'#5bb8e0',line:'#e6f8ff',glow:'#bdf0ff',ch:6},
+ {id:'candy',name:'Конфетный',body:'#ff9ccf',belly:'#fff1a8',ear:'#c45a95',line:'#ffffff',ch:8},
+ {id:'shadow',name:'Тень',body:'#111216',belly:'#3b3d47',ear:'#000000',line:'#4dffa8',glow:'#4dffa8',trail:'#4dffa8',ch:10}
 ];
+/* Friends of Uhu: playable characters. */
+const HEROES=[
+ {id:'owl',name:'Совёнок Уху',need:0},
+ {id:'fox',name:'Лисёнок Рыжик',need:4},
+ {id:'bunny',name:'Зайка Пуша',need:8},
+ {id:'hedgehog',name:'Ёжик Колючка',ch:3},
+ {id:'frog',name:'Лягушонок Квак',ch:5},
+ {id:'penguin',name:'Пингвинёнок Пинг',ch:7},
+ {id:'cat',name:'Котёнок Мур',ch:9},
+ {id:'wind',name:'Ветерок',ch:11}
+];
+const MODES={cube:{name:'Кубик',col:'#4dffa8',letter:'К'},ship:{name:'Ракета',col:'#ff4fd8',letter:'Р'},ball:{name:'Шарик',col:'#ffb02e',letter:'Ш'},ufo:{name:'НЛО',col:'#ffd45c',letter:'Н'},wave:{name:'Волна',col:'#29e3ff',letter:'В'}};
+const TH_BLUE={bg1:'#0a2a66',bg2:'#06102e',line:'#29e3ff',block:'rgba(41,227,255,.14)',floor:'#040a1e'};
+const TH_PINK={bg1:'#3d0a5c',bg2:'#12041f',line:'#ff4fd8',block:'rgba(255,79,216,.14)',floor:'#0d0216'};
+const TH_ORANGE={bg1:'#5c1a0a',bg2:'#1a0603',line:'#ffb02e',block:'rgba(255,176,46,.14)',floor:'#140402'};
+const TH_GREEN={bg1:'#0b4a2e',bg2:'#04160f',line:'#4dffa8',block:'rgba(77,255,168,.14)',floor:'#03120c'};
+const TH_GOLD={bg1:'#4a3a06',bg2:'#140f02',line:'#ffd45c',block:'rgba(255,212,92,.14)',floor:'#110c01'};
+const TH_VIOLET={bg1:'#2b1257',bg2:'#0c0420',line:'#c78bff',block:'rgba(199,139,255,.14)',floor:'#0a0318'};
+/* Indexes 0-2 must stay as they are: saved progress (chBest/chDone) refers to them. */
 const LEVELS=[
- {name:'Звёздная тропинка',diff:1,need:0,speed:7,len:120,gap:[5,8],pool:['s1','s1','s2','b1','b1','step'],th:{bg1:'#0a2a66',bg2:'#06102e',line:'#29e3ff',block:'rgba(41,227,255,.14)',floor:'#040a1e'}},
- {name:'Неоновый лес',diff:2,need:5,speed:8,len:170,gap:[4,7],pool:['s1','s2','b1','step','plat','platSpike','pad','s2'],th:{bg1:'#3d0a5c',bg2:'#12041f',line:'#ff4fd8',block:'rgba(255,79,216,.14)',floor:'#0d0216'}},
- {name:'Вихрь Ветра',diff:3,need:12,speed:9,len:220,gap:[3,6],pool:['s2','s3pad','step','plat','platSpike','orbGap','stairs','pad','s1'],th:{bg1:'#5c1a0a',bg2:'#1a0603',line:'#ffb02e',block:'rgba(255,176,46,.14)',floor:'#140402'}}
+ {name:'Звёздная тропинка',mode:'cube',diff:1,need:0,speed:7,len:120,gap:[5,8],pool:['s1','s1','s2','b1','b1','step'],th:TH_BLUE},
+ {name:'Неоновый лес',mode:'cube',diff:2,need:5,speed:8,len:170,gap:[4,7],pool:['s1','s2','b1','step','plat','platSpike','pad','s2'],th:TH_PINK},
+ {name:'Вихрь Ветра',mode:'cube',diff:3,need:12,speed:9,len:220,gap:[3,6],pool:['s2','s3pad','step','plat','platSpike','orbGap','stairs','pad','s1'],th:TH_ORANGE},
+ {name:'Взлёт',mode:'ship',diff:1,need:6,speed:6.5,len:130,gap:[6,9],ceil:7,pool:['gLow','gHigh'],th:TH_PINK},
+ {name:'Тоннель',mode:'ship',diff:2,need:10,speed:7.5,len:170,gap:[5,7],ceil:7,pool:['gLow','gHigh','gMid','floorSp'],th:TH_VIOLET},
+ {name:'Потолок',mode:'ball',diff:1,need:8,speed:6.5,len:130,gap:[6,9],ceil:5,pool:['fSp','cSp'],th:TH_ORANGE},
+ {name:'Перевёртыш',mode:'ball',diff:2,need:13,speed:7.5,len:170,gap:[5,8],ceil:5,pool:['fSp','cSp','fcSp'],th:TH_GREEN},
+ {name:'Прыг-скок',mode:'ufo',diff:1,need:10,speed:6,len:120,gap:[6,8],ceil:7,pool:['gate'],th:TH_GOLD},
+ {name:'Облака',mode:'ufo',diff:2,need:15,speed:7,len:160,gap:[5,7],ceil:7,pool:['gate','gate','low'],th:TH_BLUE},
+ {name:'Зигзаг',mode:'wave',diff:1,need:12,speed:6,len:120,gap:[6,8],ceil:7,pool:['gate'],th:TH_BLUE},
+ {name:'Шторм',mode:'wave',diff:2,need:18,speed:7,len:160,gap:[5,7],ceil:7,pool:['gate','gate','spikes'],th:TH_VIOLET},
+ {name:'Всё вместе',mode:'mix',diff:3,need:22,speed:7,ceil:7,mix:['cube','ship','ball','ufo','wave','cube'],th:TH_GREEN}
 ];
 const RUN_THEMES={
  read:{bg1:'#0b3b2e',bg2:'#04160f',line:'#4dffa8',block:'rgba(77,255,168,.14)',floor:'#03120c'},
@@ -594,16 +641,20 @@ const RUN_THEMES={
 };
 const PORTAL_COLORS=['#29e3ff','#ff4fd8','#ffd45c','#4dffa8'];
 const COOLDOWN=3*3600*1000, GRACE=3*60*1000;
+const STAR_POINTS=4;/* points out of 5 needed for a star: 1 for a first-try answer, 1/2 for a second try */
 
 /* ---------- storage ---------- */
-const STORE='uhu-v1',GAL='uhu-gallery-v1',TSTORE='uhu-time-v1';
+/* Keys and field names are kept from earlier versions so an update keeps all progress. */
+const STORE='uhu-v1',GAL='uhu-gallery-v1',TSTORE='uhu-time-v1',CUSTOM='uhu-custom-v1';
+const NL=LEVELS.length;
 const DEF={stars:0,levels:{read:1,math:1,logic:1},good:{read:0,math:0,logic:0},music:true,sound:true,
-  limit:0,pin:'',skin:'classic',chBest:[0,0,0],chDone:[false,false,false]};
+  limit:0,pin:'',skin:'classic',hero:'owl',chBest:Array(NL).fill(0),chDone:Array(NL).fill(false)};
 const clone=o=>JSON.parse(JSON.stringify(o));
 function load(){
   try{const s=JSON.parse(localStorage.getItem(STORE)||'null');
     if(s&&typeof s==='object'){const p=Object.assign(clone(DEF),s);p.levels=Object.assign({},DEF.levels,s.levels);p.good=Object.assign({},DEF.good,s.good);
-      p.chBest=[0,1,2].map(i=>(s.chBest||[])[i]||0);p.chDone=[0,1,2].map(i=>!!(s.chDone||[])[i]);return p;}}catch(e){}
+      p.chBest=LEVELS.map((_,i)=>(s.chBest||[])[i]||0);p.chDone=LEVELS.map((_,i)=>!!(s.chDone||[])[i]);
+      if(!HEROES.some(h=>h.id===p.hero))p.hero='owl';return p;}}catch(e){}
   return clone(DEF);
 }
 let P=load();
@@ -900,9 +951,11 @@ const GEN={read:genRead,math:genMath,logic:genLogic};
 /* ---------- runner engine (world units = tiles, y up from the floor) ---------- */
 const PHYS={g:83,v:18.7,pad:1.45,dt:1/120};
 const sp_=(x,y)=>({k:'spike',x,y:y||0,w:1,h:1});
+const spd_=(x,y)=>({k:'spike',x,y,w:1,h:1,flip:true});
 const bl_=(x,y,w,h)=>({k:'block',x,y,w,h});
 const pd_=x=>({k:'pad',x,y:0,w:1,h:.3});
 const orb_=(x,y)=>({k:'orb',x,y,w:0,h:0});
+const pt_=(x,mode)=>({k:'portal',x,y:0,w:1,h:0,mode});
 const CHUNKS={
   s1:(o,x)=>{o.push(sp_(x));return x+1;},
   s2:(o,x)=>{o.push(sp_(x),sp_(x+1));return x+2;},
@@ -915,48 +968,107 @@ const CHUNKS={
   orbGap:(o,x)=>{for(let i=0;i<6;i++)o.push(sp_(x+i));o.push(orb_(x+2.6,2.2));return x+6;},
   stairs:(o,x)=>{o.push(bl_(x,0,2,1),bl_(x+2,0,2,2),bl_(x+4,0,3,3));return x+7;}
 };
+/* chunks for the other modes: (objs, x, ceiling, rng) -> next x */
+const MCHUNKS={
+  ship:{
+    gLow:(o,x,C)=>{o.push(bl_(x,4,2,C-4));return x+2;},
+    gHigh:(o,x)=>{o.push(bl_(x,0,2,3));return x+2;},
+    gMid:(o,x,C)=>{o.push(bl_(x,0,2,2),bl_(x,5,2,C-5));return x+2;},
+    floorSp:(o,x)=>{o.push(sp_(x),sp_(x+1),sp_(x+2));return x+3;}
+  },
+  ball:{
+    fSp:(o,x)=>{o.push(sp_(x),sp_(x+1),sp_(x+2));return x+3;},
+    cSp:(o,x,C)=>{o.push(spd_(x,C-1),spd_(x+1,C-1),spd_(x+2,C-1));return x+3;},
+    fcSp:(o,x,C)=>{o.push(sp_(x),sp_(x+1),spd_(x+6,C-1),spd_(x+7,C-1));return x+8;}
+  },
+  ufo:{
+    gate:(o,x,C,r)=>{const a=1+Math.floor(r()*3);o.push(bl_(x,0,1,a),bl_(x,a+3,1,C-a-3));return x+1;},
+    low:(o,x,C)=>{o.push(bl_(x,3,3,C-3));return x+3;}
+  },
+  wave:{
+    gate:(o,x,C,r)=>{const a=1+Math.floor(r()*3);o.push(bl_(x,0,1,a),bl_(x,a+3,1,C-a-3));return x+1;},
+    spikes:(o,x,C)=>{o.push(sp_(x),sp_(x+1),spd_(x+3,C-1),spd_(x+4,C-1));return x+5;}
+  },
+  cube:{s1:CHUNKS.s1,b1:CHUNKS.b1,s2:CHUNKS.s2}
+};
 function seeded(seed){let s=seed*9301+49297;return()=>{s=(s*9301+49297)%233280;return s/233280;};}
 function buildLevel(n){
   const L=LEVELS[n],r=seeded(n*7+11),objs=[],safe=[];
   let x=12,last='';
-  while(x<L.len){
-    let c;do{c=L.pool[Math.floor(r()*L.pool.length)];}while(c===last&&L.pool.length>2&&(c!=='s1'));
-    last=c;safe.push(x-2);x=CHUNKS[c](objs,x);
-    x+=L.gap[0]+Math.floor(r()*(L.gap[1]-L.gap[0]+1));
+  if(L.mode==='cube'){
+    /* unchanged since version 1, so the first three levels stay the same */
+    while(x<L.len){
+      let c;do{c=L.pool[Math.floor(r()*L.pool.length)];}while(c===last&&L.pool.length>2&&(c!=='s1'));
+      last=c;safe.push(x-2);x=CHUNKS[c](objs,x);
+      x+=L.gap[0]+Math.floor(r()*(L.gap[1]-L.gap[0]+1));
+    }
+  }else{
+    const C=L.ceil,sections=L.mix||[L.mode];
+    sections.forEach((m,si)=>{
+      if(si>0){objs.push(pt_(x,m));x+=5;}
+      const pool=L.mix?Object.keys(MCHUNKS[m]):L.pool,gap=L.mix?[6,8]:L.gap;
+      const until=L.mix?x+30:L.len;
+      while(x<until){
+        const c=pool[Math.floor(r()*pool.length)];
+        safe.push(x-2);x=MCHUNKS[m][c](objs,x,C,r);
+        x+=gap[0]+Math.floor(r()*(gap[1]-gap[0]+1));
+      }
+    });
   }
   objs.sort((a,b)=>a.x-b.x);
-  return {objs,safe,len:x+4,speed:L.speed};
+  return {objs,safe,len:x+4,speed:L.speed,mode:L.mode==='mix'?'cube':L.mode,ceil:L.ceil==null?null:L.ceil};
 }
-function newCube(x){return {x:x||0,y:0,vy:0,rot:0,ground:true,dead:false};}
-/* One fixed physics step. W={objs,speedNow,lethal,on*}; input={hold,buffer}. */
+function newCube(x,mode){return {x:x||0,y:0,vy:0,rot:0,ground:true,dead:false,mode:mode||'cube',gd:1};}
+/* One fixed physics step. W={objs,speedNow,lethal,ceil,on*}; input={hold,buffer}. */
 function stepCube(W,c,dt,input){
-  const prevY=c.y;
-  c.x+=W.speedNow*dt;c.vy-=PHYS.g*dt;c.y+=c.vy*dt;
+  const m=c.mode,C=W.ceil,prevY=c.y,spd=W.speedNow;
+  c.x+=spd*dt;
+  if(m==='cube')c.vy-=PHYS.g*dt;
+  else if(m==='ship'){c.vy=clamp(c.vy+(input.hold?60:-50)*dt,-9,9);}
+  else if(m==='ball'){c.vy=clamp(c.vy-PHYS.g*c.gd*dt,-22,22);}
+  else if(m==='ufo'){if(input.buffer>0){c.vy=10.5;input.buffer=0;W.onJump&&W.onJump();}c.vy=Math.max(c.vy-48*dt,-12);}
+  else if(m==='wave'){c.vy=(input.hold?1:-1)*spd;}
+  c.y+=c.vy*dt;
   let ground=false;
-  if(c.y<=0){c.y=0;c.vy=0;ground=true;}
+  if(c.y<=0){c.y=0;if(c.vy<0)c.vy=0;if(m!=='ball'||c.gd>0)ground=true;}
+  if(C!=null&&c.y>=C-1){c.y=C-1;if(c.vy>0)c.vy=0;if(m==='ball'&&c.gd<0)ground=true;}
+  const hb=m==='wave'?.3:0;
   for(const o of W.objs){
     if(o.x>c.x+2)break;
     if(o.gone||(o.x+(o.w||1)<c.x-1))continue;
     if(o.k==='block'){
-      if(!(c.x+.98>o.x&&c.x+.02<o.x+o.w))continue;
+      if(!(c.x+.98-hb>o.x&&c.x+.02+hb<o.x+o.w))continue;
       const top=o.y+o.h;
-      if(c.vy<=0&&prevY>=top-.15&&c.y<top){c.y=top;c.vy=0;ground=true;}
+      if(m==='wave'){if(c.y+hb<top&&c.y+1-hb>o.y)hit(W,c,o);continue;}
+      if(c.vy<=0&&prevY>=top-.15&&c.y<top){c.y=top;c.vy=0;if(m!=='ball'||c.gd>0)ground=true;}
+      else if(m!=='cube'&&c.vy>=0&&prevY+1<=o.y+.15&&c.y+1>o.y){c.y=o.y-1;c.vy=0;if(m==='ball'&&c.gd<0)ground=true;}
       else if(c.y<top-.05&&c.y+.9>o.y)hit(W,c,o);
     }else if(o.k==='spike'){
-      if(c.x+.82>o.x+.3&&c.x+.18<o.x+.7&&c.y+.1<o.y+.6&&c.y+.85>o.y)hit(W,c,o);
+      const x1=c.x+(hb||.18),x2=c.x+1-(hb||.18),y1=c.y+(hb||.1),y2=c.y+1-(hb||.15);
+      const sy1=o.flip?o.y+.4:o.y,sy2=o.flip?o.y+1:o.y+.6;
+      if(x2>o.x+.3&&x1<o.x+.7&&y1<sy2&&y2>sy1)hit(W,c,o);
     }else if(o.k==='orb'){
-      if(!o.used&&input.buffer>0&&Math.hypot(c.x+.5-o.x,c.y+.5-o.y)<1.05){o.used=true;c.vy=PHYS.v;input.buffer=0;ground=false;W.onOrb&&W.onOrb(o);}
+      if(m==='cube'&&!o.used&&input.buffer>0&&Math.hypot(c.x+.5-o.x,c.y+.5-o.y)<1.05){o.used=true;c.vy=PHYS.v;input.buffer=0;ground=false;W.onOrb&&W.onOrb(o);}
     }else if(o.k==='pad'){
-      if(!o.used&&c.x+.9>o.x&&c.x+.1<o.x+1&&c.y<=o.y+.3){o.used=true;c.vy=PHYS.v*PHYS.pad;ground=false;W.onPad&&W.onPad(o);}
+      if(m==='cube'&&!o.used&&c.x+.9>o.x&&c.x+.1<o.x+1&&c.y<=o.y+.3){o.used=true;c.vy=PHYS.v*PHYS.pad;ground=false;W.onPad&&W.onPad(o);}
+    }else if(o.k==='portal'){
+      if(!o.used&&c.x+.5>=o.x){o.used=true;if(c.mode!==o.mode){c.mode=o.mode;c.gd=1;c.vy=0;c.rot=0;W.onPortal&&W.onPortal(o);}}
     }else if(o.k==='spark'){
       if(!o.used&&Math.hypot(c.x+.5-o.x,c.y+.5-o.y)<.85){o.used=true;W.onSpark&&W.onSpark(o);}
     }
   }
-  c.ground=ground&&c.vy<=0;
-  if(c.ground&&(input.hold||input.buffer>0)){c.vy=PHYS.v;c.ground=false;input.buffer=0;W.onJump&&W.onJump();}
+  if(m==='cube'){
+    c.ground=ground&&c.vy<=0;
+    if(c.ground&&(input.hold||input.buffer>0)){c.vy=PHYS.v;c.ground=false;input.buffer=0;W.onJump&&W.onJump();}
+    if(!c.ground)c.rot+=Math.PI/.45*dt;
+    else{const q=Math.PI/2,tg=Math.round(c.rot/q)*q;c.rot+=(tg-c.rot)*Math.min(1,dt*25);}
+  }else if(m==='ball'){
+    c.ground=ground;
+    if(c.ground&&input.buffer>0){c.gd=-c.gd;c.vy=0;c.ground=false;input.buffer=0;W.onJump&&W.onJump();}
+    c.rot+=spd*dt*2*c.gd;
+  }else if(m==='wave'){c.ground=ground;c.rot=c.vy>0?-Math.PI/4:Math.PI/4;}
+  else{c.ground=ground;c.rot=-Math.atan2(c.vy,Math.max(spd,1))*.7;}
   if(input.buffer>0)input.buffer-=dt;
-  if(!c.ground)c.rot+=Math.PI/.45*dt;
-  else{const q=Math.PI/2,tg=Math.round(c.rot/q)*q;c.rot+=(tg-c.rot)*Math.min(1,dt*25);}
 }
 function hit(W,c,o){if(W.lethal)c.dead=true;else{o.gone=true;W.onBump&&W.onBump(o);}}
 
@@ -969,6 +1081,7 @@ function fitCanvas(cv){
 }
 function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.lineTo(x+w-r,y);g.quadraticCurveTo(x+w,y,x+w,y+r);g.lineTo(x+w,y+h-r);g.quadraticCurveTo(x+w,y+h,x+w-r,y+h);g.lineTo(x+r,y+h);g.quadraticCurveTo(x,y+h,x,y+h-r);g.lineTo(x,y+r);g.quadraticCurveTo(x,y,x+r,y);g.closePath();}
 function tri(g,a,b,c,d,e,f){g.beginPath();g.moveTo(a,b);g.lineTo(c,d);g.lineTo(e,f);g.closePath();g.fill();}
+function circ(g,x,y,r,col){g.fillStyle=col;g.beginPath();g.arc(x,y,r,0,7);g.fill();}
 function skinById(id){return SKINS.find(s=>s.id===id)||SKINS[0];}
 function drawOwl(g,cx,cy,s,rot,sk,time){
   const h=s/2;let body=sk.body,ear=sk.ear;
@@ -979,17 +1092,90 @@ function drawOwl(g,cx,cy,s,rot,sk,time){
   rr(g,-h,-h,s,s,s*.24);g.fillStyle=body;g.fill();g.shadowBlur=0;
   g.lineWidth=Math.max(2,s*.06);g.strokeStyle=sk.line;g.stroke();
   g.fillStyle=sk.belly;g.beginPath();g.ellipse(0,h*.55,h*.6,h*.36,0,0,Math.PI*2);g.fill();
-  [-1,1].forEach(k=>{
-    g.fillStyle='#fff6e0';g.beginPath();g.arc(k*h*.42,-h*.18,h*.36,0,7);g.fill();
-    g.fillStyle='#2a2140';g.beginPath();g.arc(k*h*.42+h*.09,-h*.15,h*.18,0,7);g.fill();
-    g.fillStyle='#fff';g.beginPath();g.arc(k*h*.42+h*.15,-h*.23,h*.06,0,7);g.fill();
-  });
+  [-1,1].forEach(k=>{circ(g,k*h*.42,-h*.18,h*.36,'#fff6e0');circ(g,k*h*.42+h*.09,-h*.15,h*.18,'#2a2140');circ(g,k*h*.42+h*.15,-h*.23,h*.06,'#fff');});
   g.fillStyle='#f0a91c';tri(g,-h*.14,h*.04,h*.14,h*.04,0,h*.32);
+  g.restore();
+}
+/* Friends: each is a rounded cube with its own face. */
+function bodyBox(g,h,fill,line){rr(g,-h,-h,h*2,h*2,h*.48);g.fillStyle=fill;g.fill();g.lineWidth=Math.max(2,h*.12);g.strokeStyle=line;g.stroke();}
+function dotEyes(g,h,y,r){[-1,1].forEach(k=>{circ(g,k*h*.38,y,r,'#1b1530');circ(g,k*h*.38+r*.35,y-r*.35,r*.35,'#fff');});}
+function drawFriend(g,cx,cy,s,rot,id,time){
+  const h=s/2;g.save();g.translate(cx,cy);g.rotate(rot);
+  if(id==='fox'){
+    g.fillStyle='#e8651f';tri(g,-h*.95,-h*.4,-h*.7,-h*1.4,-h*.15,-h*.9);tri(g,h*.95,-h*.4,h*.7,-h*1.4,h*.15,-h*.9);
+    g.fillStyle='#2a1a12';tri(g,-h*.8,-h*1.05,-h*.7,-h*1.4,-h*.5,-h*1.15);tri(g,h*.8,-h*1.05,h*.7,-h*1.4,h*.5,-h*1.15);
+    bodyBox(g,h,'#ff8a3d','#ffc08a');
+    g.fillStyle='#fff3e6';g.beginPath();g.moveTo(-h*.95,h*.05);g.quadraticCurveTo(0,h*.15,h*.95,h*.05);g.quadraticCurveTo(h*.6,h*.95,0,h*.95);g.quadraticCurveTo(-h*.6,h*.95,-h*.95,h*.05);g.fill();
+    dotEyes(g,h,-h*.18,h*.15);g.fillStyle='#1b1530';g.beginPath();g.ellipse(0,h*.3,h*.13,h*.09,0,0,7);g.fill();
+  }else if(id==='bunny'){
+    [-1,1].forEach(k=>{rr(g,k*h*.45-h*.2,-h*2.05,h*.4,h*1.3,h*.2);g.fillStyle='#e9e6f5';g.fill();rr(g,k*h*.45-h*.09,-h*1.9,h*.18,h*1,h*.09);g.fillStyle='#ffb3c8';g.fill();});
+    bodyBox(g,h,'#f1eefb','#ffffff');
+    dotEyes(g,h,-h*.15,h*.15);circ(g,-h*.62,h*.25,h*.14,'#ffc2d4');circ(g,h*.62,h*.25,h*.14,'#ffc2d4');
+    g.fillStyle='#ff8fb0';tri(g,-h*.1,h*.15,h*.1,h*.15,0,h*.3);g.fillStyle='#fff';g.fillRect(-h*.11,h*.32,h*.22,h*.22);g.strokeStyle='#d8d2ea';g.lineWidth=1;g.strokeRect(-h*.11,h*.32,h*.22,h*.22);
+  }else if(id==='hedgehog'){
+    g.fillStyle='#5b3d27';for(let i=0;i<7;i++){const a=-Math.PI*.95+i*Math.PI*.95/6;const x=Math.cos(a)*h*1.05,y=Math.sin(a)*h*1.05;tri(g,x*.7,y*.7-h*.1,x*1.35,y*1.35-h*.1,x*.7+Math.cos(a+1.4)*h*.4,y*.7+Math.sin(a+1.4)*h*.4-h*.1);}
+    bodyBox(g,h,'#8a6142','#c79a74');
+    g.fillStyle='#f0d2a8';g.beginPath();g.ellipse(0,h*.3,h*.78,h*.6,0,0,7);g.fill();
+    dotEyes(g,h,-h*.05,h*.13);circ(g,0,h*.32,h*.12,'#1b1530');
+  }else if(id==='frog'){
+    [-1,1].forEach(k=>{circ(g,k*h*.48,-h*.95,h*.36,'#5fd35f');circ(g,k*h*.48,-h*.95,h*.25,'#ffffff');circ(g,k*h*.48+h*.05,-h*.92,h*.12,'#1b1530');});
+    bodyBox(g,h,'#5fd35f','#b7f5a0');
+    g.strokeStyle='#1d5a1d';g.lineWidth=h*.1;g.beginPath();g.arc(0,h*.05,h*.55,.2*Math.PI,.8*Math.PI);g.stroke();
+    circ(g,-h*.65,h*.25,h*.13,'#ff9db0');circ(g,h*.65,h*.25,h*.13,'#ff9db0');
+  }else if(id==='penguin'){
+    bodyBox(g,h,'#24304a','#8fa6d8');
+    g.fillStyle='#ffffff';g.beginPath();g.ellipse(0,h*.18,h*.66,h*.76,0,0,7);g.fill();
+    dotEyes(g,h,-h*.2,h*.13);g.fillStyle='#ff9a1f';tri(g,-h*.16,h*.02,h*.16,h*.02,0,h*.28);
+    g.fillStyle='#ff9a1f';g.beginPath();g.ellipse(-h*.45,h*1.02,h*.25,h*.1,0,0,7);g.ellipse(h*.45,h*1.02,h*.25,h*.1,0,0,7);g.fill();
+  }else if(id==='cat'){
+    g.fillStyle='#8c95a8';tri(g,-h*.95,-h*.35,-h*.8,-h*1.35,-h*.2,-h*.9);tri(g,h*.95,-h*.35,h*.8,-h*1.35,h*.2,-h*.9);
+    g.fillStyle='#ffb3c8';tri(g,-h*.78,-h*.6,-h*.74,-h*1.1,-h*.4,-h*.85);tri(g,h*.78,-h*.6,h*.74,-h*1.1,h*.4,-h*.85);
+    bodyBox(g,h,'#9aa3b5','#d7dceb');
+    [-1,1].forEach(k=>{g.fillStyle='#8fe36b';g.beginPath();g.ellipse(k*h*.4,-h*.15,h*.2,h*.22,0,0,7);g.fill();g.fillStyle='#1b1530';g.fillRect(k*h*.4-h*.04,-h*.33,h*.08,h*.36);});
+    g.fillStyle='#ff8fb0';tri(g,-h*.1,h*.18,h*.1,h*.18,0,h*.32);
+    g.strokeStyle='#f5f6fb';g.lineWidth=1.5;[-1,1].forEach(k=>{[0,.12].forEach(d=>{g.beginPath();g.moveTo(k*h*.25,h*.3+d*h);g.lineTo(k*h*.95,h*.22+d*h*1.6);g.stroke();});});
+  }else{ /* wind */
+    g.globalAlpha=.95;bodyBox(g,h,'#bfe9ff','#ffffff');
+    g.strokeStyle='#ffffff';g.lineWidth=h*.1;g.beginPath();g.arc(-h*.35,h*.45,h*.25,Math.PI,Math.PI*2.4);g.stroke();g.beginPath();g.arc(h*.4,h*.5,h*.2,Math.PI,Math.PI*2.4);g.stroke();
+    g.strokeStyle='#1b1530';g.lineWidth=h*.09;[-1,1].forEach(k=>{g.beginPath();g.arc(k*h*.38,-h*.15,h*.16,Math.PI*1.1,Math.PI*1.9);g.stroke();});
+    circ(g,-h*.65,h*.08,h*.12,'#ff9db0');circ(g,h*.65,h*.08,h*.12,'#ff9db0');
+    g.lineWidth=h*.08;g.beginPath();g.arc(0,h*.1,h*.2,.15*Math.PI,.85*Math.PI);g.stroke();
+  }
+  g.restore();
+}
+function drawChar(g,cx,cy,s,rot,heroId,time){
+  if(heroId==='owl'||!heroId)drawOwl(g,cx,cy,s,rot,skinById(P.skin),time);else drawFriend(g,cx,cy,s,rot,heroId,time);
+}
+/* The hero in a vehicle for the other modes. */
+function drawHero(g,c,cx,cy,s,time,th){
+  const m=c.mode||'cube',col=MODES[m].col;
+  if(m==='cube'){drawChar(g,cx,cy,s,c.rot,P.hero,time);return;}
+  g.save();g.translate(cx,cy);
+  if(m==='ship'){
+    g.rotate(c.rot);g.shadowColor=col;g.shadowBlur=12;g.fillStyle='#1a1d33';g.strokeStyle=col;g.lineWidth=3;
+    g.beginPath();g.moveTo(-s*.75,s*.05);g.lineTo(s*.55,s*.05);g.quadraticCurveTo(s*.85,s*.22,s*.55,s*.42);g.lineTo(-s*.75,s*.42);g.closePath();g.fill();g.stroke();
+    g.fillStyle=col;tri(g,-s*.75,s*.05,-s*.95,-s*.25,-s*.45,s*.05);
+    g.shadowBlur=0;drawChar(g,0,-s*.18,s*.55,0,P.hero,time);
+  }else if(m==='ball'){
+    g.rotate(c.rot);g.shadowColor=col;g.shadowBlur=12;g.strokeStyle=col;g.lineWidth=3;g.fillStyle='#1a1d33';
+    g.beginPath();g.arc(0,0,s*.52,0,7);g.fill();g.stroke();g.shadowBlur=0;
+    for(let i=0;i<4;i++){g.rotate(Math.PI/2);g.fillStyle=col;g.fillRect(s*.36,-s*.06,s*.14,s*.12);}
+    g.rotate(-c.rot);drawChar(g,0,0,s*.5,0,P.hero,time);
+  }else if(m==='ufo'){
+    g.rotate(c.rot*.5);drawChar(g,0,-s*.2,s*.5,0,P.hero,time);
+    g.fillStyle='rgba(180,240,255,.35)';g.beginPath();g.arc(0,-s*.12,s*.42,Math.PI,0);g.fill();
+    g.shadowColor=col;g.shadowBlur=12;g.fillStyle='#1a1d33';g.strokeStyle=col;g.lineWidth=3;
+    g.beginPath();g.ellipse(0,s*.12,s*.75,s*.22,0,0,7);g.fill();g.stroke();
+    [-.4,0,.4].forEach(k=>circ(g,k*s,s*.14,s*.06,col));
+  }else{
+    g.rotate(c.rot);g.shadowColor=col;g.shadowBlur=14;g.fillStyle=col;
+    g.beginPath();g.moveTo(s*.5,0);g.lineTo(-s*.4,-s*.35);g.lineTo(-s*.2,0);g.lineTo(-s*.4,s*.35);g.closePath();g.fill();
+  }
   g.restore();
 }
 function starShape(g,x,y,r){g.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,q=i%2?r*.45:r;g.lineTo(x+Math.cos(a)*q,y+Math.sin(a)*q);}g.closePath();}
 function drawWorld(V,objs,th,time,extra){
-  const {g,w,h,T,floorY,camX}=V,pulse=1-beatPhase();
+  const {g,w,h,T,floorY,camX}=V,pulse=1-beatPhase(),C=V.ceil;
   const grd=g.createLinearGradient(0,0,0,h);grd.addColorStop(0,th.bg1);grd.addColorStop(1,th.bg2);g.fillStyle=grd;g.fillRect(0,0,w,h);
   g.strokeStyle=th.line;g.lineWidth=2;g.globalAlpha=.09+.05*pulse;
   const span=w+T*4;
@@ -999,8 +1185,14 @@ function drawWorld(V,objs,th,time,extra){
   g.strokeStyle=th.line;g.globalAlpha=.22;g.lineWidth=1;
   for(let gx=Math.floor(camX)-1;gx<camX+w/T+2;gx++){const sx=(gx-camX)*T;g.beginPath();g.moveTo(sx,floorY);g.lineTo(sx-T*.7,h);g.stroke();}
   g.globalAlpha=1;
-  g.save();g.shadowColor=th.line;g.shadowBlur=6+12*pulse;g.fillStyle=th.line;g.fillRect(0,floorY-1.5,w,3);g.restore();
-  if(extra&&extra.cps)extra.cps.forEach(x=>{const sx=(x-camX)*T+T/2;if(sx<-T||sx>w+T)return;g.save();g.translate(sx,floorY-T*.35);g.rotate(Math.PI/4);g.fillStyle='#4dffa8';g.shadowColor='#4dffa8';g.shadowBlur=10;g.fillRect(-T*.16,-T*.16,T*.32,T*.32);g.restore();});
+  g.save();g.shadowColor=th.line;g.shadowBlur=6+12*pulse;g.fillStyle=th.line;g.fillRect(0,floorY-1.5,w,3);
+  if(C!=null){const cy=floorY-C*T;g.restore();g.fillStyle=th.floor;g.fillRect(0,0,w,cy);g.save();g.shadowColor=th.line;g.shadowBlur=6+12*pulse;g.fillStyle=th.line;g.fillRect(0,cy-1.5,w,3);}
+  g.restore();
+  if(extra&&extra.grid){g.strokeStyle='rgba(255,255,255,.12)';g.lineWidth=1;const top=C!=null?floorY-C*T:0;
+    for(let gx=Math.floor(camX);gx<camX+w/T+1;gx++){const sx=(gx-camX)*T;g.beginPath();g.moveTo(sx,top);g.lineTo(sx,floorY);g.stroke();}
+    for(let gy=1;gy<(C||8);gy++){g.beginPath();g.moveTo(0,floorY-gy*T);g.lineTo(w,floorY-gy*T);g.stroke();}
+    const sx=(3-camX)*T;if(sx>0){g.fillStyle='rgba(255,255,255,.06)';g.fillRect(0,top,sx,floorY-top);}}
+  if(extra&&extra.cps)extra.cps.forEach(cp=>{const sx=(cp.x-camX)*T+T/2;if(sx<-T||sx>w+T)return;g.save();g.translate(sx,floorY-cp.y*T-T*.35);g.rotate(Math.PI/4);g.fillStyle='#4dffa8';g.shadowColor='#4dffa8';g.shadowBlur=10;g.fillRect(-T*.16,-T*.16,T*.32,T*.32);g.restore();});
   for(const o of objs){
     const sx=(o.x-camX)*T;if(sx>w+T*2)break;if(sx+(o.w||1)*T<-T*2)continue;
     g.globalAlpha=o.gone?.22:1;
@@ -1010,14 +1202,19 @@ function drawWorld(V,objs,th,time,extra){
       for(let i=0;i<o.w;i++)for(let j=0;j<o.h;j++)g.strokeRect(sx+i*T+T*.18,y+j*T+T*.18,T*.64,T*.64);
       g.globalAlpha=o.gone?.22:1;g.lineWidth=2.5;g.save();g.shadowColor=th.line;g.shadowBlur=8;g.strokeRect(sx,y,o.w*T,o.h*T);g.restore();
     }else if(o.k==='spike'){
-      const b=floorY-o.y*T;g.save();g.shadowColor=th.line;g.shadowBlur=6;g.fillStyle='#05060f';
-      g.beginPath();g.moveTo(sx+T*.08,b);g.lineTo(sx+T*.5,b-T*.92);g.lineTo(sx+T*.92,b);g.closePath();g.fill();
-      g.strokeStyle='#ffffff';g.lineWidth=2.2;g.stroke();g.restore();
+      g.save();g.shadowColor=th.line;g.shadowBlur=6;g.fillStyle='#05060f';g.beginPath();
+      if(o.flip){const t=floorY-(o.y+1)*T;g.moveTo(sx+T*.08,t);g.lineTo(sx+T*.5,t+T*.92);g.lineTo(sx+T*.92,t);}
+      else{const b=floorY-o.y*T;g.moveTo(sx+T*.08,b);g.lineTo(sx+T*.5,b-T*.92);g.lineTo(sx+T*.92,b);}
+      g.closePath();g.fill();g.strokeStyle='#ffffff';g.lineWidth=2.2;g.stroke();g.restore();
     }else if(o.k==='orb'){
       const cx=sx,cy=floorY-o.y*T,r=T*.3*(1+.1*pulse);g.save();g.globalAlpha=o.used?.3:1;g.shadowColor='#ffd45c';g.shadowBlur=14;
       g.strokeStyle='#ffd45c';g.lineWidth=T*.09;g.beginPath();g.arc(cx,cy,r,0,7);g.stroke();g.fillStyle='rgba(255,212,92,.35)';g.fill();g.restore();
     }else if(o.k==='pad'){
       g.save();g.shadowColor='#ffd45c';g.shadowBlur=12;g.fillStyle='#ffd45c';g.beginPath();g.ellipse(sx+T/2,floorY-o.y*T,T*.42,T*.2,0,Math.PI,0);g.fill();g.restore();
+    }else if(o.k==='portal'){
+      const col=MODES[o.mode].col,top=C!=null?floorY-C*T:floorY-5*T,ph=floorY-top;
+      g.save();g.shadowColor=col;g.shadowBlur=16;g.strokeStyle=col;g.lineWidth=T*.14;rr(g,sx+T*.1,top+T*.3,T*.8,ph-T*.6,T*.4);g.stroke();
+      g.fillStyle=col;g.globalAlpha=.18;g.fill();g.globalAlpha=1;g.font=`900 ${Math.round(T*.6)}px Nunito,sans-serif`;g.textAlign='center';g.textBaseline='middle';g.fillText(MODES[o.mode].letter,sx+T/2,top+ph/2);g.restore();
     }else if(o.k==='spark'){
       if(!o.used){g.save();g.shadowColor='#ffd45c';g.shadowBlur=10;g.fillStyle='#ffd45c';g.translate(sx,floorY-o.y*T);g.rotate(time*2);starShape(g,0,0,T*.22);g.fill();g.restore();}
     }
@@ -1034,27 +1231,29 @@ function drawParts(g,dt){
 let trail=[];
 function addTrail(x,y,c,vx){trail.push({x,y,c,vx,life:.35});}
 function drawTrail(g,dt){trail=trail.filter(p=>(p.life-=dt)>0);trail.forEach(p=>{p.x+=p.vx*dt;g.globalAlpha=p.life/.35*.6;g.fillStyle=p.c;const s=6*p.life/.35+2;g.fillRect(p.x-s/2,p.y-s/2,s,s);});g.globalAlpha=1;}
-function view(cv,mode,camX){
+function view(cv,mode,camX,ceil){
   const {g,w,h}=fitCanvas(cv);
-  const T=mode==='chal'?Math.min(w/9,h/6.5):Math.min(w/8.5,h/4.4);
-  const floorY=mode==='chal'?h*.74:h-T*.85;
-  return {g,w,h,T,floorY,camX:camX||0};
+  let T,floorY;
+  if(mode==='run'){T=Math.min(w/8.5,h/4.4);floorY=h-T*.85;}
+  else if(ceil!=null){T=Math.min(w/9,(h-150)/(ceil+1.5));floorY=Math.min(h-T*1.2,(h+ceil*T)/2+40);}
+  else{T=Math.min(w/9,h/6.5);floorY=h*.74;}
+  return {g,w,h,T,floorY,camX:camX||0,ceil:ceil==null?null:ceil};
 }
 
 /* ---------- learning runner: questions are portals ---------- */
 let R=null,timers=[];
 const later=(fn,ms)=>{const t=setTimeout(fn,ms);timers.push(t);return t;};
 function clearTimers(){timers.forEach(clearTimeout);timers=[];}
-function renderDots(){$('#dots').innerHTML=Array.from({length:R.n},(_,i)=>`<i class="${i<R.i?'done':i===R.i?'now':''}"></i>`).join('');}
+function renderDots(){$('#dots').innerHTML=Array.from({length:R.n},(_,i)=>`<i class="${R.res[i]||(i===R.i?'now':'')}"></i>`).join('');}
 function runIdle(){
   setPrompt('Беги к порталу!');
   $('#q').innerHTML=`<div class="runmsg"><b>Тап — прыжок</b><small>Перепрыгивай шипы и собирай звёздочки</small></div>`;
 }
 function startRound(subj){
   clearTimers();parts=[];trail=[];
-  R={subj,level:P.levels[subj],i:0,n:5,mistakes:0,used:new Set(),phase:'run',speed:6,camX:-2,
-     c:newCube(0),input:{hold:false,buffer:0},bumpT:0,lastCall:false,syl:null,
-     W:{objs:[],speedNow:6,lethal:false}};
+  R={subj,level:P.levels[subj],i:0,n:5,pts:0,res:[],used:new Set(),phase:'run',speed:6,camX:-2,
+     c:newCube(0),input:{hold:false,buffer:0},bumpT:0,lastCall:false,syl:null,coolUntil:0,
+     W:{objs:[],speedNow:6,lethal:false,ceil:null}};
   R.W.onJump=()=>sfx.jump();
   R.W.onSpark=o=>{sfx.spark();const V=R.V;if(V)burst((o.x-V.camX)*V.T,V.floorY-o.y*V.T,'#ffd45c',10,160);};
   R.W.onBump=()=>{sfx.bump();R.bumpT=.7;};
@@ -1089,8 +1288,8 @@ function runLoop(ts){
     }
   }else if(R.phase!=='fly'){R.W.speedNow=0;stepCube(R.W,c,dt,{hold:false,buffer:0});}
   R.camX+=((c.x-2)-R.camX)*Math.min(1,dt*5);V.camX=R.camX;
-  const time=now,sk=skinById(P.skin);
-  drawWorld(V,R.W.objs,RUN_THEMES[R.subj],time);
+  const sk=skinById(P.skin);
+  drawWorld(V,R.W.objs,RUN_THEMES[R.subj],now);
   let cx=(c.x-V.camX)*V.T+V.T/2,cy=V.floorY-c.y*V.T-V.T/2,rot=c.rot;
   if(R.phase==='fly'&&R.fly){
     const f=R.fly;f.t+=dt/f.dur;const k=Math.min(1,f.t);
@@ -1098,10 +1297,10 @@ function runLoop(ts){
     cx=f.from.x+(f.to.x-f.from.x)*u;cy=f.from.y+(f.to.y-f.from.y)*u-Math.sin(Math.PI*u)*V.T*1.3;rot=f.rot0+u*Math.PI*2;
     if(k>=1)flyDone();
   }
-  if(R.phase==='run'&&c.ground&&Math.random()<.6)addTrail(cx-V.T*.45,cy+V.T*.4,sk.trail||RUN_THEMES[R.subj].line,-R.W.speedNow*V.T*.6);
+  if(R.phase==='run'&&c.ground&&Math.random()<.6)addTrail(cx-V.T*.45,cy+V.T*.4,(P.hero==='owl'&&sk.trail)||RUN_THEMES[R.subj].line,-R.W.speedNow*V.T*.6);
   drawTrail(V.g,dt);
   if(R.bumpT>0)R.bumpT-=dt;
-  if(!(R.bumpT>0&&Math.floor(R.bumpT*12)%2))drawOwl(V.g,cx,cy,V.T*.94,rot,sk,time);
+  if(!(R.bumpT>0&&Math.floor(R.bumpT*12)%2))drawChar(V.g,cx,cy,V.T*.94,rot,P.hero,now);
   R.cubeScreen={x:cx,y:cy};
   drawParts(V.g,dt);
   requestAnimationFrame(runLoop);
@@ -1124,48 +1323,70 @@ function arriveFork(){
   }else showPortals(t.opts);
 }
 function renderSylFork(){
-  const s=R.syl,t=s.t;R.wrong=0;
+  const s=R.syl,t=s.t;
   setPrompt('Собери слово');
   $('#q').innerHTML=`<div class="pic">${t.e}</div><div class="slots">${t.s.map((x,i)=>i<s.pos?`<span class="slot full">${x}</span>`:'<span class="slot"></span>').join('')}</div>`;
   showPortals(shuffle(s.tiles).map(x=>({h:wd(x),ok:x===t.s[s.pos],syl:x})));
 }
+function triesLeftHtml(){const left=2-R.wrong;return `<span class="tries">${'❤'.repeat(Math.max(0,left))}${'♡'.repeat(Math.max(0,2-left))}</span>`;}
 function showPortals(opts){
-  const box=$('#portals');box.classList.remove('out');box.innerHTML='';
+  const box=$('#portals');box.classList.remove('out','cool');box.innerHTML='';
   const cols=shuffle(PORTAL_COLORS);
   opts.forEach((op,i)=>{
     const b=document.createElement('button');b.className='portal';b.innerHTML=op.h;b.style.setProperty('--pc',cols[i%cols.length]);
     b.style.animationDelay=(i*70)+'ms';if(op.ok)b.dataset.ok='1';
     b.addEventListener('click',()=>choosePortal(b,op));box.appendChild(b);
   });
+  $('#prompt').insertAdjacentHTML('beforeend',triesLeftHtml());
 }
-function choosePortal(b,op){
+function choosePortal(b,op,forced){
   if(!R||R.phase!=='fork'||b.classList.contains('no'))return;
+  if(!forced&&(R.revealed||Date.now()<R.coolUntil))return;
   const st=$('#runStage').getBoundingClientRect(),r=b.getBoundingClientRect();
   R.phase='fly';sfx.jump();
-  R.fly={t:0,dur:op.ok?.45:.6,ok:!!op.ok,op,btn:b,rot0:R.c.rot,from:Object.assign({},R.cubeScreen),to:{x:r.left-st.left+r.width*.3,y:r.top-st.top+r.height/2}};
+  R.fly={t:0,dur:op.ok?.45:.6,ok:!!op.ok,forced:!!forced,op,btn:b,rot0:R.c.rot,from:Object.assign({},R.cubeScreen),to:{x:r.left-st.left+r.width*.3,y:r.top-st.top+r.height/2}};
 }
 function flyDone(){
   const f=R.fly;R.fly=null;
   if(!f.ok){
-    R.phase='fork';R.mistakes++;R.wrong++;f.btn.classList.add('no');sfx.no();
-    if(R.wrong===1){toast(pick(TRY));if(R.task&&R.task.visual&&!R.syl&&!$('#q .hintdots'))$('#q').insertAdjacentHTML('beforeend',R.task.visual());}
-    else{setHint(R.syl?'Назовите картинку вслух по слогам: какой слог следующий?':(R.task.hint||'Посмотри внимательно.'));const c=$('#portals [data-ok]');if(c)c.classList.add('hint');}
+    R.phase='fork';R.wrong++;f.btn.classList.add('no');sfx.no();
+    if(R.wrong>=2){
+      /* attempts are over: the right portal lights up and Uhu goes through it without a point */
+      R.revealed=true;$('#portals').classList.add('cool');
+      const c=$('#portals [data-ok]');if(c)c.classList.add('hint');
+      setHint('Попытки кончились. Правильный ответ светится.');
+      later(()=>{const c2=$('#portals [data-ok]');if(c2&&R)choosePortal(c2,{ok:true,syl:R.syl?R.syl.t.s[R.syl.pos]:null},true);},1600);
+      return;
+    }
+    toast(pick(TRY));
+    if(R.task&&R.task.visual&&!R.syl&&!$('#q .hintdots'))$('#q').insertAdjacentHTML('beforeend',R.task.visual());
+    setHint((R.syl?'Назовите картинку вслух по слогам: какой слог следующий?':(R.task.hint||'Посмотри внимательно.')));
+    $('#prompt').insertAdjacentHTML('beforeend',triesLeftHtml());
+    R.coolUntil=Date.now()+1500;const box=$('#portals');box.classList.add('cool');later(()=>box.classList.remove('cool'),1500);
     return;
   }
-  f.btn.classList.add('ok');burst(f.to.x,f.to.y,'#ffd45c',26,260);
+  f.btn.classList.add('ok');burst(f.to.x,f.to.y,f.forced?'#aab2e6':'#ffd45c',26,260);
   let wordDone=true;
-  if(R.syl){const s=R.syl;s.tiles.splice(s.tiles.indexOf(f.op.syl),1);s.pos++;wordDone=s.pos>=s.t.s.length;
-    $$('#q .slot')[s.pos-1].textContent=f.op.syl;$$('#q .slot')[s.pos-1].classList.add('full');}
-  if(wordDone){sfx.ok();praise(pick(PRAISE));}else sfx.tick();
+  if(R.syl){
+    const s=R.syl;
+    if(f.forced){s.pos=s.t.s.length;$$('#q .slot').forEach((el,i)=>{el.textContent=s.t.s[i];el.classList.add('full');});}
+    else{s.tiles.splice(s.tiles.indexOf(f.op.syl),1);s.pos++;$$('#q .slot')[s.pos-1].textContent=f.op.syl;$$('#q .slot')[s.pos-1].classList.add('full');}
+    wordDone=s.pos>=s.t.s.length;
+  }
+  if(wordDone){
+    const r=f.forced?'miss':R.wrong===0?'gold':'half';
+    R.res[R.i]=r;R.pts+=r==='gold'?1:r==='half'?.5:0;
+    if(r==='miss')sfx.no();else{sfx.ok();praise(r==='gold'?pick(PRAISE):'Получилось!');}
+  }else sfx.tick();
   const V=R.V;
   R.c.x=V.camX+f.to.x/V.T-.5;R.c.y=Math.max(0,(V.floorY-f.to.y)/V.T-.5);R.c.vy=4;R.c.rot=f.rot0;
   R.phase='pause';
   later(()=>{
     $('#portals').classList.add('out');
     later(()=>{
-      $('#portals').innerHTML='';
-      if(!wordDone){newSegment(R.c.x,7,0);return;}
-      R.syl=null;R.i++;renderDots();
+      $('#portals').innerHTML='';$('#portals').classList.remove('cool');R.revealed=false;
+      if(!wordDone){R.coolUntil=0;newSegment(R.c.x,7,0);return;}
+      R.syl=null;R.wrong=0;R.i++;renderDots();
       if(R.i>=R.n){R.phase='done';later(finishRound,500);return;}
       runIdle();newSegment(R.c.x,15+rnd(6),R.level>=2?3:2);
     },260);
@@ -1174,67 +1395,126 @@ function flyDone(){
 $('#runStage').addEventListener('pointerdown',e=>{if(!R||R.phase!=='run'||e.target.closest('button'))return;ac();R.input.hold=true;R.input.buffer=.12;});
 ['pointerup','pointercancel','pointerleave'].forEach(t=>$('#runStage').addEventListener(t,()=>{if(R)R.input.hold=false;}));
 function finishRound(){
-  const s=R.subj;let msg='';
-  if(R.mistakes<=1){P.good[s]++;if(P.good[s]>=2&&P.levels[s]<5){P.levels[s]++;P.good[s]=0;msg='Ты так хорошо справляешься, что задания станут чуть сложнее!';}}
-  else if(R.mistakes>=4){P.good[s]=0;if(P.levels[s]>1)P.levels[s]--;}
+  const s=R.subj,pts=R.pts;let msg='';
+  if(pts>=4.5){P.good[s]++;if(P.good[s]>=2&&P.levels[s]<5){P.levels[s]++;P.good[s]=0;msg='Ты так хорошо справляешься, что задания станут чуть сложнее!';}}
+  else if(pts<2.5){P.good[s]=0;if(P.levels[s]>1)P.levels[s]--;}
   else P.good[s]=0;
   if(R.lastCall)pendingLock=true;
-  giveStar(msg);
+  const ptsTxt=`Очки: ${String(pts).replace('.',',')} из 5.`;
+  if(pts>=STAR_POINTS){giveStar(ptsTxt+(msg?' '+msg:''));return;}
+  save();
+  $('#rewStar').classList.add('dim');$('#rewTitle').textContent='Почти получилось!';
+  $('#rewText').textContent=`${ptsTxt} Для звезды нужно ${STAR_POINTS}. Отвечай с первой попытки — так очков больше.`;
+  $('#rewAgain').hidden=false;$('#rewAgain').dataset.subj=s;
+  show('reward');sfx.no();setTrack('lullaby');
 }
-function unlockedSkins(){return SKINS.filter(sk=>sk.ch!=null?P.chDone[sk.ch]:P.stars>=sk.need).map(s=>s.id);}
+function isUnlocked(item){return item.ch!=null?P.chDone[item.ch]:P.stars>=item.need;}
+function unlockedSkins(){return SKINS.filter(isUnlocked).map(s=>s.id);}
+function unlockedHeroes(){return HEROES.filter(isUnlocked).map(s=>s.id);}
+function freshUnlocks(beforeS,beforeH){
+  const s=SKINS.filter(x=>isUnlocked(x)&&!beforeS.includes(x.id)).map(x=>'наряд «'+x.name+'»');
+  const h=HEROES.filter(x=>isUnlocked(x)&&!beforeH.includes(x.id)).map(x=>'новый друг — '+x.name);
+  return [...h,...s];
+}
 function giveStar(extra){
-  const before=unlockedSkins();
+  const bs=unlockedSkins(),bh=unlockedHeroes();
   P.stars++;save();
-  const fresh=SKINS.filter(sk=>unlockedSkins().includes(sk.id)&&!before.includes(sk.id));
+  const fresh=freshUnlocks(bs,bh);
   const inSky=P.stars%PER_SKY;
   let title='Звезда найдена!',text=`На небе уже ${inSky} из ${PER_SKY}.`;
   if(inSky===0){title='Небо сияет!';text='Ты зажигаешь целое небо звёзд! Уху летит дальше, в новое небо.';}
-  if(fresh.length)text+=` Новый наряд для Уху: «${fresh.map(s=>s.name).join('», «')}». Загляни в Гардероб!`;
-  const ch=LEVELS.find((L,i)=>L.need===P.stars&&i>0);if(ch)text+=` Открыт уровень Испытания «${ch.name}»!`;
-  if(extra)text+=' '+extra;
+  if(fresh.length)text+=' Открыто: '+fresh.join(', ')+'. Загляни в Гардероб!';
+  const ch=LEVELS.filter((L,i)=>L.need===P.stars&&i>0);if(ch.length)text+=' Открыт уровень Испытания: '+ch.map(L=>MODES[L.mode]?MODES[L.mode].name+' «'+L.name+'»':'«'+L.name+'»').join(', ')+'!';
+  if(extra)text=extra+' '+text;
+  $('#rewStar').classList.remove('dim');$('#rewAgain').hidden=true;
   $('#rewTitle').textContent=title;$('#rewText').textContent=text;
   show('reward');sfx.star();setTrack('lullaby');
 }
 
 /* ---------- challenge (Geometry Dash-like, own levels) ---------- */
-let CH=null;
+let CH=null,chTab='cube';
+const TABS=[['cube','Кубик'],['ship','Ракета'],['ball','Шарик'],['ufo','НЛО'],['wave','Волна'],['mix','Всё вместе'],['mine','Мои уровни']];
+const MODE_HELP={cube:'Тап — прыжок. Держи палец — прыгает без остановки.',ship:'Держи палец — ракета летит вверх, отпусти — вниз.',
+  ball:'Тап — шарик переворачивается на потолок и обратно.',ufo:'Каждый тап — маленький прыжок в воздухе.',wave:'Держи палец — волна идёт вверх, отпусти — вниз.',
+  mix:'Цветные ворота меняют режим: К — кубик, Р — ракета, Ш — шарик, Н — НЛО, В — волна.',mine:'Здесь уровни, которые ты построил сам.'};
 function chUnlocked(i){return P.stars>=LEVELS[i].need;}
-function openChSel(){
-  $('#levels').innerHTML=LEVELS.map((L,i)=>{
-    const open=chUnlocked(i),done=P.chDone[i],best=P.chBest[i];
+function rewardOf(i){const s=SKINS.find(x=>x.ch===i);if(s)return 'наряд «'+s.name+'»';const h=HEROES.find(x=>x.ch===i);return h?'друг — '+h.name:'';}
+function openChSel(tab){
+  if(tab)chTab=tab;
+  $('#modeTabs').innerHTML=TABS.map(([id,n])=>`<button data-tab="${id}" class="${chTab===id?'on':''}">${n}</button>`).join('');
+  $('#modeHelp').textContent=MODE_HELP[chTab];
+  if(chTab==='mine')renderMine();
+  else $('#levels').innerHTML=LEVELS.map((L,i)=>{
+    if(L.mode!==chTab)return '';
+    const open=chUnlocked(i),done=P.chDone[i],best=P.chBest[i],rw=rewardOf(i);
     return `<div class="lvcard${open?'':' locked'}" style="--lc:${L.th.line}">
       <div class="lvhead"><b>${L.name}</b><span class="diff">${'★'.repeat(L.diff)}${'☆'.repeat(3-L.diff)}</span></div>
-      <div class="lvmeta">${open?(done?'Пройден! ':'')+'Лучший результат: '+best+'%':'Откроется за '+L.need+' ★ (сейчас '+P.stars+')'} · награда — наряд «${SKINS.find(s=>s.ch===i).name}»</div>
+      <div class="lvmeta">${open?(done?'Пройден! ':'')+'Лучший результат: '+best+'%':'Откроется за '+L.need+' ★ (сейчас '+P.stars+')'}${rw?' · награда — '+rw:''}</div>
       ${open?`<div class="btnrow" style="justify-content:flex-start"><button class="btn2 main" data-ch="${i}">Играть</button><button class="btn2" data-chp="${i}">Тренировка</button></div>`:''}
     </div>`;}).join('');
   show('chsel');setTrack('lullaby');
 }
-$('#levels').addEventListener('click',e=>{const b=e.target.closest('[data-ch],[data-chp]');if(!b)return;ac();
-  if(b.dataset.ch!=null)startChallenge(+b.dataset.ch,false);else startChallenge(+b.dataset.chp,true);});
+$('#modeTabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b)openChSel(b.dataset.tab);});
+$('#levels').addEventListener('click',e=>{
+  const b=e.target.closest('[data-ch],[data-chp],[data-cplay],[data-cedit],[data-cdel],#newLevel');if(!b)return;ac();
+  if(b.id==='newLevel'){openBuilder(null);return;}
+  if(b.dataset.ch!=null)startChallenge(+b.dataset.ch,false);
+  else if(b.dataset.chp!=null)startChallenge(+b.dataset.chp,true);
+  else if(b.dataset.cplay!=null)startCustom(+b.dataset.cplay,false);
+  else if(b.dataset.cedit!=null)openBuilder(+b.dataset.cedit);
+  else if(b.dataset.cdel!=null){
+    const i=+b.dataset.cdel;
+    if(b.dataset.armed){customs.splice(i,1);saveCustoms();renderMine();}
+    else{b.dataset.armed='1';b.textContent='Точно удалить?';setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.textContent='Удалить';}},3000);}
+  }
+});
+function levelFromCustom(cl){
+  const objs=[];
+  cl.cells.forEach(([t,x,y,m])=>{
+    if(t==='b')objs.push(bl_(x,y,1,1));else if(t==='s')objs.push(sp_(x,y));else if(t==='d')objs.push(spd_(x,y));
+    else if(t==='o')objs.push(orb_(x+.5,y+.5));else if(t==='p')objs.push(Object.assign(pd_(x),{y}));else if(t==='g')objs.push(pt_(x,m));
+  });
+  objs.sort((a,b)=>a.x-b.x);
+  const len=Math.max(24,cl.cells.reduce((a,c)=>Math.max(a,c[1]),0)+10);
+  const busy=new Set(cl.cells.map(c=>c[1])),safe=[];
+  for(let x=6;x<len;x+=6){let s=x;while(s<len&&(busy.has(s)||busy.has(s+1)||busy.has(s-1)))s++;if(s<len)safe.push(s);}
+  return {objs,safe,len,speed:cl.speed||7,mode:cl.mode||'cube',ceil:BUILD_CEIL};
+}
 function startChallenge(n,practice){
   parts=[];trail=[];
-  CH={n,practice,lv:buildLevel(n),attempt:0,cp:null,cps:[],state:'play',input:{hold:false,buffer:0},lastTs:0,lastCall:false};
+  CH={n,practice,lv:buildLevel(n),th:LEVELS[n].th,attempt:0,cp:null,cps:[],state:'play',input:{hold:false,buffer:0},lastTs:0,lastCall:false};
+  $('#chOver').hidden=true;show('chal');chRestart(true);requestAnimationFrame(chLoop);
+}
+function startCustom(i,fromBuilder){
+  parts=[];trail=[];
+  const cl=fromBuilder?B.level:customs[i];
+  CH={n:-1,custom:i,fromBuilder,practice:false,lv:levelFromCustom(cl),th:TH_GREEN,attempt:0,cp:null,cps:[],state:'play',input:{hold:false,buffer:0},lastTs:0,lastCall:false};
   $('#chOver').hidden=true;show('chal');chRestart(true);requestAnimationFrame(chLoop);
 }
 function chRestart(full){
   const lv=CH.lv;
-  CH.W={objs:lv.objs.map(o=>Object.assign({},o)),speedNow:lv.speed,lethal:true,
-    onJump(){},onOrb:()=>sfx.orb(),onPad:()=>sfx.pad()};
-  const startX=(CH.practice&&CH.cp!=null&&!full)?CH.cp:0;
-  CH.c=newCube(startX);CH.state='play';CH.input.hold=false;CH.input.buffer=0;CH.attempt++;
-  CH.camX=startX-2.2;
-  if(!CH.practice||startX===0)setTrack('challenge',true);
+  CH.W={objs:lv.objs.map(o=>Object.assign({},o)),speedNow:lv.speed,lethal:true,ceil:lv.ceil,
+    onJump(){},onOrb:()=>sfx.orb(),onPad:()=>sfx.pad(),onPortal:()=>sfx.cp()};
+  const cp=(CH.practice&&CH.cp&&!full)?CH.cp:null;
+  CH.c=newCube(cp?cp.x:0,cp?cp.mode:lv.mode);
+  if(cp){CH.c.y=cp.y;CH.c.gd=cp.gd;CH.W.objs.forEach(o=>{if(o.x<cp.x&&(o.k==='portal'||o.k==='orb'||o.k==='pad'))o.used=true;});}
+  CH.state='play';CH.input.hold=false;CH.input.buffer=0;CH.attempt++;
+  CH.camX=CH.c.x-2.2;
+  if(!cp)setTrack('challenge',true);
   $('#chAttempt').textContent=CH.practice?'Тренировка':'Попытка '+CH.attempt;
 }
 function chLoop(ts){
   if(cur!=='chal'||!CH)return;
   const now=ts/1000,dt=Math.min(.05,CH.lastTs?now-CH.lastTs:0);CH.lastTs=now;
-  const V=view($('#chCanvas'),'chal',CH.camX),c=CH.c,lv=CH.lv,L=LEVELS[CH.n],sk=skinById(P.skin);
+  const lv=CH.lv,V=view($('#chCanvas'),'chal',CH.camX,lv.ceil),c=CH.c,th=CH.th;
   if(CH.state==='play'){
     let acc=dt;
     while(acc>1e-6){
       const st=Math.min(acc,PHYS.dt);acc-=st;stepCube(CH.W,c,st,CH.input);
-      if(CH.practice&&c.ground){const sp=lv.safe.filter(x=>x<=c.x&&x>(CH.cp??-1));if(sp.length&&c.x-sp[sp.length-1]<1.5){CH.cp=sp[sp.length-1];CH.cps.push(CH.cp);sfx.cp();}}
+      if(CH.practice){
+        const last=(CH.cp?CH.cp.x:-1),sp=lv.safe.filter(x=>x<=c.x&&x>last);
+        if(sp.length&&c.x-sp[sp.length-1]<1.5&&(c.mode!=='cube'||c.ground)){CH.cp={x:c.x,y:c.y,mode:c.mode,gd:c.gd};CH.cps.push(CH.cp);sfx.cp();}
+      }
       if(c.dead){chDie(V);break;}
       if(c.x>=lv.len){chWin();break;}
     }
@@ -1242,11 +1522,12 @@ function chLoop(ts){
     CH.deadT-=dt;if(CH.deadT<=0){if(CH.lastCall){lockNow();return;}chRestart(false);}
   }
   CH.camX=c.x-2.2;V.camX=CH.camX;
-  drawWorld(V,CH.W.objs,L.th,now,{cps:CH.practice?CH.cps:null});
+  drawWorld(V,CH.W.objs,th,now,{cps:CH.practice?CH.cps:null});
   const cx=(c.x-V.camX)*V.T+V.T/2,cy=V.floorY-c.y*V.T-V.T/2;
-  if(CH.state==='play'&&c.ground)addTrail(cx-V.T*.45,cy+V.T*.4,sk.trail||L.th.line,-lv.speed*V.T*.6);
+  const sk=skinById(P.skin),tc=(P.hero==='owl'&&sk.trail)||(c.mode==='cube'?th.line:MODES[c.mode].col);
+  if(CH.state==='play'&&(c.ground||c.mode!=='cube'))addTrail(cx-V.T*.45,cy+(c.mode==='cube'?V.T*.4:0),tc,-lv.speed*V.T*.6);
   drawTrail(V.g,dt);
-  if(CH.state!=='dead')drawOwl(V.g,cx,cy,V.T*.94,c.rot,sk,now);
+  if(CH.state!=='dead')drawHero(V.g,c,cx,cy,V.T*.94,now,th);
   drawParts(V.g,dt);
   const pct=Math.min(100,Math.floor(c.x/lv.len*100));
   $('#chBar').style.width=pct+'%';$('#chPct').textContent=pct+'%';
@@ -1254,69 +1535,155 @@ function chLoop(ts){
 }
 function chDie(V){
   const c=CH.c;CH.state='dead';CH.deadT=.8;sfx.crash();
-  const cx=(c.x-V.camX)*V.T+V.T/2,cy=V.floorY-c.y*V.T-V.T/2;burst(cx,cy,'#ffffff',30,380);burst(cx,cy,LEVELS[CH.n].th.line,20,300);
+  const cx=(c.x-V.camX)*V.T+V.T/2,cy=V.floorY-c.y*V.T-V.T/2;burst(cx,cy,'#ffffff',30,380);burst(cx,cy,CH.th.line,20,300);
   const pct=Math.floor(c.x/CH.lv.len*100);
-  if(!CH.practice&&pct>P.chBest[CH.n]){P.chBest[CH.n]=pct;save();}
+  if(!CH.practice&&CH.n>=0&&pct>P.chBest[CH.n]){P.chBest[CH.n]=pct;save();}
+  if(CH.n<0&&!CH.fromBuilder&&customs[CH.custom]&&pct>(customs[CH.custom].best||0)){customs[CH.custom].best=pct;saveCustoms();}
 }
 function chWin(){
   CH.state='win';sfx.star();
-  let text;
-  if(CH.practice){text='Тренировка пройдена! Теперь попробуй без точек сохранения.';}
-  else{
-    const first=!P.chDone[CH.n];P.chDone[CH.n]=true;P.chBest[CH.n]=100;save();
-    const sk=SKINS.find(s=>s.ch===CH.n);
-    text=`Попыток: ${CH.attempt}.`+(first?` Новый наряд для Уху: «${sk.name}»!`:'');
+  let text,title='Уровень пройден!';
+  if(CH.practice){text='Тренировка пройдена! Теперь попробуй без точек сохранения.';title='Отлично!';}
+  else if(CH.n<0){
+    text=`Попыток: ${CH.attempt}.`;
+    if(CH.fromBuilder){B.level.done=true;text+=' Уровень проходимый — можно сохранять!';}
+    else if(customs[CH.custom]){customs[CH.custom].best=100;customs[CH.custom].done=true;saveCustoms();}
+  }else{
+    const bs=unlockedSkins(),bh=unlockedHeroes();
+    P.chDone[CH.n]=true;P.chBest[CH.n]=100;save();
+    const fresh=freshUnlocks(bs,bh);
+    text=`Попыток: ${CH.attempt}.`+(fresh.length?' Открыто: '+fresh.join(', ')+'!':'');
   }
-  $('#chOverTitle').textContent=CH.practice?'Отлично!':'Уровень пройден!';$('#chOverText').textContent=text;$('#chOver').hidden=false;
+  $('#chOverTitle').textContent=title;$('#chOverText').textContent=text;$('#chOver').hidden=false;
+  $('#chToList').textContent=CH.fromBuilder?'В строитель':'К уровням';
   if(CH.lastCall)later(lockNow,2500);
 }
+function chExit(){const fb=CH&&CH.fromBuilder;CH=null;if(fb)openBuilder(B.idx,true);else openChSel();}
 $('#chal').addEventListener('pointerdown',e=>{if(!CH||e.target.closest('button')||CH.state!=='play')return;ac();CH.input.hold=true;CH.input.buffer=.12;});
 ['pointerup','pointercancel'].forEach(t=>$('#chal').addEventListener(t,()=>{if(CH)CH.input.hold=false;}));
 $('#chAgain').addEventListener('click',()=>{$('#chOver').hidden=true;CH.cp=null;CH.cps=[];CH.attempt=0;chRestart(true);});
-$('#chToList').addEventListener('click',()=>{CH=null;openChSel();});
-$('#chHome').addEventListener('click',()=>{CH=null;openChSel();});
+$('#chToList').addEventListener('click',chExit);
+$('#chHome').addEventListener('click',chExit);
 
-/* Level check used by tests: search for a jump sequence that finishes the level. */
-window.__uhuSolve=function(n){
-  const lv=buildLevel(n),seen=new Set(),dyn=lv.objs.filter(o=>o.k==='orb'||o.k==='pad');
-  const W={objs:lv.objs,speedNow:lv.speed,lethal:true};
-  const snap=(c)=>({c:Object.assign({},c),u:dyn.map(o=>!!o.used)});
+/* Level check used by tests: search for an input sequence that finishes the level. */
+window.__uhuSolve=function(n,given){
+  const lv=given||buildLevel(n),seen=new Set(),dyn=lv.objs.filter(o=>o.k==='orb'||o.k==='pad'||o.k==='portal');
+  const W={objs:lv.objs,speedNow:lv.speed,lethal:true,ceil:lv.ceil};
+  dyn.forEach(o=>o.used=false);
+  const snap=(c,hold)=>({c:Object.assign({},c),u:dyn.map(o=>!!o.used),hold});
   const load_=s=>{dyn.forEach((o,i)=>o.used=s.u[i]);return Object.assign({},s.c);};
-  const stack=[snap(newCube(0))];let iter=0;
-  while(stack.length&&iter<4e6){
-    const s=stack.pop();let c=load_(s);
+  const c0=newCube(0,lv.mode);c0.f=0;
+  const stack=[snap(c0,false)];let iter=0;
+  while(stack.length&&iter<6e6){
+    const s=stack.pop();let c=load_(s),hold=s.hold;
     for(;;){
       iter++;
       if(c.dead)break;
       if(c.x>=lv.len)return {ok:true,iter};
-      const nearOrb=dyn.some(o=>o.k==='orb'&&!o.used&&Math.hypot(c.x+.5-o.x,c.y+.5-o.y)<1.05);
-      if(c.ground||nearOrb){
-        const key=Math.round(c.x*30)+','+Math.round(c.y*30)+','+Math.round(c.vy)+','+dyn.map(o=>o.used?1:0).join('');
+      const m=c.mode;c.f=(c.f||0)+1;
+      let dec;
+      if(m==='cube')dec=c.ground||dyn.some(o=>o.k==='orb'&&!o.used&&Math.hypot(c.x+.5-o.x,c.y+.5-o.y)<1.05);
+      else if(m==='ball')dec=c.ground;
+      else dec=c.f%4===0;
+      if(dec){
+        const key=[m,Math.round(c.x*20),Math.round(c.y*20),Math.round(c.vy),c.gd,hold?1:0,dyn.map(o=>o.used?1:0).join('')].join(',');
         if(seen.has(key))break;seen.add(key);
-        const base=snap(c);
-        const a=load_(base);stepCube(W,a,PHYS.dt,{hold:false,buffer:.05});stack.push(snap(a));
-        c=load_(base);stepCube(W,c,PHYS.dt,{hold:false,buffer:0});continue;
+        const base=snap(c,hold);
+        if(m==='ship'||m==='wave'){const a=load_(base);stepCube(W,a,PHYS.dt,{hold:!hold,buffer:0});stack.push(snap(a,!hold));c=load_(base);}
+        else{const a=load_(base);stepCube(W,a,PHYS.dt,{hold:false,buffer:.05});stack.push(snap(a,false));c=load_(base);}
       }
-      stepCube(W,c,PHYS.dt,{hold:false,buffer:0});
+      stepCube(W,c,PHYS.dt,{hold:(m==='ship'||m==='wave')?hold:false,buffer:0});
     }
   }
   return {ok:false,iter};
 };
 
-/* ---------- wardrobe ---------- */
+/* ---------- wardrobe: friends and outfits ---------- */
 function openWardrobe(){
-  const un=unlockedSkins();
-  $('#skins').innerHTML=SKINS.map(sk=>{
-    const open=un.includes(sk.id);
-    const cond=sk.ch!=null?`Испытание ${sk.ch+1}`:`★ ${sk.need}`;
-    return `<button class="skin${open?'':' locked'}${P.skin===sk.id?' on':''}" data-skin="${sk.id}"><canvas width="128" height="128"></canvas><b>${sk.name}</b><small>${open?(P.skin===sk.id?'надет':'надеть'):cond}</small></button>`;}).join('');
-  $$('#skins .skin').forEach(b=>{const cv=b.querySelector('canvas'),g=cv.getContext('2d');drawOwl(g,64,72,72,0,skinById(b.dataset.skin),1.5);});
+  const uh=unlockedHeroes(),us=unlockedSkins();
+  const cond=x=>x.ch!=null?`${MODES[LEVELS[x.ch].mode]?MODES[LEVELS[x.ch].mode].name:'Испытание'} «${LEVELS[x.ch].name}»`:`★ ${x.need}`;
+  $('#heroes').innerHTML=HEROES.map(h=>{const open=uh.includes(h.id);
+    return `<button class="skin${open?'':' locked'}${P.hero===h.id?' on':''}" data-hero="${h.id}"><canvas width="128" height="128"></canvas><b>${h.name}</b><small>${open?(P.hero===h.id?'играет':'выбрать'):cond(h)}</small></button>`;}).join('');
+  $('#skins').innerHTML=SKINS.map(sk=>{const open=us.includes(sk.id);
+    return `<button class="skin${open?'':' locked'}${P.skin===sk.id?' on':''}" data-skin="${sk.id}"><canvas width="128" height="128"></canvas><b>${sk.name}</b><small>${open?(P.skin===sk.id?'надет':'надеть'):cond(sk)}</small></button>`;}).join('');
+  $$('#heroes .skin').forEach(b=>{const g=b.querySelector('canvas').getContext('2d');drawChar(g,64,74,66,0,b.dataset.hero,1.5);});
+  $$('#skins .skin').forEach(b=>{const g=b.querySelector('canvas').getContext('2d');drawOwl(g,64,72,72,0,skinById(b.dataset.skin),1.5);});
   show('wardrobe');
 }
-$('#skins').addEventListener('click',e=>{const b=e.target.closest('[data-skin]');if(!b)return;
-  if(!unlockedSkins().includes(b.dataset.skin)){sfx.no();toast('Этот наряд пока закрыт');return;}
-  P.skin=b.dataset.skin;save();sfx.ok();openWardrobe();});
+$('#wardrobe').addEventListener('click',e=>{
+  const h=e.target.closest('[data-hero]'),s=e.target.closest('[data-skin]');
+  if(h){if(!unlockedHeroes().includes(h.dataset.hero)){sfx.no();toast('Этот друг пока не пришёл');return;}P.hero=h.dataset.hero;save();sfx.ok();openWardrobe();}
+  else if(s){if(!unlockedSkins().includes(s.dataset.skin)){sfx.no();toast('Этот наряд пока закрыт');return;}P.skin=s.dataset.skin;P.hero='owl';save();sfx.ok();openWardrobe();}
+});
 
+/* ---------- level builder ---------- */
+const BUILD_CEIL=7,MAX_CUSTOM=8,MAX_LEN=300;
+let customs=[];
+try{customs=JSON.parse(localStorage.getItem(CUSTOM)||'[]')||[];if(!Array.isArray(customs))customs=[];}catch(e){customs=[];}
+function saveCustoms(){try{localStorage.setItem(CUSTOM,JSON.stringify(customs));}catch(e){toast('Не хватает места для сохранения');}}
+const TOOLS=[['b','Блок'],['s','Шип'],['d','Шип вниз'],['o','Кольцо'],['p','Батут'],['g:ship','Р'],['g:ball','Ш'],['g:ufo','Н'],['g:wave','В'],['g:cube','К'],['x','Ластик']];
+let B=null;
+function renderMine(){
+  $('#levels').innerHTML=(customs.length?customs.map((cl,i)=>`<div class="lvcard" style="--lc:${MODES[cl.mode||'cube'].col}">
+      <div class="lvhead"><b>${cl.name}</b><span class="lvmeta">${MODES[cl.mode||'cube'].name}</span></div>
+      <div class="lvmeta">${cl.done?'Пройден! ':''}Лучший результат: ${cl.best||0}%</div>
+      <div class="btnrow" style="justify-content:flex-start"><button class="btn2 main" data-cplay="${i}">Играть</button><button class="btn2" data-cedit="${i}">Изменить</button><button class="btn2" data-cdel="${i}">Удалить</button></div>
+    </div>`).join(''):'<p class="note">Пока нет своих уровней.</p>')
+    +(customs.length<MAX_CUSTOM?'<button class="btn2 main" id="newLevel" style="align-self:flex-start">Построить новый уровень</button>':`<p class="note">Можно хранить до ${MAX_CUSTOM} уровней. Удали старый, чтобы построить новый.</p>`);
+}
+function openBuilder(idx,keep){
+  if(!keep||!B){
+    const src=idx!=null&&customs[idx]?clone(customs[idx]):{name:'Мой уровень '+(customs.length+1),mode:'cube',speed:7,cells:[]};
+    B={idx,level:src,tool:'b',camX:-1,drag:null};
+  }
+  $('#bTools').innerHTML=TOOLS.map(([id,n])=>{const g=id.startsWith('g:')?MODES[id.slice(2)]:null;
+    return `<button class="tool${B.tool===id?' on':''}" data-tool="${id}"${g?` style="color:${g.col}"`:''}>${g?'Ворота '+n:n}</button>`;}).join('');
+  $('#bModes').innerHTML=Object.entries(MODES).map(([id,m])=>`<button data-bmode="${id}" class="${B.level.mode===id?'on':''}">${m.name}</button>`).join('');
+  $('#bName').textContent=B.level.name;
+  show('build');setTrack('lullaby');requestAnimationFrame(drawBuilder);
+}
+function cellsToObjs(){return levelFromCustom(B.level).objs;}
+function drawBuilder(){
+  if(cur!=='build'||!B)return;
+  const V=view($('#bCanvas'),'chal',B.camX,BUILD_CEIL);B.V=V;
+  drawWorld(V,cellsToObjs(),TH_GREEN,performance.now()/1000,{grid:true});
+  const sx=(0-V.camX)*V.T+V.T/2,sy=V.floorY-V.T/2;
+  drawHero(V.g,{mode:B.level.mode,rot:0},sx,sy,V.T*.9,1,TH_GREEN);
+  const len=levelFromCustom(B.level).len,fx=(len-V.camX)*V.T;
+  if(fx<V.w){V.g.fillStyle='#ffd45c';V.g.fillRect(fx,V.floorY-BUILD_CEIL*V.T,4,BUILD_CEIL*V.T);}
+  $('#bPos').value=String(Math.round(B.camX));
+}
+$('#bTools').addEventListener('click',e=>{const b=e.target.closest('[data-tool]');if(!b)return;B.tool=b.dataset.tool;$$('#bTools .tool').forEach(x=>x.classList.toggle('on',x===b));});
+$('#bModes').addEventListener('click',e=>{const b=e.target.closest('[data-bmode]');if(!b)return;B.level.mode=b.dataset.bmode;B.level.done=false;$$('#bModes button').forEach(x=>x.classList.toggle('on',x===b));drawBuilder();});
+$('#bPos').addEventListener('input',e=>{B.camX=+e.target.value;drawBuilder();});
+$('#bCanvas').addEventListener('pointerdown',e=>{if(!B)return;B.drag={x:e.clientX,cam:B.camX,moved:false};try{$('#bCanvas').setPointerCapture(e.pointerId);}catch(_){}});
+$('#bCanvas').addEventListener('pointermove',e=>{if(!B||!B.drag)return;const dx=e.clientX-B.drag.x;if(Math.abs(dx)>10)B.drag.moved=true;if(B.drag.moved){B.camX=clamp(B.drag.cam-dx/B.V.T,-1,MAX_LEN-6);drawBuilder();}});
+$('#bCanvas').addEventListener('pointerup',e=>{
+  if(!B||!B.drag)return;const moved=B.drag.moved;B.drag=null;if(moved)return;
+  const r=$('#bCanvas').getBoundingClientRect(),V=B.V;
+  const x=Math.floor(B.camX+(e.clientX-r.left)/V.T),y=Math.floor((V.floorY-(e.clientY-r.top))/V.T);
+  if(y<0||y>=BUILD_CEIL||x>MAX_LEN)return;
+  if(x<3){toast('Начало трассы оставь свободным');return;}
+  const cells=B.level.cells,i=cells.findIndex(c=>c[1]===x&&(c[2]===y||c[0]==='g'));
+  const t=B.tool,code=t.startsWith('g:')?'g':t;
+  if(i>=0){const same=cells[i][0]===code&&(code!=='g'||cells[i][3]===t.slice(2));cells.splice(i,1);if(same||t==='x'){sfx.tick();B.level.done=false;drawBuilder();return;}}
+  if(t==='x'){drawBuilder();return;}
+  if(code==='g'){for(let k=cells.length-1;k>=0;k--)if(cells[k][1]===x)cells.splice(k,1);cells.push(['g',x,0,t.slice(2)]);}
+  else cells.push([code,x,y]);
+  B.level.done=false;sfx.tick();drawBuilder();
+});
+$('#bTest').addEventListener('click',()=>{ac();if(!B.level.cells.length){toast('Поставь хотя бы один блок или шип');return;}startCustom(B.idx,true);});
+$('#bSave').addEventListener('click',()=>{
+  if(!B.level.cells.length){toast('Уровень пустой');return;}
+  if(!B.level.done){toast('Сначала пройди уровень сам — нажми «Проверить»');return;}
+  const copy=clone(B.level);copy.best=Math.max(copy.best||0,100);
+  if(B.idx!=null&&customs[B.idx])customs[B.idx]=copy;else{if(customs.length>=MAX_CUSTOM){toast('Нет места: удали старый уровень');return;}customs.push(copy);B.idx=customs.length-1;}
+  saveCustoms();sfx.ok();toast('Уровень сохранён');
+});
+$('#bClear').addEventListener('click',e=>{const b=e.currentTarget;if(b.dataset.armed){B.level.cells=[];B.level.done=false;delete b.dataset.armed;b.textContent='Очистить';drawBuilder();return;}
+  b.dataset.armed='1';b.textContent='Точно очистить?';setTimeout(()=>{delete b.dataset.armed;b.textContent='Очистить';},3000);});
+$('#bBack').addEventListener('click',()=>{B=null;openChSel('mine');});
+window.addEventListener('resize',()=>{if(cur==='build')drawBuilder();});
 
 /* ---------- play-time limit ---------- */
 /* Monotonic clock from the Android app (ms since boot, counts deep sleep too): changing the phone's clock does not shorten the pause. */
@@ -1333,7 +1700,7 @@ function lockLeft(){
 function fmtLeft(ms){const m=Math.ceil(ms/60000),h=Math.floor(m/60);return h?`${h} ч ${m%60} мин`:`${m} мин`;}
 function lockNow(){
   if(cur==='draw'&&ink>=25)saveDrawing();
-  clearTimers();clearInterval(storyTimer);R=null;CH=null;pendingLock=false;
+  clearTimers();R=null;CH=null;B=null;pendingLock=false;
   TS.lockUntil=Date.now()+COOLDOWN;TS.lockUp=uptime()||0;saveTS();
   music.track=null;showLock();
 }
@@ -1386,7 +1753,7 @@ setInterval(timeTick,1000);
 
 /* ---------- map ---------- */
 function goMap(){
-  clearTimers();clearInterval(storyTimer);R=null;CH=null;
+  clearTimers();R=null;CH=null;B=null;
   if(lockLeft()>0){showLock();return;}
   if(P.limit>0&&TS.used>=P.limit*60000&&!(TS.last&&Date.now()-TS.last>COOLDOWN)){lockNow();return;}
   show('map');setTrack('lullaby');requestAnimationFrame(updateMap);
@@ -1410,7 +1777,7 @@ function updateMap(){
   $('#skyCount').textContent=`★ ${n} из ${PER_SKY}`;
   $('#bubble').textContent=chapter()[1];
   $$('[data-lvl]').forEach(el=>{const l=P.levels[el.dataset.lvl];el.innerHTML=Array.from({length:5},(_,i)=>`<i class="${i<l?'on':''}"></i>`).join('');});
-  $('#wardNote').textContent=SKINS.find(s=>s.id===P.skin).name;
+  $('#wardNote').textContent=HEROES.find(h=>h.id===P.hero).name;
   updateTimePill();
   drawSky();
 }
@@ -1499,22 +1866,6 @@ $('#drawDone').addEventListener('click',()=>{
 });
 $('#drawBack').addEventListener('click',openStudio);
 
-let storyTimer=null,storyLine='';
-function openStory(){
-  const three=sample(WORDS,3);
-  $('#storyPics').innerHTML=three.map(x=>`<div><span>${x.e}</span><b>${x.w.toLowerCase()}</b></div>`).join('');
-  const names=three.map(x=>x.w.toLowerCase());
-  storyLine=`Придумай сказку, в которой есть ${names[0]}, ${names[1]} и ${names[2]}.`;
-  $('#storyText').textContent=storyLine;
-  show('story');
-  clearInterval(storyTimer);let left=20;const btn=$('#storyDone');btn.disabled=true;
-  $('#storyRing').textContent=`Рассказывай… кнопка включится через ${left} с`;
-  storyTimer=setInterval(()=>{left--;if(left<=0){clearInterval(storyTimer);btn.disabled=false;$('#storyRing').textContent='Рассказ готов? Нажимай!';}else $('#storyRing').textContent=`Рассказывай… кнопка включится через ${left} с`;},1000);
-}
-$('#storyNew').addEventListener('click',openStory);
-$('#storyBack').addEventListener('click',()=>{clearInterval(storyTimer);openStudio();});
-$('#storyDone').addEventListener('click',()=>{clearInterval(storyTimer);giveStar('Какая интересная сказка!');});
-
 
 /* ---------- PIN ---------- */
 const PINS={buf:'',mode:'check',first:'',ok:null,cancel:null,fails:0,blockUntil:0};
@@ -1602,17 +1953,18 @@ $$('[data-home]').forEach(b=>b.addEventListener('click',goMap));
 $$('[data-go]').forEach(b=>b.addEventListener('click',()=>{ac();const s=b.dataset.go;
   if(s==='art')openStudio();else if(s==='chal')openChSel();else if(s==='ward')openWardrobe();else startRound(s);}));
 $('#rewBtn').addEventListener('click',()=>{if(pendingLock){lockNow();return;}goMap();});
+$('#rewAgain').addEventListener('click',e=>{if(pendingLock){lockNow();return;}startRound(e.currentTarget.dataset.subj);});
 $$('.music-btn').forEach(b=>b.addEventListener('click',()=>{setMusic(!P.music);save();}));
 $('#goDraw').addEventListener('click',openDraw);
-$('#goStory').addEventListener('click',openStory);
 window.addEventListener('resize',()=>{if(cur==='map')drawSky();});
 document.addEventListener('keydown',e=>{if(e.code!=='Space')return;const inp=cur==='chal'&&CH?CH.input:cur==='run'&&R&&R.phase==='run'?R.input:null;if(inp){inp.hold=true;inp.buffer=.12;}});
 document.addEventListener('keyup',e=>{if(e.code!=='Space')return;if(CH)CH.input.hold=false;if(R)R.input.hold=false;});
 /* Android back button: the app calls this; true means the game handled it. */
 window.uhuBack=()=>{
   if(cur==='start'||cur==='map'||cur==='lock')return false;
-  if(cur==='draw'||cur==='story'){clearInterval(storyTimer);openStudio();return true;}
-  if(cur==='chal'){CH=null;openChSel();return true;}
+  if(cur==='draw'){openStudio();return true;}
+  if(cur==='chal'){chExit();return true;}
+  if(cur==='build'){B=null;openChSel('mine');return true;}
   if(cur==='pin'){const c=PINS.cancel;PINS.ok=null;c?c():goMap();return true;}
   if(cur==='parents'){backFromParents();return true;}
   goMap();return true;
