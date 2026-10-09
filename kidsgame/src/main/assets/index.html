@@ -343,7 +343,7 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
 #chsel .levels{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));align-content:start}
 #chsel #modeHelp{margin:0}
 .wscroll .skins,.skins{grid-template-columns:repeat(auto-fill,minmax(104px,1fr))}
-.skin canvas{width:54px;height:54px}
+.skin canvas{width:66px;height:66px}
 .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;overflow-y:auto;min-height:0;align-content:start;padding-bottom:10px}
 #parents{overflow:hidden}
 #pin{flex-direction:row;gap:clamp(24px,6vw,60px)}
@@ -365,6 +365,13 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
 #build .seg button{padding:6px 10px;font-size:14px}
 .toast{bottom:16px}
 .banner{top:calc(env(safe-area-inset-top,0px) + 12px)}
+
+/* v5: keys, accessories */
+.gatekeys{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.keycard{min-height:130px}
+.keycard.got{border:3px solid var(--star)}
+.keycard .glyph{font-size:34px}
+.chtimer{font-weight:900;color:var(--star);font-variant-numeric:tabular-nums;font-size:18px}
 </style>
 </head>
 <body>
@@ -430,7 +437,7 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
       <button class="place" data-go="read" style="--g:#4dffa8"><span class="glyph">Аа</span><b>Лес букв</b><span class="lvl" data-lvl="read"></span></button>
       <button class="place" data-go="math" style="--g:#29e3ff"><span class="glyph">2+3</span><b>Река чисел</b><span class="lvl" data-lvl="math"></span></button>
       <button class="place" data-go="logic" style="--g:#c78bff"><span class="glyph">?!</span><b>Пещера загадок</b><span class="lvl" data-lvl="logic"></span></button>
-      <button class="place" data-go="chal" style="--g:#ff4fd8"><span class="glyph">▲▲</span><b>Испытание</b><small>5 режимов и строитель</small></button>
+      <button class="place" data-go="chal" style="--g:#ff4fd8"><span class="glyph">▲▲</span><b>Испытание</b><small id="chalNote">5 режимов и строитель</small></button>
       <button class="place" data-go="art" style="--g:#ffb36b"><span class="glyph">✎</span><b>Мастерская</b><small>рисуем и сочиняем</small></button>
       <button class="place" data-go="ward" style="--g:#ffd45c"><span class="glyph">◆</span><b>Гардероб</b><small id="wardNote">наряды Уху</small></button>
     </div>
@@ -452,6 +459,7 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
     <div class="bar">
       <button class="icon-btn" data-home aria-label="На карту"><svg><use href="#i-home"/></svg></button>
       <h2 class="grow" style="font-size:22px">Испытание</h2>
+      <span class="chtimer" id="chTimer"></span>
       <button class="icon-btn music-btn" aria-label="Музыка"><svg><use href="#i-music"/></svg></button>
     </div>
     <div class="seg modes" id="modeTabs"></div>
@@ -477,6 +485,19 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
     </div>
   </section>
 
+  <section class="screen" id="gate" hidden>
+    <div class="bar">
+      <button class="icon-btn" data-home aria-label="На карту"><svg><use href="#i-home"/></svg></button>
+      <h2 class="grow" style="font-size:22px">Испытание закрыто</h2>
+    </div>
+    <div class="split">
+      <div class="col" style="justify-content:center">
+        <div class="owl-row"><svg class="owl"><use href="#owl"/></svg><div class="bubble" id="gateText"></div></div>
+      </div>
+      <div class="col" style="justify-content:center"><div class="gatekeys" id="gateKeys"></div></div>
+    </div>
+  </section>
+
   <section class="screen" id="wardrobe" hidden>
     <div class="bar">
       <button class="icon-btn" data-home aria-label="На карту"><svg><use href="#i-home"/></svg></button>
@@ -485,8 +506,10 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
     <div class="wscroll">
       <div class="label">Друзья Уху — выбери, кто бежит</div>
       <div class="skins" id="heroes"></div>
-      <div class="label">Наряды совёнка</div>
+      <div class="label" id="skinsLabel">Цвет</div>
       <div class="skins" id="skins"></div>
+      <div class="label" id="accLabel">Аксессуар</div>
+      <div class="skins" id="accs"></div>
     </div>
   </section>
 
@@ -555,9 +578,16 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
       <p class="note" id="pinNote"></p>
       <div class="btnrow" style="justify-content:flex-start" id="pinBtns"></div>
     </div>
+    <div class="pcard">
+      <div class="ptitle">Испытание по ключам</div>
+      <div class="prow"><div class="grow">Открывать только за ключи<small>Ключ — звезда в Лесу букв, на Реке чисел или в Пещере загадок. Три разных ключа открывают Испытание (вместе со строителем) на выбранное время.</small></div><button class="toggle" id="tChGate"></button></div>
+      <div class="seg" id="chMinSeg"></div>
+      <p class="note" id="chNote"></p>
+      <div class="btnrow" style="justify-content:flex-start"><button class="btn2" id="chOpenNow">Открыть сейчас</button></div>
+    </div>
     <div class="pcard" id="levelsCard"></div>
     <div class="pcard">
-      <div class="prow"><div class="grow">Музыка<small>Колыбельная «Ah vous dirai-je, Maman» (народная мелодия 1761 года, общественное достояние) и собственная мелодия Испытания. Всё играет синтезатор внутри игры.</small></div><button class="toggle" id="tMusic"></button></div>
+      <div class="prow"><div class="grow">Музыка<small>Мелодии в общественном достоянии в собственной аранжировке: «Ah vous dirai-je, Maman» (1761), Бетховен — «Ода к радости» и «К Элизе», Григ — «В пещере горного короля», Джоплин — «The Entertainer», а также собственная мелодия Испытания. Записи не используются: всё играет синтезатор внутри игры.</small></div><button class="toggle" id="tMusic"></button></div>
       <div class="prow"><div class="grow">Звуки</div><button class="toggle" id="tSound"></button></div>
     </div>
     <div class="pcard">
@@ -697,6 +727,7 @@ const LEVEL_NAMES={
  logic:['Узоры и тени','Что лишнее','Узоры посложнее, память','Числовые ряды','Сложные ряды и память']
 };
 const SUBJ_NAMES={read:'Чтение',math:'Счёт',logic:'Логика'};
+const SECTION_NAMES={read:'Лес букв',math:'Река чисел',logic:'Пещера загадок'};
 const PER_SKY=20;
 
 
@@ -726,6 +757,16 @@ const HEROES=[
  {id:'cat',name:'Котёнок Мур',ch:9},
  {id:'wind',name:'Ветерок',ch:11}
 ];
+/* Accessories any friend can wear. */
+const ACCS=[
+ {id:'',name:'Без',need:0},
+ {id:'cap',name:'Кепка',need:5},
+ {id:'glasses',name:'Очки',need:9},
+ {id:'bow',name:'Бантик',need:12},
+ {id:'scarf',name:'Шарф',need:16},
+ {id:'crown',name:'Корона',ch:2}
+];
+const KEY_SUBJ=['read','math','logic'];
 const MODES={cube:{name:'Кубик',col:'#4dffa8',letter:'К'},ship:{name:'Ракета',col:'#ff4fd8',letter:'Р'},ball:{name:'Шарик',col:'#ffb02e',letter:'Ш'},ufo:{name:'НЛО',col:'#ffd45c',letter:'Н'},wave:{name:'Волна',col:'#29e3ff',letter:'В'}};
 const TH_BLUE={bg1:'#0a2a66',bg2:'#06102e',line:'#29e3ff',block:'rgba(41,227,255,.14)',floor:'#040a1e'};
 const TH_PINK={bg1:'#3d0a5c',bg2:'#12041f',line:'#ff4fd8',block:'rgba(255,79,216,.14)',floor:'#0d0216'};
@@ -755,6 +796,7 @@ const RUN_THEMES={
 };
 const PORTAL_COLORS=['#29e3ff','#ff4fd8','#ffd45c','#4dffa8'];
 const COOLDOWN=3*3600*1000, GRACE=3*60*1000;
+const LEVEL_MUSIC=['challenge','challenge','challenge','king','king','joplin','joplin','joplin','joplin','king','king','challenge'];
 const STAR_POINTS=4;/* points out of 5 needed for a star: 1 for a first-try answer, 1/2 for a second try */
 
 /* ---------- storage ---------- */
@@ -762,13 +804,15 @@ const STAR_POINTS=4;/* points out of 5 needed for a star: 1 for a first-try answ
 const STORE='uhu-v1',GAL='uhu-gallery-v1',TSTORE='uhu-time-v1',CUSTOM='uhu-custom-v1';
 const NL=LEVELS.length;
 const DEF={stars:0,levels:{read:1,math:1,logic:1},good:{read:0,math:0,logic:0},music:true,sound:true,
-  limit:0,pin:'',skin:'classic',hero:'owl',chBest:Array(NL).fill(0),chDone:Array(NL).fill(false)};
+  limit:0,pin:'',skin:'classic',hero:'owl',chBest:Array(NL).fill(0),chDone:Array(NL).fill(false),
+  looks:{},keys:{read:false,math:false,logic:false},chMs:0,chGate:true,chMin:5};
 const clone=o=>JSON.parse(JSON.stringify(o));
 function load(){
   try{const s=JSON.parse(localStorage.getItem(STORE)||'null');
     if(s&&typeof s==='object'){const p=Object.assign(clone(DEF),s);p.levels=Object.assign({},DEF.levels,s.levels);p.good=Object.assign({},DEF.good,s.good);
       p.chBest=LEVELS.map((_,i)=>(s.chBest||[])[i]||0);p.chDone=LEVELS.map((_,i)=>!!(s.chDone||[])[i]);
-      if(!HEROES.some(h=>h.id===p.hero))p.hero='owl';return p;}}catch(e){}
+      if(!HEROES.some(h=>h.id===p.hero))p.hero='owl';
+      if(!p.looks||typeof p.looks!=='object')p.looks={};p.keys=Object.assign({},DEF.keys,s.keys);return p;}}catch(e){}
   return clone(DEF);
 }
 let P=load();
@@ -847,10 +891,43 @@ function challengeStep(step,t,sp){
   const n=CH_LEAD[bar][i];
   if(n>=0&&step>=16){osc(musicBus,'square',mtof(CH_SCALE[n]),t,sp*1.1,.028);osc(musicBus,'sine',mtof(CH_SCALE[n]+12),t,sp*.9,.02);}
 }
+/* More public-domain melodies, own arrangements synthesized here (no recordings are used):
+   Beethoven "Ode to Joy" (1824), Beethoven "Für Elise" (pub. 1867), Grieg "In the Hall of the Mountain King" (1876),
+   Joplin "The Entertainer" (1902). Notes are [midi, length in steps]; 0 = rest. */
+const ODE_A=[[64,2],[64,2],[65,2],[67,2],[67,2],[65,2],[64,2],[62,2],[60,2],[60,2],[62,2],[64,2]];
+const ODE=[...ODE_A,[64,3],[62,1],[62,4],...ODE_A,[62,3],[60,1],[60,4],
+  [62,2],[62,2],[64,2],[60,2],[62,2],[64,1],[65,1],[64,2],[60,2],[62,2],[64,1],[65,1],[64,2],[62,2],[60,2],[62,2],[55,4],
+  ...ODE_A,[62,3],[60,1],[60,4]];
+const ELISE_A=[[76,1],[75,1],[76,1],[75,1],[76,1],[71,1],[74,1],[72,1],[69,2],[0,1],[60,1],[64,1],[69,1],[71,2],[0,1],[64,1]];
+const ELISE=[...ELISE_A,[68,1],[71,1],[72,2],[0,1],[64,1],...ELISE_A,[72,1],[71,1],[69,4],[0,2]];
+const KING_A=[[59,1],[61,1],[62,1],[64,1],[66,1],[62,1],[66,2],[65,1],[61,1],[65,2],[64,1],[60,1],[64,2],
+  [59,1],[61,1],[62,1],[64,1],[66,1],[62,1],[66,1],[71,1],[69,1],[66,1],[62,1],[66,1],[69,4]];
+const KING=[...KING_A,...KING_A,...KING_A.map(([m,l])=>[m+7,l]),...KING_A];
+const RAG_A=[[62,1],[63,1],[64,1],[72,2],[64,1],[72,2],[64,1],[72,6]];
+const JOPLIN=[...RAG_A,[72,1],[74,1],[75,1],[76,1],[72,1],[74,1],[76,2],[71,1],[74,2],[72,5],
+  ...RAG_A,[69,1],[67,1],[66,1],[69,1],[72,1],[76,2],[74,1],[72,1],[69,1],[74,6]];
+function events(song){const ev={};let t=0;song.forEach(([m,l])=>{if(m)ev[t]=[m,l];t+=l;});return {ev,len:t};}
+function melTrack(o){
+  const {ev,len}=events(o.song);
+  return {bpm:o.bpm,div:o.div,bpmAt:o.bpmAt,play(step,t,sp){
+    const s=step%len,loop=Math.floor(step/len),e=ev[s];
+    if(e){const f=mtof(e[0]+(o.octave&&loop%2?12:0)),d=e[1]*sp*(o.legato||1.4);
+      if(o.voice==='chip'){osc(musicBus,'square',f,t,d,.03);osc(musicBus,'sine',f*2,t,d*.8,.018);}else box(f,t,d,o.vol||.06);}
+    const bar=o.bar,b=Math.floor(s/bar)%o.bass.length,i=s%bar,r=o.bass[b];
+    if(o.style==='pad'&&i===0)padNote(mtof(r),t,sp*bar*1.1,.045);
+    if(o.style==='rag'){if(i===0||i===4)osc(musicBus,'triangle',mtof(r),t,sp*1.6,.09);if(i===2||i===6){osc(musicBus,'triangle',mtof(r+16),t,sp,.03);osc(musicBus,'triangle',mtof(r+19),t,sp,.03);}}
+    if(o.style==='stomp'&&i%2===0)osc(musicBus,'triangle',mtof(r+(i%4?7:0)),t,sp*.8,.09);
+    if(o.drums){if(i%2===0)kick(t,o.drums);else noise(musicBus,t,.04,.035,'highpass',7000);if(i===2||i===6)noise(musicBus,t,.1,.06,'bandpass',1800);}
+  }};
+}
 const TRACKS={
   lullaby:{bpm:76,div:2,play:(s,t,sp)=>lullabyStep(s,t,sp,false)},
-  run:{bpm:100,div:2,play:(s,t,sp)=>lullabyStep(s,t,sp,true)},
-  challenge:{bpm:128,div:2,play:challengeStep}
+  run:melTrack({song:ODE,bpm:104,div:2,bar:8,bass:[48,43,48,43, 48,43,48,48, 43,48,43,43, 48,43,48,48],style:'pad',drums:.15,vol:.055}),
+  elise:melTrack({song:ELISE,bpm:62,div:4,bar:6,bass:[45,40,45,40,45,40,45,45],style:'pad',vol:.06,legato:2}),
+  challenge:{bpm:128,div:2,play:challengeStep},
+  king:melTrack({song:KING,bpm:100,div:2,bar:8,bass:[47,47,47,47, 47,47,47,47, 42,42,42,42, 47,47,47,47],style:'stomp',drums:.2,voice:'chip',legato:.9,
+    bpmAt:step=>100+Math.min(6,Math.floor(step/128)%7)*12}),
+  joplin:melTrack({song:JOPLIN,bpm:96,div:2,bar:8,bass:[48,48,43,48,48,48,50,43],style:'rag',voice:'chip',legato:1.1})
 };
 const music={track:null,step:0,nextT:0,t0:0,timer:null};
 function setTrack(name,restart){
@@ -861,11 +938,11 @@ function setTrack(name,restart){
 }
 function scheduleMusic(){
   if(!actx||!music.track||actx.state!=='running')return;
-  const tr=TRACKS[music.track],sp=60/tr.bpm/tr.div;
+  const tr=TRACKS[music.track];
   if(music.nextT<actx.currentTime)music.nextT=actx.currentTime+.02;
-  while(music.nextT<actx.currentTime+.3){tr.play(music.step,music.nextT,sp);music.nextT+=sp;music.step++;}
+  while(music.nextT<actx.currentTime+.3){const bpm=tr.bpmAt?tr.bpmAt(music.step):tr.bpm,sp=60/bpm/tr.div;music.bpm=bpm;tr.play(music.step,music.nextT,sp);music.nextT+=sp;music.step++;}
 }
-function beatPhase(){if(!actx||!music.track)return 0;const tr=TRACKS[music.track];const b=(actx.currentTime-music.t0)*tr.bpm/60;return b>0?b%1:0;}
+function beatPhase(){if(!actx||!music.track)return 0;const tr=TRACKS[music.track];const b=(actx.currentTime-music.t0)*(music.bpm||tr.bpm)/60;return b>0?b%1:0;}
 function setMusic(on){
   P.music=on;const c=ac();
   if(c){const t=c.currentTime;musicBus.gain.cancelScheduledValues(t);musicBus.gain.setValueAtTime(musicBus.gain.value,t);musicBus.gain.linearRampToValueAtTime(on?1:0,t+.4);}
@@ -1211,45 +1288,58 @@ function drawOwl(g,cx,cy,s,rot,sk,time){
   g.restore();
 }
 /* Friends: each is a rounded cube with its own face. */
-function bodyBox(g,h,fill,line){rr(g,-h,-h,h*2,h*2,h*.48);g.fillStyle=fill;g.fill();g.lineWidth=Math.max(2,h*.12);g.strokeStyle=line;g.stroke();}
+const FRIEND_BASE={fox:{body:'#ff8a3d',line:'#ffc08a',ear:'#e8651f'},bunny:{body:'#f1eefb',line:'#ffffff',ear:'#e9e6f5'},
+  hedgehog:{body:'#8a6142',line:'#c79a74',ear:'#5b3d27'},frog:{body:'#5fd35f',line:'#b7f5a0',ear:'#5fd35f'},
+  penguin:{body:'#24304a',line:'#8fa6d8',ear:'#24304a'},cat:{body:'#9aa3b5',line:'#d7dceb',ear:'#8c95a8'},wind:{body:'#bfe9ff',line:'#ffffff',ear:'#bfe9ff'}};
+/* A friend's colours: its own look for the classic outfit, otherwise the outfit's colours. */
+function friendPal(id,skinId,time){
+  const base=FRIEND_BASE[id]||FRIEND_BASE.fox;
+  if(!skinId||skinId==='classic')return base;
+  const sk=skinById(skinId);
+  if(sk.rainbow){const hue=(time*90)%360;return {body:`hsl(${hue},85%,58%)`,line:'#ffffff',ear:`hsl(${(hue+40)%360},85%,42%)`,glow:sk.glow};}
+  return {body:sk.body,line:sk.line,ear:sk.ear||sk.body,glow:sk.glow};
+}
+let PAL_GLOW=null;
+function bodyBox(g,h,fill,line){rr(g,-h,-h,h*2,h*2,h*.48);if(PAL_GLOW){g.shadowColor=PAL_GLOW;g.shadowBlur=h*.9;}g.fillStyle=fill;g.fill();g.shadowBlur=0;g.lineWidth=Math.max(2,h*.12);g.strokeStyle=line;g.stroke();}
 function dotEyes(g,h,y,r){[-1,1].forEach(k=>{circ(g,k*h*.38,y,r,'#1b1530');circ(g,k*h*.38+r*.35,y-r*.35,r*.35,'#fff');});}
-function drawFriend(g,cx,cy,s,rot,id,time){
+function drawFriend(g,cx,cy,s,rot,id,time,pal){
+  pal=pal||FRIEND_BASE[id];PAL_GLOW=pal.glow||null;
   const h=s/2;g.save();g.translate(cx,cy);g.rotate(rot);
   if(id==='fox'){
-    g.fillStyle='#e8651f';tri(g,-h*.95,-h*.4,-h*.7,-h*1.4,-h*.15,-h*.9);tri(g,h*.95,-h*.4,h*.7,-h*1.4,h*.15,-h*.9);
+    g.fillStyle=pal.ear;tri(g,-h*.95,-h*.4,-h*.7,-h*1.4,-h*.15,-h*.9);tri(g,h*.95,-h*.4,h*.7,-h*1.4,h*.15,-h*.9);
     g.fillStyle='#2a1a12';tri(g,-h*.8,-h*1.05,-h*.7,-h*1.4,-h*.5,-h*1.15);tri(g,h*.8,-h*1.05,h*.7,-h*1.4,h*.5,-h*1.15);
-    bodyBox(g,h,'#ff8a3d','#ffc08a');
+    bodyBox(g,h,pal.body,pal.line);
     g.fillStyle='#fff3e6';g.beginPath();g.moveTo(-h*.95,h*.05);g.quadraticCurveTo(0,h*.15,h*.95,h*.05);g.quadraticCurveTo(h*.6,h*.95,0,h*.95);g.quadraticCurveTo(-h*.6,h*.95,-h*.95,h*.05);g.fill();
     dotEyes(g,h,-h*.18,h*.15);g.fillStyle='#1b1530';g.beginPath();g.ellipse(0,h*.3,h*.13,h*.09,0,0,7);g.fill();
   }else if(id==='bunny'){
-    [-1,1].forEach(k=>{rr(g,k*h*.45-h*.2,-h*2.05,h*.4,h*1.3,h*.2);g.fillStyle='#e9e6f5';g.fill();rr(g,k*h*.45-h*.09,-h*1.9,h*.18,h*1,h*.09);g.fillStyle='#ffb3c8';g.fill();});
-    bodyBox(g,h,'#f1eefb','#ffffff');
+    [-1,1].forEach(k=>{rr(g,k*h*.45-h*.2,-h*2.05,h*.4,h*1.3,h*.2);g.fillStyle=pal.ear;g.fill();rr(g,k*h*.45-h*.09,-h*1.9,h*.18,h*1,h*.09);g.fillStyle='#ffb3c8';g.fill();});
+    bodyBox(g,h,pal.body,pal.line);
     dotEyes(g,h,-h*.15,h*.15);circ(g,-h*.62,h*.25,h*.14,'#ffc2d4');circ(g,h*.62,h*.25,h*.14,'#ffc2d4');
     g.fillStyle='#ff8fb0';tri(g,-h*.1,h*.15,h*.1,h*.15,0,h*.3);g.fillStyle='#fff';g.fillRect(-h*.11,h*.32,h*.22,h*.22);g.strokeStyle='#d8d2ea';g.lineWidth=1;g.strokeRect(-h*.11,h*.32,h*.22,h*.22);
   }else if(id==='hedgehog'){
-    g.fillStyle='#5b3d27';for(let i=0;i<7;i++){const a=-Math.PI*.95+i*Math.PI*.95/6;const x=Math.cos(a)*h*1.05,y=Math.sin(a)*h*1.05;tri(g,x*.7,y*.7-h*.1,x*1.35,y*1.35-h*.1,x*.7+Math.cos(a+1.4)*h*.4,y*.7+Math.sin(a+1.4)*h*.4-h*.1);}
-    bodyBox(g,h,'#8a6142','#c79a74');
+    g.fillStyle=pal.ear;for(let i=0;i<7;i++){const a=-Math.PI*.95+i*Math.PI*.95/6;const x=Math.cos(a)*h*1.05,y=Math.sin(a)*h*1.05;tri(g,x*.7,y*.7-h*.1,x*1.35,y*1.35-h*.1,x*.7+Math.cos(a+1.4)*h*.4,y*.7+Math.sin(a+1.4)*h*.4-h*.1);}
+    bodyBox(g,h,pal.body,pal.line);
     g.fillStyle='#f0d2a8';g.beginPath();g.ellipse(0,h*.3,h*.78,h*.6,0,0,7);g.fill();
     dotEyes(g,h,-h*.05,h*.13);circ(g,0,h*.32,h*.12,'#1b1530');
   }else if(id==='frog'){
-    [-1,1].forEach(k=>{circ(g,k*h*.48,-h*.95,h*.36,'#5fd35f');circ(g,k*h*.48,-h*.95,h*.25,'#ffffff');circ(g,k*h*.48+h*.05,-h*.92,h*.12,'#1b1530');});
-    bodyBox(g,h,'#5fd35f','#b7f5a0');
+    [-1,1].forEach(k=>{circ(g,k*h*.48,-h*.95,h*.36,pal.ear);circ(g,k*h*.48,-h*.95,h*.25,'#ffffff');circ(g,k*h*.48+h*.05,-h*.92,h*.12,'#1b1530');});
+    bodyBox(g,h,pal.body,pal.line);
     g.strokeStyle='#1d5a1d';g.lineWidth=h*.1;g.beginPath();g.arc(0,h*.05,h*.55,.2*Math.PI,.8*Math.PI);g.stroke();
     circ(g,-h*.65,h*.25,h*.13,'#ff9db0');circ(g,h*.65,h*.25,h*.13,'#ff9db0');
   }else if(id==='penguin'){
-    bodyBox(g,h,'#24304a','#8fa6d8');
+    bodyBox(g,h,pal.body,pal.line);
     g.fillStyle='#ffffff';g.beginPath();g.ellipse(0,h*.18,h*.66,h*.76,0,0,7);g.fill();
     dotEyes(g,h,-h*.2,h*.13);g.fillStyle='#ff9a1f';tri(g,-h*.16,h*.02,h*.16,h*.02,0,h*.28);
     g.fillStyle='#ff9a1f';g.beginPath();g.ellipse(-h*.45,h*1.02,h*.25,h*.1,0,0,7);g.ellipse(h*.45,h*1.02,h*.25,h*.1,0,0,7);g.fill();
   }else if(id==='cat'){
-    g.fillStyle='#8c95a8';tri(g,-h*.95,-h*.35,-h*.8,-h*1.35,-h*.2,-h*.9);tri(g,h*.95,-h*.35,h*.8,-h*1.35,h*.2,-h*.9);
+    g.fillStyle=pal.ear;tri(g,-h*.95,-h*.35,-h*.8,-h*1.35,-h*.2,-h*.9);tri(g,h*.95,-h*.35,h*.8,-h*1.35,h*.2,-h*.9);
     g.fillStyle='#ffb3c8';tri(g,-h*.78,-h*.6,-h*.74,-h*1.1,-h*.4,-h*.85);tri(g,h*.78,-h*.6,h*.74,-h*1.1,h*.4,-h*.85);
-    bodyBox(g,h,'#9aa3b5','#d7dceb');
+    bodyBox(g,h,pal.body,pal.line);
     [-1,1].forEach(k=>{g.fillStyle='#8fe36b';g.beginPath();g.ellipse(k*h*.4,-h*.15,h*.2,h*.22,0,0,7);g.fill();g.fillStyle='#1b1530';g.fillRect(k*h*.4-h*.04,-h*.33,h*.08,h*.36);});
     g.fillStyle='#ff8fb0';tri(g,-h*.1,h*.18,h*.1,h*.18,0,h*.32);
     g.strokeStyle='#f5f6fb';g.lineWidth=1.5;[-1,1].forEach(k=>{[0,.12].forEach(d=>{g.beginPath();g.moveTo(k*h*.25,h*.3+d*h);g.lineTo(k*h*.95,h*.22+d*h*1.6);g.stroke();});});
   }else{ /* wind */
-    g.globalAlpha=.95;bodyBox(g,h,'#bfe9ff','#ffffff');
+    g.globalAlpha=.95;bodyBox(g,h,pal.body,pal.line);
     g.strokeStyle='#ffffff';g.lineWidth=h*.1;g.beginPath();g.arc(-h*.35,h*.45,h*.25,Math.PI,Math.PI*2.4);g.stroke();g.beginPath();g.arc(h*.4,h*.5,h*.2,Math.PI,Math.PI*2.4);g.stroke();
     g.strokeStyle='#1b1530';g.lineWidth=h*.09;[-1,1].forEach(k=>{g.beginPath();g.arc(k*h*.38,-h*.15,h*.16,Math.PI*1.1,Math.PI*1.9);g.stroke();});
     circ(g,-h*.65,h*.08,h*.12,'#ff9db0');circ(g,h*.65,h*.08,h*.12,'#ff9db0');
@@ -1257,8 +1347,41 @@ function drawFriend(g,cx,cy,s,rot,id,time){
   }
   g.restore();
 }
-function drawChar(g,cx,cy,s,rot,heroId,time){
-  if(heroId==='owl'||!heroId)drawOwl(g,cx,cy,s,rot,skinById(P.skin),time);else drawFriend(g,cx,cy,s,rot,heroId,time);
+function lookOf(id){
+  if(!id||id==='owl')return {skin:P.skin,acc:(P.looks.owl&&P.looks.owl.acc)||''};
+  const l=P.looks[id]||{};return {skin:l.skin||'classic',acc:l.acc||''};
+}
+function setLook(id,key,val){
+  if(key==='skin'&&id==='owl'){P.skin=val;return;}
+  P.looks[id]=Object.assign({},P.looks[id],{[key]:val});
+}
+function heroTrail(){return skinById(lookOf(P.hero).skin).trail;}
+function drawChar(g,cx,cy,s,rot,heroId,time,look){
+  look=look||lookOf(heroId);
+  if(heroId==='owl'||!heroId)drawOwl(g,cx,cy,s,rot,skinById(look.skin),time);
+  else drawFriend(g,cx,cy,s,rot,heroId,time,friendPal(heroId,look.skin,time));
+  if(look.acc)drawAcc(g,cx,cy,s,rot,look.acc,heroId);
+}
+function drawAcc(g,cx,cy,s,rot,acc,heroId){
+  const h=s/2,owl=!heroId||heroId==='owl';g.save();g.translate(cx,cy);g.rotate(rot);
+  if(acc==='cap'){
+    g.fillStyle='#e8434f';g.beginPath();g.arc(0,-h*.88,h*.62,Math.PI,0);g.closePath();g.fill();
+    g.fillStyle='#b8262f';g.beginPath();g.ellipse(h*.5,-h*.88,h*.5,h*.12,0,0,7);g.fill();circ(g,0,-h*1.5,h*.1,'#ffd45c');
+  }else if(acc==='glasses'){
+    const r=owl?h*.42:h*.3,y=owl?-h*.18:-h*.16,x=owl?h*.42:h*.38;
+    g.strokeStyle='#1b1530';g.lineWidth=Math.max(2,h*.09);[-1,1].forEach(k=>{g.beginPath();g.arc(k*x,y,r,0,7);g.stroke();});
+    g.beginPath();g.moveTo(-x+r,y);g.lineTo(x-r,y);g.stroke();g.fillStyle='rgba(120,200,255,.18)';[-1,1].forEach(k=>{g.beginPath();g.arc(k*x,y,r,0,7);g.fill();});
+  }else if(acc==='bow'){
+    g.fillStyle='#ff5fa2';tri(g,h*.55,-h*.95,h*.15,-h*1.25,h*.15,-h*.65);tri(g,h*.55,-h*.95,h*.95,-h*1.25,h*.95,-h*.65);circ(g,h*.55,-h*.95,h*.13,'#ff97c4');
+  }else if(acc==='scarf'){
+    g.fillStyle='#3a8de0';g.fillRect(-h*.98,h*.38,h*1.96,h*.26);g.fillRect(h*.3,h*.5,h*.28,h*.6);
+    g.fillStyle='#ffffff';for(let i=-3;i<3;i++)g.fillRect(i*h*.32+h*.05,h*.38,h*.1,h*.26);
+  }else if(acc==='crown'){
+    g.fillStyle='#ffd45c';g.strokeStyle='#f0a91c';g.lineWidth=Math.max(1.5,h*.06);g.beginPath();
+    g.moveTo(-h*.55,-h*.82);g.lineTo(-h*.62,-h*1.42);g.lineTo(-h*.3,-h*1.12);g.lineTo(0,-h*1.55);g.lineTo(h*.3,-h*1.12);g.lineTo(h*.62,-h*1.42);g.lineTo(h*.55,-h*.82);g.closePath();g.fill();g.stroke();
+    circ(g,0,-h*1.05,h*.09,'#e8434f');
+  }
+  g.restore();
 }
 /* The hero in a vehicle for the other modes. */
 function drawHero(g,c,cx,cy,s,time,th){
@@ -1412,7 +1535,7 @@ function runLoop(ts){
     cx=f.from.x+(f.to.x-f.from.x)*u;cy=f.from.y+(f.to.y-f.from.y)*u-Math.sin(Math.PI*u)*V.T*1.3;rot=f.rot0+u*Math.PI*2;
     if(k>=1)flyDone();
   }
-  if(R.phase==='run'&&c.ground&&Math.random()<.6)addTrail(cx-V.T*.45,cy+V.T*.4,(P.hero==='owl'&&sk.trail)||RUN_THEMES[R.subj].line,-R.W.speedNow*V.T*.6);
+  if(R.phase==='run'&&c.ground&&Math.random()<.6)addTrail(cx-V.T*.45,cy+V.T*.4,heroTrail()||RUN_THEMES[R.subj].line,-R.W.speedNow*V.T*.6);
   drawTrail(V.g,dt);
   if(R.bumpT>0)R.bumpT-=dt;
   if(!(R.bumpT>0&&Math.floor(R.bumpT*12)%2))drawChar(V.g,cx,cy,V.T*.94,rot,P.hero,now);
@@ -1516,7 +1639,7 @@ function finishRound(){
   else P.good[s]=0;
   if(R.lastCall)pendingLock=true;
   const ptsTxt=`Очки: ${String(pts).replace('.',',')} из 5.`;
-  if(pts>=STAR_POINTS){giveStar(ptsTxt+(msg?' '+msg:''));return;}
+  if(pts>=STAR_POINTS){giveStar(ptsTxt+(msg?' '+msg:''),s);return;}
   save();
   $('#rewStar').classList.add('dim');$('#rewTitle').textContent='Почти получилось!';
   $('#rewText').textContent=`${ptsTxt} Для звезды нужно ${STAR_POINTS}. Отвечай с первой попытки — так очков больше.`;
@@ -1526,20 +1649,34 @@ function finishRound(){
 function isUnlocked(item){return item.ch!=null?P.chDone[item.ch]:P.stars>=item.need;}
 function unlockedSkins(){return SKINS.filter(isUnlocked).map(s=>s.id);}
 function unlockedHeroes(){return HEROES.filter(isUnlocked).map(s=>s.id);}
-function freshUnlocks(beforeS,beforeH){
-  const s=SKINS.filter(x=>isUnlocked(x)&&!beforeS.includes(x.id)).map(x=>'наряд «'+x.name+'»');
+function unlockedAccs(){return ACCS.filter(isUnlocked).map(s=>s.id);}
+function freshUnlocks(beforeS,beforeH,beforeA){
+  const s=SKINS.filter(x=>isUnlocked(x)&&!beforeS.includes(x.id)).map(x=>'цвет «'+x.name+'»');
   const h=HEROES.filter(x=>isUnlocked(x)&&!beforeH.includes(x.id)).map(x=>'новый друг — '+x.name);
-  return [...h,...s];
+  const a=beforeA?ACCS.filter(x=>x.id&&isUnlocked(x)&&!beforeA.includes(x.id)).map(x=>'аксессуар «'+x.name+'»'):[];
+  return [...h,...s,...a];
 }
-function giveStar(extra){
-  const bs=unlockedSkins(),bh=unlockedHeroes();
-  P.stars++;save();
-  const fresh=freshUnlocks(bs,bh);
+/* A star from a learning section also gives that section's key; three different keys open the challenge for a while. */
+function takeKey(subj){
+  if(!subj||!P.chGate)return '';
+  const had=P.keys[subj];P.keys[subj]=true;
+  if(KEY_SUBJ.every(k=>P.keys[k])){
+    P.keys={read:false,math:false,logic:false};P.chMs=Math.min(P.chMs+P.chMin*60000,P.chMin*60000*3);
+    return `Все три ключа собраны! Испытание открыто на ${P.chMin} мин.`;
+  }
+  const miss=KEY_SUBJ.filter(k=>!P.keys[k]).map(k=>SECTION_NAMES[k]).join(' и ');
+  return had?`Ключ «${SUBJ_NAMES[subj]}» у тебя уже есть. Для Испытания нужны ключи: ${miss}.`:`Ключ «${SUBJ_NAMES[subj]}» получен! Для Испытания ещё нужны: ${miss}.`;
+}
+function giveStar(extra,subj){
+  const bs=unlockedSkins(),bh=unlockedHeroes(),ba=unlockedAccs();
+  P.stars++;const keyTxt=takeKey(subj);save();
+  const fresh=freshUnlocks(bs,bh,ba);
   const inSky=P.stars%PER_SKY;
   let title='Звезда найдена!',text=`На небе уже ${inSky} из ${PER_SKY}.`;
   if(inSky===0){title='Небо сияет!';text='Ты зажигаешь целое небо звёзд! Уху летит дальше, в новое небо.';}
   if(fresh.length)text+=' Открыто: '+fresh.join(', ')+'. Загляни в Гардероб!';
   const ch=LEVELS.filter((L,i)=>L.need===P.stars&&i>0);if(ch.length)text+=' Открыт уровень Испытания: '+ch.map(L=>MODES[L.mode]?MODES[L.mode].name+' «'+L.name+'»':'«'+L.name+'»').join(', ')+'!';
+  if(keyTxt)text+=' '+keyTxt;
   if(extra)text=extra+' '+text;
   $('#rewStar').classList.remove('dim');$('#rewAgain').hidden=true;
   $('#rewTitle').textContent=title;$('#rewText').textContent=text;
@@ -1568,6 +1705,7 @@ function openChSel(tab){
       ${open?`<div class="btnrow" style="justify-content:flex-start"><button class="btn2 main" data-ch="${i}">Играть</button><button class="btn2" data-chp="${i}">Тренировка</button></div>`:''}
     </div>`;}).join('');
   show('chsel');setTrack('lullaby');
+  const tEl=$('#chTimer');tEl.hidden=!P.chGate;tEl.textContent='⏱ '+fmtMs(P.chMs);
 }
 $('#modeTabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b)openChSel(b.dataset.tab);});
 $('#levels').addEventListener('click',e=>{
@@ -1615,7 +1753,7 @@ function chRestart(full){
   if(cp){CH.c.y=cp.y;CH.c.gd=cp.gd;CH.W.objs.forEach(o=>{if(o.x<cp.x&&(o.k==='portal'||o.k==='orb'||o.k==='pad'))o.used=true;});}
   CH.state='play';CH.input.hold=false;CH.input.buffer=0;CH.attempt++;
   CH.camX=CH.c.x-2.2;
-  if(!cp)setTrack('challenge',true);
+  if(!cp)setTrack(CH.n>=0?LEVEL_MUSIC[CH.n]:'challenge',true);
   $('#chAttempt').textContent=CH.practice?'Тренировка':'Попытка '+CH.attempt;
 }
 function chLoop(ts){
@@ -1634,12 +1772,12 @@ function chLoop(ts){
       if(c.x>=lv.len){chWin();break;}
     }
   }else if(CH.state==='dead'){
-    CH.deadT-=dt;if(CH.deadT<=0){if(CH.lastCall){lockNow();return;}chRestart(false);}
+    CH.deadT-=dt;if(CH.deadT<=0){if(CH.lastCall){lockNow();return;}if(CH.keysOut){CH=null;openGate();return;}chRestart(false);}
   }
   CH.camX=c.x-2.2;V.camX=CH.camX;
   drawWorld(V,CH.W.objs,th,now,{cps:CH.practice?CH.cps:null});
   const cx=(c.x-V.camX)*V.T+V.T/2,cy=V.floorY-c.y*V.T-V.T/2;
-  const sk=skinById(P.skin),tc=(P.hero==='owl'&&sk.trail)||(c.mode==='cube'?th.line:MODES[c.mode].col);
+  const tc=heroTrail()||(c.mode==='cube'?th.line:MODES[c.mode].col);
   if(CH.state==='play'&&(c.ground||c.mode!=='cube'))addTrail(cx-V.T*.45,cy+(c.mode==='cube'?V.T*.4:0),tc,-lv.speed*V.T*.6);
   drawTrail(V.g,dt);
   if(CH.state!=='dead')drawHero(V.g,c,cx,cy,V.T*.94,now,th);
@@ -1664,19 +1802,19 @@ function chWin(){
     if(CH.fromBuilder){B.level.done=true;text+=' Уровень проходимый — можно сохранять!';}
     else if(customs[CH.custom]){customs[CH.custom].best=100;customs[CH.custom].done=true;saveCustoms();}
   }else{
-    const bs=unlockedSkins(),bh=unlockedHeroes();
+    const bs=unlockedSkins(),bh=unlockedHeroes(),ba=unlockedAccs();
     P.chDone[CH.n]=true;P.chBest[CH.n]=100;save();
-    const fresh=freshUnlocks(bs,bh);
+    const fresh=freshUnlocks(bs,bh,ba);
     text=`Попыток: ${CH.attempt}.`+(fresh.length?' Открыто: '+fresh.join(', ')+'!':'');
   }
   $('#chOverTitle').textContent=title;$('#chOverText').textContent=text;$('#chOver').hidden=false;
   $('#chToList').textContent=CH.fromBuilder?'В строитель':'К уровням';
   if(CH.lastCall)later(lockNow,2500);
 }
-function chExit(){const fb=CH&&CH.fromBuilder;CH=null;if(fb)openBuilder(B.idx,true);else openChSel();}
+function chExit(){if(CH&&CH.keysOut){CH=null;openGate();return;}const fb=CH&&CH.fromBuilder;CH=null;if(fb)openBuilder(B.idx,true);else openChSel();}
 $('#chal').addEventListener('pointerdown',e=>{if(!CH||e.target.closest('button')||CH.state!=='play')return;ac();CH.input.hold=true;CH.input.buffer=.12;});
 ['pointerup','pointercancel'].forEach(t=>$('#chal').addEventListener(t,()=>{if(CH)CH.input.hold=false;}));
-$('#chAgain').addEventListener('click',()=>{$('#chOver').hidden=true;CH.cp=null;CH.cps=[];CH.attempt=0;chRestart(true);});
+$('#chAgain').addEventListener('click',()=>{if(CH&&CH.keysOut){CH=null;openGate();return;}$('#chOver').hidden=true;CH.cp=null;CH.cps=[];CH.attempt=0;chRestart(true);});
 $('#chToList').addEventListener('click',chExit);
 $('#chHome').addEventListener('click',chExit);
 
@@ -1713,23 +1851,63 @@ window.__uhuSolve=function(n,given){
   return {ok:false,iter};
 };
 
-/* ---------- wardrobe: friends and outfits ---------- */
+/* ---------- wardrobe: friends, colours and accessories ---------- */
+function condText(x){return x.ch!=null?`${MODES[LEVELS[x.ch].mode]?MODES[LEVELS[x.ch].mode].name:'Испытание'} «${LEVELS[x.ch].name}»`:`★ ${x.need}`;}
 function openWardrobe(){
-  const uh=unlockedHeroes(),us=unlockedSkins();
-  const cond=x=>x.ch!=null?`${MODES[LEVELS[x.ch].mode]?MODES[LEVELS[x.ch].mode].name:'Испытание'} «${LEVELS[x.ch].name}»`:`★ ${x.need}`;
+  const uh=unlockedHeroes(),us=unlockedSkins(),ua=unlockedAccs(),hero=P.hero,look=lookOf(hero),hn=HEROES.find(h=>h.id===hero).name;
   $('#heroes').innerHTML=HEROES.map(h=>{const open=uh.includes(h.id);
-    return `<button class="skin${open?'':' locked'}${P.hero===h.id?' on':''}" data-hero="${h.id}"><canvas width="128" height="128"></canvas><b>${h.name}</b><small>${open?(P.hero===h.id?'играет':'выбрать'):cond(h)}</small></button>`;}).join('');
-  $('#skins').innerHTML=SKINS.map(sk=>{const open=us.includes(sk.id);
-    return `<button class="skin${open?'':' locked'}${P.skin===sk.id?' on':''}" data-skin="${sk.id}"><canvas width="128" height="128"></canvas><b>${sk.name}</b><small>${open?(P.skin===sk.id?'надет':'надеть'):cond(sk)}</small></button>`;}).join('');
-  $$('#heroes .skin').forEach(b=>{const g=b.querySelector('canvas').getContext('2d');drawChar(g,64,74,66,0,b.dataset.hero,1.5);});
-  $$('#skins .skin').forEach(b=>{const g=b.querySelector('canvas').getContext('2d');drawOwl(g,64,72,72,0,skinById(b.dataset.skin),1.5);});
+    return `<button class="skin${open?'':' locked'}${hero===h.id?' on':''}" data-hero="${h.id}"><canvas width="128" height="128"></canvas><b>${h.name}</b><small>${open?(hero===h.id?'играет':'выбрать'):condText(h)}</small></button>`;}).join('');
+  $('#skinsLabel').textContent='Цвет — '+hn;$('#accLabel').textContent='Аксессуар — '+hn;
+  $('#skins').innerHTML=SKINS.map(sk=>{const open=us.includes(sk.id),on=look.skin===sk.id;
+    return `<button class="skin${open?'':' locked'}${on?' on':''}" data-skin="${sk.id}"><canvas width="128" height="128"></canvas><b>${sk.name}</b><small>${open?(on?'надет':'надеть'):condText(sk)}</small></button>`;}).join('');
+  $('#accs').innerHTML=ACCS.map(a=>{const open=ua.includes(a.id),on=look.acc===a.id;
+    return `<button class="skin${open?'':' locked'}${on?' on':''}" data-acc="${a.id}"><canvas width="128" height="128"></canvas><b>${a.name}</b><small>${open?(on?'надет':'надеть'):condText(a)}</small></button>`;}).join('');
+  $$('#heroes .skin').forEach(b=>{const g=b.querySelector('canvas').getContext('2d');drawChar(g,64,76,62,0,b.dataset.hero,1.5);});
+  $$('#skins .skin').forEach(b=>{const g=b.querySelector('canvas').getContext('2d');drawChar(g,64,76,62,0,hero,1.5,{skin:b.dataset.skin,acc:look.acc});});
+  $$('#accs .skin').forEach(b=>{const g=b.querySelector('canvas').getContext('2d');drawChar(g,64,78,60,0,hero,1.5,{skin:look.skin,acc:b.dataset.acc});});
   show('wardrobe');
 }
 $('#wardrobe').addEventListener('click',e=>{
-  const h=e.target.closest('[data-hero]'),s=e.target.closest('[data-skin]');
-  if(h){if(!unlockedHeroes().includes(h.dataset.hero)){sfx.no();toast('Этот друг пока не пришёл');return;}P.hero=h.dataset.hero;save();sfx.ok();openWardrobe();}
-  else if(s){if(!unlockedSkins().includes(s.dataset.skin)){sfx.no();toast('Этот наряд пока закрыт');return;}P.skin=s.dataset.skin;P.hero='owl';save();sfx.ok();openWardrobe();}
+  const h=e.target.closest('[data-hero]'),s=e.target.closest('[data-skin]'),a=e.target.closest('[data-acc]');
+  if(h){if(!unlockedHeroes().includes(h.dataset.hero)){sfx.no();toast('Этот друг пока не пришёл');return;}P.hero=h.dataset.hero;}
+  else if(s){if(!unlockedSkins().includes(s.dataset.skin)){sfx.no();toast('Этот цвет пока закрыт');return;}setLook(P.hero,'skin',s.dataset.skin);}
+  else if(a){if(!unlockedAccs().includes(a.dataset.acc)){sfx.no();toast('Этот аксессуар пока закрыт');return;}setLook(P.hero,'acc',a.dataset.acc);}
+  else return;
+  save();sfx.ok();const sc=$('#wardrobe .wscroll').scrollTop;openWardrobe();$('#wardrobe .wscroll').scrollTop=sc;
 });
+
+/* ---------- challenge keys ---------- */
+function chOpen(){return !P.chGate||P.chMs>0;}
+function fmtMs(ms){const s=Math.max(0,Math.ceil(ms/1000));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+function openGate(){
+  $('#gateKeys').innerHTML=KEY_SUBJ.map(k=>`<button class="place keycard${P.keys[k]?' got':''}" data-key="${k}" style="--g:${{read:'#4dffa8',math:'#29e3ff',logic:'#c78bff'}[k]}">
+    <span class="glyph">${P.keys[k]?'🔑':'🔒'}</span><b>${SECTION_NAMES[k]}</b><small>${P.keys[k]?'ключ есть':'нужна звезда'}</small></button>`).join('');
+  $('#gateText').textContent=`Испытание открывается ключами. Получи звезду в Лесу букв, на Реке чисел и в Пещере загадок — и Испытание откроется на ${P.chMin} минут.`;
+  show('gate');setTrack('lullaby');
+}
+$('#gateKeys').addEventListener('click',e=>{const b=e.target.closest('[data-key]');if(b){ac();startRound(b.dataset.key);}});
+function saveDraft(){
+  if(!B||!B.level.cells.length)return false;
+  const copy=clone(B.level);
+  if(B.idx!=null&&customs[B.idx])customs[B.idx]=copy;else if(customs.length<MAX_CUSTOM){customs.push(copy);B.idx=customs.length-1;}else return false;
+  saveCustoms();return true;
+}
+function chTimeUp(){
+  P.chMs=0;save();
+  if(cur==='chal'&&CH&&CH.state==='play'){CH.keysOut=true;banner('Время Испытания вышло — доиграй попытку',4000);return;}
+  if(cur==='build'){if(saveDraft())toast('Уровень сохранён');B=null;}
+  CH=null;openGate();
+}
+let chLastTick=0;
+function chTick(now){
+  const d=chLastTick?clamp(now-chLastTick,0,2000):0;chLastTick=now;
+  if(!P.chGate||document.hidden||!['chsel','chal','build'].includes(cur)||P.chMs<=0)return;
+  const before=P.chMs;P.chMs=Math.max(0,P.chMs-d);
+  if(before>30000&&P.chMs<=30000)banner('Испытание: осталось 30 секунд');
+  const el=$('#chTimer');if(el)el.textContent='⏱ '+fmtMs(P.chMs);
+  if(Math.floor(before/5000)!==Math.floor(P.chMs/5000))save();
+  if(P.chMs<=0)chTimeUp();
+}
 
 /* ---------- level builder ---------- */
 const BUILD_CEIL=7,MAX_CUSTOM=8,MAX_LEN=300;
@@ -1830,6 +2008,7 @@ function renderLock(){
 }
 function timeTick(){
   const now=Date.now();
+  chTick(now);
   if(lockLeft()>0){if(!['lock','pin','parents'].includes(cur))showLock();else if(cur==='lock')renderLock();TS.last=now;saveTS();return;}
   if(cur==='lock'){goMap();return;}
   const counting=P.limit>0&&!document.hidden&&!['start','pin','parents'].includes(cur);
@@ -1893,6 +2072,7 @@ function updateMap(){
   $('#bubble').textContent=chapter()[1];
   $$('[data-lvl]').forEach(el=>{const l=P.levels[el.dataset.lvl];el.innerHTML=Array.from({length:5},(_,i)=>`<i class="${i<l?'on':''}"></i>`).join('');});
   $('#wardNote').textContent=HEROES.find(h=>h.id===P.hero).name;
+  $('#chalNote').textContent=!P.chGate?'5 режимов и строитель':P.chMs>0?'открыто ещё '+fmtMs(P.chMs):'ключи: '+KEY_SUBJ.filter(k=>P.keys[k]).length+' из 3';
   updateTimePill();
   drawSky();
 }
@@ -1924,7 +2104,7 @@ function starPath(g,x,y,r){g.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/
 function openStudio(){
   const gl=$('#gallery');
   gl.innerHTML=gallery.length?gallery.slice().reverse().map(src=>`<img src="${src}" alt="Рисунок">`).join(''):'<div class="empty" style="grid-column:1/-1">Пока пусто. Нарисуй что-нибудь, и рисунок появится здесь.</div>';
-  show('studio');
+  show('studio');setTrack('elise');
 }
 let pen={color:PAINT[0],size:14,erase:false,stamp:null},ink=0,undoStack=[],drawTopic='';
 const paint=$('#paint'),pg=paint.getContext('2d');
@@ -2027,6 +2207,10 @@ function renderParents(){
   $('#levelsCard').innerHTML=Object.keys(SUBJ_NAMES).map(s=>`
     <div class="prow"><div class="grow">${SUBJ_NAMES[s]}<small>${LEVEL_NAMES[s][P.levels[s]-1]}</small></div>
     <button class="step" data-s="${s}" data-d="-1" aria-label="Проще">−</button><span class="lvnum">${P.levels[s]}</span><button class="step" data-s="${s}" data-d="1" aria-label="Сложнее">+</button></div>`).join('');
+  $('#tChGate').textContent=P.chGate?'Вкл':'Выкл';$('#tChGate').classList.toggle('on',P.chGate);
+  $('#chMinSeg').innerHTML=[3,5,10,15].map(m=>`<button data-chmin="${m}" class="${P.chMin===m?'on':''}">${m} мин за 3 ключа</button>`).join('');
+  $('#chNote').textContent=!P.chGate?'Испытание открыто всегда.':`Ключи сейчас: ${KEY_SUBJ.map(k=>SUBJ_NAMES[k]+(P.keys[k]?' ✓':' —')).join(', ')}. Открыто ещё: ${fmtMs(P.chMs)}.`;
+  $('#chOpenNow').textContent=`Открыть сейчас на ${P.chMin} мин`;$('#chOpenNow').hidden=!P.chGate;
   const v=$('#tMusic'),so=$('#tSound');
   v.textContent=P.music?'Вкл':'Выкл';v.classList.toggle('on',P.music);
   so.textContent=P.sound?'Вкл':'Выкл';so.classList.toggle('on',P.sound);
@@ -2044,6 +2228,9 @@ $('#parents').addEventListener('click',e=>{
   else if(id==='pinRemove'){P.pin='';save();renderParents();}
 });
 $('#levelsCard').addEventListener('click',e=>{const b=e.target.closest('[data-s]');if(!b)return;const s=b.dataset.s;P.levels[s]=clamp(P.levels[s]+(+b.dataset.d),1,5);P.good[s]=0;save();renderParents();});
+$('#tChGate').addEventListener('click',()=>{P.chGate=!P.chGate;save();renderParents();});
+$('#chMinSeg').addEventListener('click',e=>{const b=e.target.closest('[data-chmin]');if(!b)return;P.chMin=+b.dataset.chmin;save();renderParents();});
+$('#chOpenNow').addEventListener('click',()=>{P.chMs+=P.chMin*60000;save();toast('Испытание открыто');renderParents();});
 $('#tMusic').addEventListener('click',()=>{setMusic(!P.music);save();renderParents();});
 $('#tSound').addEventListener('click',()=>{P.sound=!P.sound;save();renderParents();sfx.tick();});
 let resetArmed=0;
@@ -2066,7 +2253,7 @@ holdGate($('#lockAdult'),openParents);
 $('#playBtn').addEventListener('click',()=>{ac();setMusic(P.music);goMap();});
 $$('[data-home]').forEach(b=>b.addEventListener('click',goMap));
 $$('[data-go]').forEach(b=>b.addEventListener('click',()=>{ac();const s=b.dataset.go;
-  if(s==='art')openStudio();else if(s==='chal')openChSel();else if(s==='ward')openWardrobe();else startRound(s);}));
+  if(s==='art')openStudio();else if(s==='chal'){if(chOpen())openChSel();else openGate();}else if(s==='ward')openWardrobe();else startRound(s);}));
 $('#rewBtn').addEventListener('click',()=>{if(pendingLock){lockNow();return;}goMap();});
 $('#rewAgain').addEventListener('click',e=>{if(pendingLock){lockNow();return;}startRound(e.currentTarget.dataset.subj);});
 $$('.music-btn').forEach(b=>b.addEventListener('click',()=>{setMusic(!P.music);save();}));
@@ -2080,6 +2267,7 @@ window.uhuBack=()=>{
   if(cur==='draw'){openStudio();return true;}
   if(cur==='chal'){chExit();return true;}
   if(cur==='build'){B=null;openChSel('mine');return true;}
+  if(cur==='gate'){goMap();return true;}
   if(cur==='pin'){const c=PINS.cancel;PINS.ok=null;c?c():goMap();return true;}
   if(cur==='parents'){backFromParents();return true;}
   goMap();return true;
