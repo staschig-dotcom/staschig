@@ -372,6 +372,13 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
 .keycard.got{border:3px solid var(--star)}
 .keycard .glyph{font-size:34px}
 .chtimer{font-weight:900;color:var(--star);font-variant-numeric:tabular-nums;font-size:18px}
+
+/* v6: emotions */
+.herocv{cursor:pointer;touch-action:manipulation;flex:none;display:block}
+#mapHero{width:88px;height:88px}
+#startHero{width:min(64vh,240px);height:min(64vh,240px)}
+.rewArt{position:relative;flex:none}
+#rewHero{position:absolute;right:-30%;bottom:-12%;width:62%;height:62%}
 </style>
 </head>
 <body>
@@ -409,9 +416,8 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
 </svg>
 
 <div id="app">
-<div id="app">
   <section class="screen" id="start">
-    <svg class="owl"><use href="#owl"/></svg>
+    <canvas class="herocv" id="startHero" aria-label="Совёнок Уху — нажми на него"></canvas>
     <div class="col">
       <h1>Совёнок Уху<br>и потерянные звёзды</h1>
       <p>Буквы, числа, загадки и рисунки. Помоги Уху вернуть звёзды на небо!</p>
@@ -429,7 +435,7 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
     <div class="sky-wrap"><canvas id="skyCanvas"></canvas><div class="sky-count" id="skyCount"></div></div>
     <div class="timepill" id="timePill" hidden></div>
     <div class="owl-row">
-      <svg class="owl"><use href="#owl"/></svg>
+      <canvas class="herocv" id="mapHero" aria-label="Совёнок Уху — нажми на него"></canvas>
       <div class="bubble" id="bubble"></div>
     </div>
     </div>
@@ -599,7 +605,7 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
   </section>
 
   <section class="screen" id="reward" hidden>
-    <svg class="bigstar" id="rewStar"><use href="#star"/></svg>
+    <div class="rewArt"><svg class="bigstar" id="rewStar"><use href="#star"/></svg><canvas class="herocv" id="rewHero" aria-label="Твой герой"></canvas></div>
     <div class="col">
       <h2 id="rewTitle">Звезда найдена!</h2>
       <p id="rewText"></p>
@@ -857,7 +863,14 @@ const sfx={
   bump(){fx(t=>noise(sfxBus,t,.12,.12,'lowpass',900));},
   crash(){fx(t=>{noise(sfxBus,t,.45,.3,'lowpass',1400);osc(sfxBus,'sawtooth',220,t,.35,.08,50);});},
   cp(){fx(t=>{osc(sfxBus,'sine',1046,t,.2,.1);osc(sfxBus,'sine',1568,t+.08,.25,.08);});},
-  star(){fx(t=>[523,659,784,1047,1319].forEach((f,i)=>osc(sfxBus,'sine',f,t+i*.11,.4,.14)));}
+  star(){fx(t=>[523,659,784,1047,1319].forEach((f,i)=>osc(sfxBus,'sine',f,t+i*.11,.4,.14)));},
+  hoot(){fx(t=>{osc(sfxBus,'sine',560,t,.22,.13,470);osc(sfxBus,'sine',470,t+.26,.34,.13,440);});},
+  giggle(){fx(t=>[700,820,760,900,840,1000].forEach((f,i)=>osc(sfxBus,'triangle',f,t+i*.07,.09,.08)));},
+  boing(){fx(t=>osc(sfxBus,'sine',180,t,.35,.14,720));},
+  kiss(){fx(t=>{osc(sfxBus,'sine',1400,t,.08,.08,900);osc(sfxBus,'sine',1100,t+.12,.12,.06);});},
+  pop(){fx(t=>osc(sfxBus,'sine',400,t,.12,.12,900));},
+  dizzy(){fx(t=>{for(let i=0;i<6;i++)osc(sfxBus,'sine',700-i*60+(i%2?40:-40),t+i*.09,.12,.07);});},
+  sad(){fx(t=>osc(sfxBus,'sine',440,t,.45,.08,300));}
 };
 
 /* Music. Lullaby = "Ah vous dirai-je, Maman" (folk tune, 1761, public domain), own arrangement.
@@ -1274,6 +1287,42 @@ function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.lineTo(x+w-r,y);g.quadr
 function tri(g,a,b,c,d,e,f){g.beginPath();g.moveTo(a,b);g.lineTo(c,d);g.lineTo(e,f);g.closePath();g.fill();}
 function circ(g,x,y,r,col){g.fillStyle=col;g.beginPath();g.arc(x,y,r,0,7);g.fill();}
 function skinById(id){return SKINS.find(s=>s.id===id)||SKINS[0];}
+/* Emotion of the character being drawn right now (set by drawActor). */
+let EMO={e:'normal',gx:0,gy:0,t:0};
+function heartPath(g,x,y,r){g.beginPath();g.moveTo(x,y+r*.9);g.bezierCurveTo(x-r*1.6,y-r*.2,x-r*.6,y-r*1.3,x,y-r*.45);g.bezierCurveTo(x+r*.6,y-r*1.3,x+r*1.6,y-r*.2,x,y+r*.9);g.closePath();}
+/* One eye. big = owl-style eye with a white; otherwise a dot eye of radius r. side = -1 left, 1 right. */
+function emoEye(g,x,y,r,side,big,lid){
+  const e=EMO.e,ink='#1b1530',lw=Math.max(1.5,r*(big?.26:.55));
+  g.save();g.lineCap='round';g.lineJoin='round';
+  if(e==='blink'||(e==='sleepy'&&!big)){g.strokeStyle=ink;g.lineWidth=lw;g.beginPath();g.moveTo(x-r*(big?.75:1.1),y);g.lineTo(x+r*(big?.75:1.1),y);g.stroke();g.restore();return;}
+  if(e==='happy'||e==='laugh'||(e==='wink'&&side>0)){const q=big?r*.62:r*1.25;g.strokeStyle=ink;g.lineWidth=lw;g.beginPath();g.arc(x,y+q*.45,q,Math.PI*1.15,Math.PI*1.85);g.stroke();g.restore();return;}
+  if(e==='love'){g.fillStyle='#ff4f7a';heartPath(g,x,y,(big?r*.72:r*1.5)*(1+.08*Math.sin(EMO.t*10)));g.fill();g.restore();return;}
+  if(e==='dizzy'){const q=big?r*.8:r*1.5;g.strokeStyle=ink;g.lineWidth=lw*.7;g.beginPath();for(let a=0;a<Math.PI*5;a+=.25){const d=q*a/(Math.PI*5);g.lineTo(x+Math.cos(a+EMO.t*7*side)*d,y+Math.sin(a+EMO.t*7*side)*d);}g.stroke();g.restore();return;}
+  const gx=EMO.gx||0,gy=(EMO.gy||0)+(e==='sad'?.5:0);
+  if(big){
+    const sr=e==='surprised'?r*1.1:r;circ(g,x,y,sr,'#fff6e0');
+    const pr=e==='surprised'?r*.3:r*.5;
+    circ(g,x+r*.25+gx*r*.3,y+r*.08+gy*r*.3,pr,'#2a2140');circ(g,x+r*.42+gx*r*.3,y-r*.14+gy*r*.3,r*.16,'#fff');
+    if(e==='sleepy'){g.beginPath();g.arc(x,y,sr,0,7);g.clip();g.fillStyle=lid||'#a2694a';g.fillRect(x-sr,y-sr,sr*2,sr*1.05);g.strokeStyle=ink;g.lineWidth=lw*.6;g.beginPath();g.moveTo(x-sr,y+sr*.05);g.lineTo(x+sr,y+sr*.05);g.stroke();}
+  }else{
+    if(e==='surprised'){circ(g,x,y,r*1.55,'#ffffff');circ(g,x+gx*r*.4,y+gy*r*.4,r*.75,ink);}
+    else{circ(g,x+gx*r*.4,y+gy*r*.4,r,ink);circ(g,x+gx*r*.4+r*.35,y-r*.35+gy*r*.4,r*.35,'#fff');}
+  }
+  g.restore();
+  if(e==='sad'){
+    const by=y-(big?r*1.25:r*2.2),bw=big?r*.8:r*1.4;
+    g.save();g.strokeStyle=ink;g.lineWidth=lw*.8;g.lineCap='round';g.beginPath();g.moveTo(x+side*bw,by+bw*.2);g.lineTo(x-side*bw,by-bw*.25);g.stroke();
+    if(side>0){const k=(EMO.t*1.1)%1,ty=y+(big?r:r*1.5)+k*(big?r*1.4:r*3);g.globalAlpha=1-k;g.fillStyle='#6fc3ff';g.beginPath();g.ellipse(x+r*.3,ty,big?r*.18:r*.5,big?r*.26:r*.7,0,0,7);g.fill();}
+    g.restore();
+  }
+}
+/* Mouth over a friend's face for strong emotions. */
+function emoMouth(g,h){
+  const e=EMO.e;g.save();
+  if(e==='laugh'||e==='surprised'){g.fillStyle='#3a1020';g.beginPath();g.ellipse(0,h*.6,h*(e==='laugh'?.2:.13),h*(e==='laugh'?.15:.17),0,0,7);g.fill();g.fillStyle='#ff7a96';g.beginPath();g.ellipse(0,h*.68,h*.09,h*.05,0,0,7);g.fill();}
+  else if(e==='sad'){g.strokeStyle='#1b1530';g.lineWidth=Math.max(1.5,h*.07);g.lineCap='round';g.beginPath();g.arc(0,h*.78,h*.2,Math.PI*1.2,Math.PI*1.8);g.stroke();}
+  g.restore();
+}
 function drawOwl(g,cx,cy,s,rot,sk,time){
   const h=s/2;let body=sk.body,ear=sk.ear;
   if(sk.rainbow){const hue=(time*90)%360;body=`hsl(${hue},85%,58%)`;ear=`hsl(${(hue+40)%360},85%,42%)`;}
@@ -1283,8 +1332,11 @@ function drawOwl(g,cx,cy,s,rot,sk,time){
   rr(g,-h,-h,s,s,s*.24);g.fillStyle=body;g.fill();g.shadowBlur=0;
   g.lineWidth=Math.max(2,s*.06);g.strokeStyle=sk.line;g.stroke();
   g.fillStyle=sk.belly;g.beginPath();g.ellipse(0,h*.55,h*.6,h*.36,0,0,Math.PI*2);g.fill();
-  [-1,1].forEach(k=>{circ(g,k*h*.42,-h*.18,h*.36,'#fff6e0');circ(g,k*h*.42+h*.09,-h*.15,h*.18,'#2a2140');circ(g,k*h*.42+h*.15,-h*.23,h*.06,'#fff');});
-  g.fillStyle='#f0a91c';tri(g,-h*.14,h*.04,h*.14,h*.04,0,h*.32);
+  [-1,1].forEach(k=>emoEye(g,k*h*.42,-h*.18,h*.36,k,true,body));
+  if(EMO.e==='laugh'||EMO.e==='surprised'){g.fillStyle='#3a1020';g.beginPath();g.ellipse(0,h*.2,h*.12,h*.12,0,0,7);g.fill();
+    g.fillStyle='#f0a91c';tri(g,-h*.15,h*.02,h*.15,h*.02,0,h*.14);tri(g,-h*.1,h*.27,h*.1,h*.27,0,h*.4);}
+  else{g.fillStyle='#f0a91c';tri(g,-h*.14,h*.04,h*.14,h*.04,0,h*.32);}
+  if(EMO.e==='sad'||EMO.e==='love'){circ(g,-h*.72,h*.2,h*.11,'rgba(255,120,150,.55)');circ(g,h*.72,h*.2,h*.11,'rgba(255,120,150,.55)');}
   g.restore();
 }
 /* Friends: each is a rounded cube with its own face. */
@@ -1301,7 +1353,7 @@ function friendPal(id,skinId,time){
 }
 let PAL_GLOW=null;
 function bodyBox(g,h,fill,line){rr(g,-h,-h,h*2,h*2,h*.48);if(PAL_GLOW){g.shadowColor=PAL_GLOW;g.shadowBlur=h*.9;}g.fillStyle=fill;g.fill();g.shadowBlur=0;g.lineWidth=Math.max(2,h*.12);g.strokeStyle=line;g.stroke();}
-function dotEyes(g,h,y,r){[-1,1].forEach(k=>{circ(g,k*h*.38,y,r,'#1b1530');circ(g,k*h*.38+r*.35,y-r*.35,r*.35,'#fff');});}
+function dotEyes(g,h,y,r){[-1,1].forEach(k=>emoEye(g,k*h*.38,y,r,k,false));}
 function drawFriend(g,cx,cy,s,rot,id,time,pal){
   pal=pal||FRIEND_BASE[id];PAL_GLOW=pal.glow||null;
   const h=s/2;g.save();g.translate(cx,cy);g.rotate(rot);
@@ -1335,16 +1387,19 @@ function drawFriend(g,cx,cy,s,rot,id,time,pal){
     g.fillStyle=pal.ear;tri(g,-h*.95,-h*.35,-h*.8,-h*1.35,-h*.2,-h*.9);tri(g,h*.95,-h*.35,h*.8,-h*1.35,h*.2,-h*.9);
     g.fillStyle='#ffb3c8';tri(g,-h*.78,-h*.6,-h*.74,-h*1.1,-h*.4,-h*.85);tri(g,h*.78,-h*.6,h*.74,-h*1.1,h*.4,-h*.85);
     bodyBox(g,h,pal.body,pal.line);
-    [-1,1].forEach(k=>{g.fillStyle='#8fe36b';g.beginPath();g.ellipse(k*h*.4,-h*.15,h*.2,h*.22,0,0,7);g.fill();g.fillStyle='#1b1530';g.fillRect(k*h*.4-h*.04,-h*.33,h*.08,h*.36);});
+    if(EMO.e==='normal')[-1,1].forEach(k=>{g.fillStyle='#8fe36b';g.beginPath();g.ellipse(k*h*.4+(EMO.gx||0)*h*.05,-h*.15,h*.2,h*.22,0,0,7);g.fill();g.fillStyle='#1b1530';g.fillRect(k*h*.4-h*.04+(EMO.gx||0)*h*.08,-h*.33,h*.08,h*.36);});
+    else [-1,1].forEach(k=>emoEye(g,k*h*.4,-h*.15,h*.15,k,false));
     g.fillStyle='#ff8fb0';tri(g,-h*.1,h*.18,h*.1,h*.18,0,h*.32);
     g.strokeStyle='#f5f6fb';g.lineWidth=1.5;[-1,1].forEach(k=>{[0,.12].forEach(d=>{g.beginPath();g.moveTo(k*h*.25,h*.3+d*h);g.lineTo(k*h*.95,h*.22+d*h*1.6);g.stroke();});});
   }else{ /* wind */
     g.globalAlpha=.95;bodyBox(g,h,pal.body,pal.line);
     g.strokeStyle='#ffffff';g.lineWidth=h*.1;g.beginPath();g.arc(-h*.35,h*.45,h*.25,Math.PI,Math.PI*2.4);g.stroke();g.beginPath();g.arc(h*.4,h*.5,h*.2,Math.PI,Math.PI*2.4);g.stroke();
-    g.strokeStyle='#1b1530';g.lineWidth=h*.09;[-1,1].forEach(k=>{g.beginPath();g.arc(k*h*.38,-h*.15,h*.16,Math.PI*1.1,Math.PI*1.9);g.stroke();});
+    if(EMO.e==='normal'||EMO.e==='blink'){g.strokeStyle='#1b1530';g.lineWidth=h*.09;[-1,1].forEach(k=>{g.beginPath();g.arc(k*h*.38,-h*.15,h*.16,Math.PI*1.1,Math.PI*1.9);g.stroke();});}
+    else [-1,1].forEach(k=>emoEye(g,k*h*.38,-h*.15,h*.14,k,false));
     circ(g,-h*.65,h*.08,h*.12,'#ff9db0');circ(g,h*.65,h*.08,h*.12,'#ff9db0');
     g.lineWidth=h*.08;g.beginPath();g.arc(0,h*.1,h*.2,.15*Math.PI,.85*Math.PI);g.stroke();
   }
+  emoMouth(g,h);
   g.restore();
 }
 function lookOf(id){
@@ -1362,6 +1417,119 @@ function drawChar(g,cx,cy,s,rot,heroId,time,look){
   else drawFriend(g,cx,cy,s,rot,heroId,time,friendPal(heroId,look.skin,time));
   if(look.acc)drawAcc(g,cx,cy,s,rot,look.acc,heroId);
 }
+/* ---------- emotions: animated characters ---------- */
+function newActor(){return {e:'normal',base:'normal',anim:'',t0:0,animDur:.8,until:0,fx:[],gx:0,gy:0,seed:Math.random()*9,lastT:0,lastAct:0,taps:[],lastIdx:-1};}
+function react(a,e,anim,fxKind,dur,t){
+  t=t??performance.now()/1000;a.e=e;a.anim=anim||'';a.t0=t;a.animDur=anim==='spin'?.9:anim==='wobble'?1.1:.8;a.until=t+(dur||1.8);a.lastAct=t;
+  if(fxKind)spawnFx(a,fxKind,t);
+}
+function spawnFx(a,k,t){
+  const R_=Math.random,add=o=>a.fx.push(Object.assign({k,born:t,life:1.4,vx:0,vy:-.5},o));
+  if(k==='hearts')for(let i=0;i<4;i++)add({x:(R_()-.5)*.8,y:-.55,vx:(R_()-.5)*.3,vy:-.45-R_()*.3,life:1.3+R_()*.4,d:i*.12});
+  else if(k==='stars')for(let i=0;i<7;i++){const an=-Math.PI*(.1+.8*i/6);add({x:0,y:-.3,vx:Math.cos(an)*.9,vy:Math.sin(an)*.9,life:.9});}
+  else if(k==='spark')for(let i=0;i<5;i++)add({x:(R_()-.5)*1.1,y:-.2-R_()*.6,vx:0,vy:-.15,life:.8+R_()*.4,d:i*.08});
+  else if(k==='notes')for(let i=0;i<3;i++)add({x:.45*(i%2?1:-1),y:-.4,vx:(i%2?.25:-.25),vy:-.5,life:1.4,d:i*.25,ch:i%2?'♪':'♫'});
+  else if(k==='excl')add({x:.45,y:-.85,vx:0,vy:-.1,life:1,ch:'!'});
+  else if(k==='quest')add({x:.45,y:-.85,vx:0,vy:-.1,life:1.2,ch:'?'});
+  else if(k==='zzz')add({x:.35,y:-.6,vx:.18,vy:-.3,life:2.2,ch:'z'});
+}
+function drawFx(g,a,cx,cy,s,t){
+  a.fx=a.fx.filter(f=>t-f.born<(f.life+(f.d||0)));
+  a.fx.forEach(f=>{
+    const age=t-f.born-(f.d||0);if(age<0)return;
+    const x=cx+(f.x+f.vx*age)*s,y=cy+(f.y+f.vy*age)*s,al=Math.max(0,1-age/f.life);
+    g.save();g.globalAlpha=al;
+    if(f.k==='hearts'){g.fillStyle='#ff4f7a';heartPath(g,x,y,s*.09);g.fill();}
+    else if(f.k==='stars'||f.k==='spark'){g.fillStyle='#ffd45c';g.translate(x,y);g.rotate(age*4);starShape(g,0,0,s*(f.k==='stars'?.08:.05));g.fill();}
+    else{const pop=f.k==='excl'||f.k==='quest'?Math.min(1,age*6):1;
+      g.font=`900 ${Math.round(s*(f.k==='zzz'?.22+age*.08:.34)*pop)}px Nunito,sans-serif`;g.textAlign='center';g.textBaseline='middle';
+      g.fillStyle=f.k==='notes'?'#c78bff':f.k==='excl'?'#ffd45c':f.k==='quest'?'#29e3ff':'#c9d2ff';g.fillText(f.ch,x,y);}
+    g.restore();
+  });
+}
+/* Draw a character with its current emotion, idle motion and effects. opt.still: no body motion (runner). */
+function drawActor(g,cx,cy,s,a,t,heroId,look,opt){
+  opt=opt||{};
+  if(a.until&&t>a.until){a.e=a.base;a.anim='';a.until=0;}
+  let e=a.e;if(e==='normal'&&((t+a.seed)%3.7)<.13)e='blink';
+  const p=a.anim?clamp((t-a.t0)/a.animDur,0,1):1;
+  let dx=0,dy=0,rot=opt.rot||0,sx=1,sy=1;
+  if(!opt.still){
+    dy=Math.sin(t*2.2+a.seed)*s*.025;
+    if(p<1){
+      if(a.anim==='jump'){dy-=Math.sin(p*Math.PI)*s*.5;if(p>.82){sx=1.1;sy=.9;}}
+      else if(a.anim==='hop')dy-=Math.sin(p*Math.PI)*s*.2;
+      else if(a.anim==='spin'){dy-=Math.sin(p*Math.PI)*s*.3;rot+=p*Math.PI*2;}
+      else if(a.anim==='wobble')rot+=Math.sin(p*Math.PI*6)*.22*(1-p);
+      else if(a.anim==='shake')dx+=Math.sin(p*Math.PI*10)*s*.06*(1-p);
+      else if(a.anim==='tilt')rot-=.3*Math.sin(p*Math.PI);
+      else if(a.anim==='bounce'){const k=1+Math.sin(p*Math.PI*3)*.1*(1-p);sx=k;sy=2-k;}
+    }
+    if(a.e==='sleepy')dy+=Math.sin(t*1.2)*s*.02;
+  }else if(p<1&&(a.anim==='jump'||a.anim==='bounce')){const k=1+Math.sin(p*Math.PI*2)*.08*(1-p);sx=k;sy=2-k;}
+  g.save();g.translate(cx+dx,cy+dy+s/2);g.scale(sx,sy);g.translate(0,-s/2);
+  EMO={e,gx:a.gx,gy:a.gy,t};
+  drawChar(g,0,0,s,rot,heroId,t,look);
+  EMO={e:'normal',gx:0,gy:0,t:0};
+  g.restore();
+  if(a.e==='dizzy')for(let i=0;i<3;i++){const an=t*5+i*2.1;g.save();g.fillStyle='#ffd45c';starShape(g,cx+dx+Math.cos(an)*s*.5,cy+dy-s*.78+Math.sin(an)*s*.12,s*.08);g.fill();g.restore();}
+  drawFx(g,a,cx+dx,cy+dy,s,t);
+}
+const TAP_HEAD=[
+  {e:'love',anim:'bounce',fx:'hearts',snd:'kiss',txt:['Ты мой лучший друг!','Обнимашки!','Я тебя люблю!']},
+  {e:'happy',anim:'jump',fx:'stars',snd:'boing',txt:['Ура!','Прыг-скок!','Мне весело!']},
+  {e:'wink',anim:'tilt',fx:'spark',snd:'hoot',txt:['Подмигиваю тебе!','У-ху!']},
+  {e:'surprised',anim:'hop',fx:'excl',snd:'pop',txt:['Ой, моя макушка!','Ух ты!']},
+  {e:'happy',anim:'spin',fx:'stars',snd:'boing',txt:['Смотри, как я умею!','Кувырок!']}
+];
+const TAP_BELLY={e:'laugh',anim:'wobble',fx:'notes',snd:'giggle',txt:['Хи-хи, щекотно!','Ха-ха-ха!','Ой, щекотно!']};
+const TAP_DIZZY={e:'dizzy',anim:'wobble',fx:'',snd:'dizzy',txt:['Ой-ой, голова кружится!','Всё кружится!'],dur:2.6};
+const TAP_WAKE={e:'surprised',anim:'hop',fx:'excl',snd:'hoot',txt:['Я не сплю! Я просто моргал.','А? Что? Я тут!']};
+/* Tappable characters outside the game screens. */
+const STAGES=[
+  {id:'startHero',scr:'start',hero:()=>'owl',a:newActor(),idle:true},
+  {id:'mapHero',scr:'map',hero:()=>'owl',a:newActor(),idle:true,bubble:'#bubble'},
+  {id:'rewHero',scr:'reward',hero:()=>P.hero,a:newActor()}
+];
+let bubbleTimer=0;
+function tapStage(st,e){
+  ac();const t=performance.now()/1000,a=st.a,cv=$('#'+st.id),r=cv.getBoundingClientRect();
+  const rel=(e.clientY-r.top)/r.height;
+  if(a.e==='dizzy'&&t<a.until)return;
+  a.taps=a.taps.filter(x=>t-x<2.5);a.taps.push(t);
+  let rx;
+  if(a.base==='sleepy'){a.base='normal';rx=TAP_WAKE;}
+  else if(a.taps.length>=6){a.taps=[];rx=TAP_DIZZY;}
+  else if(st.scr==='reward'&&rewardMood==='lose')rx={e:'happy',anim:'hop',fx:'spark',snd:'pop',txt:['Получится в следующий раз!']};
+  else if(rel>.62)rx=TAP_BELLY;
+  else{let i;do{i=rnd(TAP_HEAD.length);}while(i===a.lastIdx);a.lastIdx=i;rx=TAP_HEAD[i];}
+  react(a,rx.e,rx.anim,rx.fx,rx.dur,t);sfx[rx.snd]&&sfx[rx.snd]();
+  if(st.bubble){const b=$(st.bubble);b.textContent=pick(rx.txt);clearTimeout(bubbleTimer);bubbleTimer=setTimeout(()=>{if(cur==='map')b.textContent=chapter()[1];},2800);}
+}
+STAGES.forEach(st=>$('#'+st.id).addEventListener('pointerdown',e=>{e.stopPropagation();tapStage(st,e);}));
+let rewardMood='';
+function setRewardMood(m){
+  rewardMood=m;const a=STAGES[2].a,t=performance.now()/1000;a.base='normal';a.fx=[];
+  if(m==='win')react(a,'love','jump','hearts',2,t);else react(a,'sad','shake','',2.4,t);
+}
+function stageLoop(ts){
+  const t=ts/1000;
+  for(const st of STAGES){
+    if(cur!==st.scr)continue;
+    const cv=$('#'+st.id);if(!cv.offsetWidth)continue;
+    const {g,w,h}=fitCanvas(cv);g.clearRect(0,0,w,h);
+    const a=st.a;if(!a.lastAct)a.lastAct=t;
+    if(st.idle&&a.base!=='sleepy'&&t-a.lastAct>25&&a.e==='normal'){a.base='sleepy';a.e='sleepy';}
+    if(a.base==='sleepy'&&(!a.lastZ||t-a.lastZ>1.1)){a.lastZ=t;spawnFx(a,'zzz',t);}
+    if(st.scr==='reward'&&rewardMood==='win'&&a.e==='normal'&&t-a.t0>2.2)react(a,pick(['happy','love']),pick(['jump','spin','bounce']),pick(['stars','hearts','spark']),1.6,t);
+    if(!a.nextLook||t>a.nextLook){a.nextLook=t+2+Math.random()*3;a.tgx=a.base==='sleepy'?0:(Math.random()-.5)*1.4;a.tgy=(Math.random()-.5)*.6;}
+    a.gx+=((a.tgx||0)-a.gx)*.08;a.gy+=((a.tgy||0)-a.gy)*.08;
+    const s=Math.min(w*.62,h*.5);
+    drawActor(g,w/2,h*.62,s,a,t,st.hero(),null,{});
+  }
+  requestAnimationFrame(stageLoop);
+}
+requestAnimationFrame(stageLoop);
 function drawAcc(g,cx,cy,s,rot,acc,heroId){
   const h=s/2,owl=!heroId||heroId==='owl';g.save();g.translate(cx,cy);g.rotate(rot);
   if(acc==='cap'){
@@ -1494,7 +1662,8 @@ function startRound(subj){
      W:{objs:[],speedNow:6,lethal:false,ceil:null}};
   R.W.onJump=()=>sfx.jump();
   R.W.onSpark=o=>{sfx.spark();const V=R.V;if(V)burst((o.x-V.camX)*V.T,V.floorY-o.y*V.T,'#ffd45c',10,160);};
-  R.W.onBump=()=>{sfx.bump();R.bumpT=.7;};
+  R.W.onBump=()=>{sfx.bump();R.bumpT=.7;react(R.actor,'dizzy','',null,.9);};
+  R.actor=newActor();
   $('#portals').innerHTML='';
   show('run');renderDots();runIdle();setTrack('run');
   newSegment(0,10,1);
@@ -1538,7 +1707,8 @@ function runLoop(ts){
   if(R.phase==='run'&&c.ground&&Math.random()<.6)addTrail(cx-V.T*.45,cy+V.T*.4,heroTrail()||RUN_THEMES[R.subj].line,-R.W.speedNow*V.T*.6);
   drawTrail(V.g,dt);
   if(R.bumpT>0)R.bumpT-=dt;
-  if(!(R.bumpT>0&&Math.floor(R.bumpT*12)%2))drawChar(V.g,cx,cy,V.T*.94,rot,P.hero,now);
+  R.actor.gx+=((R.phase==='fork'?.9:.35)-R.actor.gx)*.1;
+  if(!(R.bumpT>0&&Math.floor(R.bumpT*12)%2))drawActor(V.g,cx,cy,V.T*.94,R.actor,now,P.hero,null,{still:true,rot});
   R.cubeScreen={x:cx,y:cy};
   drawParts(V.g,dt);
   requestAnimationFrame(runLoop);
@@ -1587,7 +1757,7 @@ function choosePortal(b,op,forced){
 function flyDone(){
   const f=R.fly;R.fly=null;
   if(!f.ok){
-    R.phase='fork';R.wrong++;f.btn.classList.add('no');sfx.no();
+    R.phase='fork';R.wrong++;f.btn.classList.add('no');sfx.no();react(R.actor,'sad','',null,1.6);
     if(R.wrong>=2){
       /* attempts are over: the right portal lights up and Uhu goes through it without a point */
       R.revealed=true;$('#portals').classList.add('cool');
@@ -1614,7 +1784,7 @@ function flyDone(){
   if(wordDone){
     const r=f.forced?'miss':R.wrong===0?'gold':'half';
     R.res[R.i]=r;R.pts+=r==='gold'?1:r==='half'?.5:0;
-    if(r==='miss')sfx.no();else{sfx.ok();praise(r==='gold'?pick(PRAISE):'Получилось!');}
+    if(r==='miss'){sfx.no();react(R.actor,'surprised','','quest',1.4);}else{sfx.ok();praise(r==='gold'?pick(PRAISE):'Получилось!');react(R.actor,r==='gold'?pick(['happy','love']):'happy','jump',r==='gold'?'stars':'spark',1.6);}
   }else sfx.tick();
   const V=R.V;
   R.c.x=V.camX+f.to.x/V.T-.5;R.c.y=Math.max(0,(V.floorY-f.to.y)/V.T-.5);R.c.vy=4;R.c.rot=f.rot0;
@@ -1644,7 +1814,7 @@ function finishRound(){
   $('#rewStar').classList.add('dim');$('#rewTitle').textContent='Почти получилось!';
   $('#rewText').textContent=`${ptsTxt} Для звезды нужно ${STAR_POINTS}. Отвечай с первой попытки — так очков больше.`;
   $('#rewAgain').hidden=false;$('#rewAgain').dataset.subj=s;
-  show('reward');sfx.no();setTrack('lullaby');
+  show('reward');sfx.no();setTrack('lullaby');setRewardMood('lose');
 }
 function isUnlocked(item){return item.ch!=null?P.chDone[item.ch]:P.stars>=item.need;}
 function unlockedSkins(){return SKINS.filter(isUnlocked).map(s=>s.id);}
@@ -1680,7 +1850,7 @@ function giveStar(extra,subj){
   if(extra)text=extra+' '+text;
   $('#rewStar').classList.remove('dim');$('#rewAgain').hidden=true;
   $('#rewTitle').textContent=title;$('#rewText').textContent=text;
-  show('reward');sfx.star();setTrack('lullaby');
+  show('reward');sfx.star();setTrack('lullaby');setRewardMood('win');
 }
 
 /* ---------- challenge (Geometry Dash-like, own levels) ---------- */
