@@ -50,10 +50,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          VER=$(sed -n 's/.*versionName = "\(.*\)".*/\1/p' kidsgame/build.gradle.kts)
           gh release delete kids-apk-latest --yes --cleanup-tag || true
           gh release create kids-apk-latest SovenokUhu.apk \
             --target "$GITHUB_SHA" \
-            --title "Совёнок Уху — последняя сборка" \
-            --notes "Детская игра. Сборка из коммита ${GITHUB_SHA::7}. Скачайте SovenokUhu.apk и установите на Android." \
+            --title "Совёнок Уху $VER — последняя сборка" \
+            --notes "Детская игра, версия $VER. Сборка из коммита ${GITHUB_SHA::7}. Скачайте SovenokUhu.apk и установите на Android поверх старой версии." \
             --latest=false
 

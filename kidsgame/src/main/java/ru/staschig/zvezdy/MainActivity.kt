@@ -45,7 +45,13 @@ class MainActivity : Activity() {
             }
         }
         // Монотонные часы для ограничения времени игры: перевод часов на телефоне их не меняет.
-        web.addJavascriptInterface(NativeClock(), "UhuNative")
+        val version = try {
+            @Suppress("DEPRECATION")
+            packageManager.getPackageInfo(packageName, 0).versionName ?: ""
+        } catch (e: Exception) {
+            ""
+        }
+        web.addJavascriptInterface(NativeClock(version), "UhuNative")
         setContentView(web)
         hideSystemBars()
 
@@ -99,7 +105,10 @@ class MainActivity : Activity() {
     }
 }
 
-private class NativeClock {
+private class NativeClock(private val versionName: String) {
     @JavascriptInterface
     fun uptime(): Long = SystemClock.elapsedRealtime()
+
+    @JavascriptInterface
+    fun version(): String = versionName
 }

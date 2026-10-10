@@ -600,6 +600,7 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
       <p class="note">Голоса в игре нет, поэтому в первый раз объясните ребёнку задания. У каждого типа задания своя иконка. На каждое задание две попытки. После первой ошибки вверху появляется подсказка, а порталы на 1,5 секунды блокируются, чтобы нельзя было быстро перебирать ответы. После второй ошибки правильный портал светится, и Уху проходит через него без очка.</p>
       <p class="note">Раунд — 5 заданий. Ответ с первой попытки даёт 1 очко, со второй — ½. Звезда — от 4 очков. Уровень растёт сам после двух раундов подряд почти без ошибок и снижается, если ошибок много. Прогресс хранится только в этом телефоне.</p>
       <div><button class="danger" id="resetBtn">Сбросить прогресс</button></div>
+      <p class="note" id="verNote"></p>
     </div>
     </div>
   </section>
@@ -2381,6 +2382,8 @@ function renderParents(){
   $('#chMinSeg').innerHTML=[3,5,10,15].map(m=>`<button data-chmin="${m}" class="${P.chMin===m?'on':''}">${m} мин за 3 ключа</button>`).join('');
   $('#chNote').textContent=!P.chGate?'Испытание открыто всегда.':`Ключи сейчас: ${KEY_SUBJ.map(k=>SUBJ_NAMES[k]+(P.keys[k]?' ✓':' —')).join(', ')}. Открыто ещё: ${fmtMs(P.chMs)}.`;
   $('#chOpenNow').textContent=`Открыть сейчас на ${P.chMin} мин`;$('#chOpenNow').hidden=!P.chGate;
+  let ver='';try{ver=window.UhuNative&&window.UhuNative.version?String(window.UhuNative.version()):'';}catch(e){}
+  $('#verNote').textContent=ver?'Версия игры: '+ver:'';
   const v=$('#tMusic'),so=$('#tSound');
   v.textContent=P.music?'Вкл':'Выкл';v.classList.toggle('on',P.music);
   so.textContent=P.sound?'Вкл':'Выкл';so.classList.toggle('on',P.sound);

@@ -13,7 +13,7 @@ android {
         minSdk = 26
         targetSdk = 34
         versionCode = 6
-        versionName = "6.0.0"
+        versionName = "5.1"
     }
 
     // Тот же постоянный ключ, что у основного приложения: обновления ставятся поверх.
