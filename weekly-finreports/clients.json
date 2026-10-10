@@ -1,0 +1,61 @@
+{
+  "_comment": "Реестр для агента mp-finreport-downloader. cabinet_match — подстрока названия кабинета, КАК ОНО ВИДНО в переключателе ЛК (лучше юрлицо/ИП или ИНН). Пока там TODO — агент не сможет проверить кабинет и вернёт WRONG_CABINET.",
+  "marketplaces": {
+    "WB": {
+      "url": "https://seller.wildberries.ru/",
+      "reports": [
+        {
+          "id": "realization_weekly",
+          "hint": "Финансовые отчёты → Еженедельные отчёты → строка(и) за отчётный период → Детализация → Скачать. Если за неделю несколько отчётов (основной + по выкупам и т.п.) — скачать каждый."
+        }
+      ]
+    },
+    "OZON": {
+      "url": "https://seller.ozon.ru/app/finances",
+      "reports": [
+        {
+          "id": "accruals",
+          "hint": "Финансы → Начисления (детализация начислений) → период = отчётная неделя → Скачать / Сформировать отчёт → дождаться готовности → Скачать."
+        }
+      ]
+    },
+    "YM": {
+      "url": "https://partner.market.yandex.ru/",
+      "reports": [
+        {
+          "id": "services_cost",
+          "hint": "Финансы → Отчёты → Отчёт по стоимости услуг → период = отчётная неделя → Сформировать → Скачать."
+        }
+      ]
+    }
+  },
+  "clients": [
+    {
+      "name": "Даминдарова",
+      "folder": "Даминдарова",
+      "active": true,
+      "accounts": [
+        { "mp": "OZON", "cabinet_match": "TODO" }
+      ]
+    },
+    {
+      "name": "Караматов + Аббасова",
+      "folder": "Караматов + Аббасова",
+      "active": true,
+      "accounts": [
+        { "mp": "WB", "cabinet_match": "TODO" },
+        { "mp": "OZON", "cabinet_match": "TODO" }
+      ]
+    },
+    {
+      "name": "Кепин",
+      "folder": "Кепин",
+      "active": true,
+      "accounts": [
+        { "mp": "WB", "cabinet_match": "TODO" },
+        { "mp": "OZON", "cabinet_match": "TODO" },
+        { "mp": "YM", "cabinet_match": "TODO" }
+      ]
+    }
+  ]
+}
