@@ -1229,9 +1229,9 @@ function stepCube(W,c,dt,input){
   const m=c.mode,C=W.ceil,prevY=c.y,spd=W.speedNow;
   c.x+=spd*dt;
   if(m==='cube')c.vy-=PHYS.g*dt;
-  else if(m==='ship'){c.vy=clamp(c.vy+(input.hold?60:-50)*dt,-9,9);}
+  else if(m==='ship'){c.vy=clamp(c.vy+(input.hold?40:-28)*dt,-6.5,6.5);}
   else if(m==='ball'){c.vy=clamp(c.vy-PHYS.g*c.gd*dt,-22,22);}
-  else if(m==='ufo'){if(input.buffer>0){c.vy=10.5;input.buffer=0;W.onJump&&W.onJump();}c.vy=Math.max(c.vy-48*dt,-12);}
+  else if(m==='ufo'){if(input.buffer>0){c.vy=8.5;input.buffer=0;W.onJump&&W.onJump();}c.vy=Math.max(c.vy-28*dt,-7);}
   else if(m==='wave'){c.vy=(input.hold?1:-1)*spd;}
   c.y+=c.vy*dt;
   let ground=false;
@@ -1493,10 +1493,19 @@ const STAGES=[
   {id:'rewHero',scr:'reward',hero:()=>P.hero,a:newActor()}
 ];
 let bubbleTimer=0;
+/* Tapping the owl is limited: after 12 reactions in 2 minutes it gets tired for a minute. */
+const TAPS={log:[],tiredUntil:0};
+const TIRED_TXT=['Я устал от щекотки. Давай лучше соберём звёзды!','Ух, я наигрался! Пойдём выполнять задания?'];
 function tapStage(st,e){
   ac();const t=performance.now()/1000,a=st.a,cv=$('#'+st.id),r=cv.getBoundingClientRect();
   const rel=(e.clientY-r.top)/r.height;
   if(a.e==='dizzy'&&t<a.until)return;
+  const say=txt=>{if(st.bubble){const b=$(st.bubble);b.textContent=txt;clearTimeout(bubbleTimer);bubbleTimer=setTimeout(()=>{if(cur==='map')b.textContent=chapter()[1];},3500);}};
+  if(st.scr!=='reward'){
+    if(t<TAPS.tiredUntil){say(pick(TIRED_TXT));return;}
+    TAPS.log=TAPS.log.filter(x=>t-x<120);TAPS.log.push(t);
+    if(TAPS.log.length>12){TAPS.log=[];TAPS.tiredUntil=t+60;a.base='sleepy';a.e='sleepy';a.anim='';a.until=0;a.lastZ=0;sfx.sad();say(pick(TIRED_TXT));return;}
+  }
   a.taps=a.taps.filter(x=>t-x<2.5);a.taps.push(t);
   let rx;
   if(a.base==='sleepy'){a.base='normal';rx=TAP_WAKE;}
