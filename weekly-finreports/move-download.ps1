@@ -1,11 +1,11 @@
 <#
   Помощник агента mp-finreport-downloader.
   -Mark                      печатает текущую отметку времени (ISO), её агент передаёт потом в -Since.
-  -Collect -Since -Dest -Prefix [-TimeoutSec] [-Downloads]
+  -Collect -Since -Dest [-Prefix] [-TimeoutSec] [-Downloads]
                              ждёт файлы, появившиеся в папке загрузок после -Since, дожидается
                              окончания загрузки (.crdownload/.tmp исчезли, размер стабилен),
-                             перемещает их в -Dest с префиксом. Печатает JSON {ok, files, error}.
-  Ничего не удаляет. Существующие файлы в -Dest не перезаписывает (добавляет суффикс).
+                             перемещает их в -Dest С ИСХОДНЫМ ИМЕНЕМ (-Prefix необязателен). Если файл с таким именем уже есть, старый уходит в _агент\_replaced\<время>\. Печатает JSON {ok, files, error}.
+  Ничего не удаляет. Существующие файлы в -Dest не удаляет и не перезаписывает: переносит в архив.
 #>
 param(
   [switch]$Mark,
@@ -28,7 +28,7 @@ if ($Mark) {
 }
 
 if (-not $Collect) { Out-Json @{ ok = $false; error = 'use -Mark or -Collect' }; exit 1 }
-if (-not $Since -or -not $Dest -or -not $Prefix) { Out-Json @{ ok = $false; error = '-Since, -Dest, -Prefix required' }; exit 1 }
+if (-not $Since -or -not $Dest) { Out-Json @{ ok = $false; error = '-Since, -Dest required' }; exit 1 }
 
 if (-not $Downloads) {
   # Папка «Загрузки» из реестра пользователя (учитывает перенос на другой диск).
@@ -65,15 +65,23 @@ if ($ready.Count -eq 0) {
 }
 
 New-Item -ItemType Directory -Force -Path $Dest | Out-Null
-$moved = @()
+$moved = @(); $replaced = @()
+$archiveRoot = Join-Path $PSScriptRoot ('_replaced\' + (Get-Date).ToString('yyyyMMdd-HHmmss'))
 foreach ($f in $ready) {
-  $base = "$Prefix`_$($f.BaseName)"
-  $target = Join-Path $Dest ($base + $f.Extension)
-  $i = 2
-  while (Test-Path -LiteralPath $target) { $target = Join-Path $Dest ("$base ($i)" + $f.Extension); $i++ }
+  # Default: keep the marketplace's original file name (downstream skills glob by it).
+  # -Prefix is optional and only prepended when given explicitly.
+  $name = if ($Prefix) { "$Prefix`_$($f.Name)" } else { $f.Name }
+  $target = Join-Path $Dest $name
+  if (Test-Path -LiteralPath $target) {
+    # Same name already in Dest (re-run): move the OLD one to archive, never delete, never create "(2)" duplicates.
+    New-Item -ItemType Directory -Force -Path $archiveRoot | Out-Null
+    $arch = Join-Path $archiveRoot $name
+    Move-Item -LiteralPath $target -Destination $arch
+    $replaced += $arch
+  }
   Move-Item -LiteralPath $f.FullName -Destination $target
   $moved += $target
 }
 
-Out-Json @{ ok = $true; files = $moved }
+Out-Json @{ ok = $true; files = $moved; replaced = $replaced }
 exit 0
