@@ -1,5 +1,5 @@
 {
-  "_comment": "Реестр для агента mp-finreport-downloader. cabinet_match — подстрока названия кабинета, КАК ОНО ВИДНО в переключателе ЛК (лучше юрлицо/ИП или ИНН). Пока там TODO — агент не сможет проверить кабинет и вернёт WRONG_CABINET.",
+  "_comment": "Реестр для агента mp-finreport-downloader. cabinet_match — строки, по которым агент проверяет, что открыт нужный кабинет: достаточно найти в активном кабинете ЛЮБУЮ из них (юрлицо, магазин, ИНН, id продавца). label — метка кабинета в имени файла, нужна когда в одной папке клиента несколько кабинетов одного маркетплейса.",
   "marketplaces": {
     "WB": {
       "url": "https://seller.wildberries.ru/",
@@ -35,7 +35,18 @@
       "folder": "Даминдарова",
       "active": true,
       "accounts": [
-        { "mp": "OZON", "cabinet_match": "TODO" }
+        {
+          "mp": "OZON",
+          "label": "Уютлайф",
+          "seller_id": "5111137",
+          "inn": "020100038610",
+          "cabinet_match": [
+            "ИП Даминдарова Д.С.",
+            "Уютлайф",
+            "020100038610",
+            "5111137"
+          ]
+        }
       ]
     },
     {
@@ -43,8 +54,42 @@
       "folder": "Караматов + Аббасова",
       "active": true,
       "accounts": [
-        { "mp": "WB", "cabinet_match": "TODO" },
-        { "mp": "OZON", "cabinet_match": "TODO" }
+        {
+          "mp": "WB",
+          "label": "Караматов-MARISAID",
+          "seller_id": "1203010",
+          "inn": "860603535172",
+          "cabinet_match": [
+            "ИП Караматов Х.Х.",
+            "MARISAID",
+            "860603535172",
+            "1203010"
+          ]
+        },
+        {
+          "mp": "WB",
+          "label": "Аббасова-NARWAY",
+          "seller_id": "1184908",
+          "inn": "860604336282",
+          "cabinet_match": [
+            "ИП Аббасова Н.Х.",
+            "NARWAY",
+            "860604336282",
+            "1184908"
+          ]
+        },
+        {
+          "mp": "OZON",
+          "label": "Аббасова-NARWAY",
+          "seller_id": "4255804",
+          "inn": "860604336282",
+          "cabinet_match": [
+            "ИП Аббасова Н.Х.",
+            "NARWAY",
+            "860604336282",
+            "4255804"
+          ]
+        }
       ]
     },
     {
@@ -52,9 +97,42 @@
       "folder": "Кепин",
       "active": true,
       "accounts": [
-        { "mp": "WB", "cabinet_match": "TODO" },
-        { "mp": "OZON", "cabinet_match": "TODO" },
-        { "mp": "YM", "cabinet_match": "TODO" }
+        {
+          "mp": "WB",
+          "label": "PB Shop",
+          "seller_id": "4149175",
+          "inn": "330401126110",
+          "cabinet_match": [
+            "ИП Кепин А.Р.",
+            "PB Shop",
+            "330401126110",
+            "4149175"
+          ]
+        },
+        {
+          "mp": "OZON",
+          "label": "PB Shop",
+          "seller_id": "2506563",
+          "inn": "330401126110",
+          "cabinet_match": [
+            "ИП Кепин А.Р.",
+            "PB Shop",
+            "330401126110",
+            "2506563"
+          ]
+        },
+        {
+          "mp": "YM",
+          "label": "PB Shop",
+          "seller_id": "181743540",
+          "inn": "330401126110",
+          "cabinet_match": [
+            "ИП Кепин А.Р.",
+            "PB Shop",
+            "330401126110",
+            "181743540"
+          ]
+        }
       ]
     }
   ]
