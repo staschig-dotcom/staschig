@@ -379,6 +379,31 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
 #startHero{width:min(64vh,240px);height:min(64vh,240px)}
 .rewArt{position:relative;flex:none}
 #rewHero{position:absolute;right:-30%;bottom:-12%;width:62%;height:62%}
+
+/* v6: new task types */
+.gapl{display:inline-block;min-width:.8em;border-bottom:5px solid var(--star);color:var(--star);line-height:1}
+.qcard .pic.sm{font-size:min(13vh,8vw)}
+.house{display:flex;flex-direction:column;align-items:center}
+.roof{width:150px;height:54px;background:var(--star);clip-path:polygon(50% 0,100% 100%,0 100%);display:flex;align-items:flex-end;justify-content:center;color:var(--paper-ink);font-weight:900;font-size:26px;padding-bottom:2px}
+.rooms{display:flex;border:4px solid var(--star);border-top:0;border-radius:0 0 10px 10px}
+.rooms span{width:62px;height:52px;display:grid;place-items:center;font-size:30px;font-weight:900}
+.rooms span+span{border-left:4px solid var(--star)}
+.q{color:var(--star)}
+.cmp{display:flex;align-items:center;justify-content:center;gap:12px;width:100%}
+.cmp .cmpgrp{max-width:40%}
+.cmpgap{font-size:34px;font-weight:900;color:var(--star);border:3px dashed var(--star);border-radius:12px;padding:0 12px;line-height:1.3}
+.qcard .riddle.story{font-size:clamp(15px,4.6vh,21px);line-height:1.4;max-width:30ch}
+.sudoku{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;width:min(52vh,210px);aspect-ratio:1}
+.sc{background:var(--card-hi);border-radius:6px;display:grid;place-items:center;font-size:min(6vh,24px);line-height:1}
+.sc.ask{border:3px dashed var(--star);background:none;color:var(--star);font-weight:900}
+.sc.empty{background:rgba(255,255,255,.06)}
+.sudoku .sc:nth-child(4n+3){margin-left:4px}
+.sudoku .sc:nth-child(n+9){margin-top:4px}
+.sudoku .sc:nth-child(n+13){margin-top:0}
+.qcard .row.seq .cell{width:min(14vh,7vw,60px);font-size:min(8vh,4.4vw,34px)}
+.arrow{color:var(--muted);font-size:20px;font-weight:900}
+.qcard .row.seq{flex-wrap:nowrap;gap:4px}
+.qcard .word{font-size:clamp(26px,min(11vh,4.6vw),56px);letter-spacing:.03em}
 </style>
 </head>
 <body>
@@ -731,10 +756,11 @@ const STAMPS=['⭐','🌙','🌳','🏠','🌸','☁️','🦉','🐱'];
 const PAINT=['#2a2140','#e8434f','#ff9a1f','#ffd43b','#3fbf6a','#3a8de0','#8a5ad6','#8a5a3c','#ff8fc7'];
 
 const LEVEL_NAMES={
- read:['Первая буква слова','Читаем короткие слова','Слово к картинке','Слова из слогов','Читаем загадки'],
- math:['Считаем до 10','Сложение с картинками','Вычитание с картинками','Примеры до 10','До 20 и пропуски'],
- logic:['Узоры и тени','Что лишнее','Узоры посложнее, память','Числовые ряды','Сложные ряды и память']
+ read:['Первая буква слова','Читаем короткие слова','Слово к картинке','Слоги: собери и посчитай','Загадки и пропущенная гласная','Пропущенная буква, слоги','Длинные слова'],
+ math:['Считаем до 10','Сложение, больше-меньше','Вычитание, домики чисел','Примеры до 10, сравнение','До 20 и пропуски','Задачки до 10','Задачки до 20'],
+ logic:['Узоры и тени','Что лишнее, что потом','Узоры, память, что потом','Числовые ряды','Сложные ряды, что сначала','Судоку 4×4','Судоку посложнее']
 };
+const MAX_LEVEL=7;
 const SUBJ_NAMES={read:'Чтение',math:'Счёт',logic:'Логика'};
 const SECTION_NAMES={read:'Лес букв',math:'Река чисел',logic:'Пещера загадок'};
 const PER_SKY=20;
@@ -987,7 +1013,7 @@ let cur='start';
 function show(id){$$('.screen').forEach(s=>{s.hidden=s.id!==id;});cur=id;}
 function toast(t){const d=document.createElement('div');d.className='toast';d.textContent=t;$('#app').appendChild(d);setTimeout(()=>d.remove(),1800);}
 function banner(t,ms){const d=document.createElement('div');d.className='banner';d.textContent=t;$('#app').appendChild(d);setTimeout(()=>d.remove(),ms||3500);}
-const ICONS={'Что начинается на эту букву?':'🔤','Прочитай слово':'📖','Найди слово к картинке':'🖼️','Собери слово':'🧩','Прочитай загадку':'❓',
+const ICONS={'Какой буквы не хватает?':'🔡','Сколько слогов в слове?':'👏','Больше, меньше или равно?':'⚖️','Засели домик':'🏠','Реши задачку':'📘','Чего не хватает в клетке?':'🔲','Что будет потом?':'⏭️','Что было сначала?':'⏮️','Что начинается на эту букву?':'🔤','Прочитай слово':'📖','Найди слово к картинке':'🖼️','Собери слово':'🧩','Прочитай загадку':'❓',
  'Сколько здесь?':'👆','Сколько всего?':'➕','Сколько осталось?':'➖','Реши пример':'✏️','Какое число спряталось?':'🔍',
  'Что дальше?':'🔁','Что лишнее?':'🚫','Чья тень?':'🌑','Запомни!':'👀','Кто спрятался?':'👀'};
 function setPrompt(text){const el=$('#prompt');el.classList.remove('hinted');el.innerHTML=(ICONS[text]?`<span class="ico">${ICONS[text]}</span>`:'')+text;}
@@ -1016,8 +1042,8 @@ function uniqPick(R,fn,key){for(let i=0;i<15;i++){const v=fn();const k=key(v);if
 function mixLevel(lv){return (lv>1&&Math.random()<.3)?1+rnd(lv-1):lv;}
 
 /* ---------- generators: reading ---------- */
-function genRead(level,R){
-  const lv=mixLevel(level);
+function genRead0(level,R){
+  const lv=level;
   if(lv===1){
     const t=uniqPick(R,()=>pick(WORDS),x=>'L'+x.w[0]);
     const others=sample(WORDS.filter(x=>x.w[0]!==t.w[0]),2);
@@ -1058,8 +1084,8 @@ function genRead(level,R){
 /* ---------- generators: math ---------- */
 const items=(n,e,cross)=>Array.from({length:n},(_,i)=>`<span${cross&&i>=n-cross?' class="x"':''}>${e}</span>`).join('');
 function dots(n,minus){return `<div class="hintdots">${Array.from({length:n},(_,i)=>`<i${minus&&i>=n-minus?' class="minus"':''}></i>`).join('')}</div>`;}
-function genMath(level,R){
-  const lv=mixLevel(level);const e=pick(COUNT_ITEMS);
+function genMath0(level,R){
+  const lv=level;const e=pick(COUNT_ITEMS);
   if(lv===1){
     const n=uniqPick(R,()=>2+rnd(9),x=>'c'+x);
     return {text:'Сколько здесь?',
@@ -1158,15 +1184,124 @@ function numSeqTask(hard){
     opts:numOpts(ans,hard?4:3,Math.max(max,20)),cols:hard?4:3,
     hint:d>0?`Каждый раз число растёт на ${d}.`:`Каждый раз число уменьшается на ${-d}.`};
 }
-function genLogic(level,R){
-  const lv=mixLevel(level);
+function genLogic0(level,R){
+  const lv=level;
   if(lv===1)return pick([()=>patternTask('AB'),()=>shadowTask(R)])();
   if(lv===2)return pick([()=>patternTask(pick(['AB','AAB'])),()=>oddTask(R),()=>shadowTask(R)])();
   if(lv===3)return pick([()=>patternTask(pick(['ABB','ABC','AAB'])),()=>oddTask(R),()=>shadowTask(R),()=>memoryTask(3)])();
   if(lv===4)return pick([()=>patternTask(pick(['ABC','AABB','ABB'])),()=>memoryTask(4),()=>numSeqTask(false),()=>oddTask(R)])();
   return pick([()=>patternTask(pick(['ABC','AABB'])),()=>memoryTask(5),()=>numSeqTask(true)])();
 }
+/* ---------- new task types (v6) ---------- */
+const VOWELS='АЕЁИОУЫЭЮЯ';
+function missLetterTask(R,mode){
+  const pool=WORDS.filter(x=>mode==='vowel'?x.w.length<=5:mode==='any'?x.w.length>=3&&x.w.length<=5:x.w.length>=5);
+  const t=uniqPick(R,()=>pick(pool),x=>'m'+x.w);
+  const L=t.w.split('');
+  const idxs=L.map((c,i)=>i).filter(i=>mode==='vowel'?VOWELS.includes(L[i]):i>0&&L[i]!=='Ь');
+  const i=pick(idxs),c=L[i];
+  const base=(VOWELS.includes(c)?'АОУИЫЕЯЮ':'БВГДЖЗКЛМНПРСТФХЦЧШ').split('').filter(x=>x!==c);
+  const n=mode==='long'?4:3;
+  const opts=[c,...sample(base,n-1)];
+  const shown=L.map((x,k)=>k===i?'<span class="gapl">?</span>':x).join('');
+  return {text:'Какой буквы не хватает?',show:`<div class="pic sm">${t.e}</div><div class="word">${shown}</div>`,
+    opts:shuffle(opts.map(x=>({h:`<span class="num">${x}</span>`,ok:x===c}))),hint:'Прочитай слово вслух по слогам и посмотри на картинку.'};
+}
+function sylCountTask(R,long){
+  const pool=WORDS.filter(x=>long?x.s.length>=2:x.s.length<=3);
+  const t=uniqPick(R,()=>pick(pool),x=>'s'+x.w);
+  const n=t.s.length,max=long?4:3;
+  return {text:'Сколько слогов в слове?',show:`<div class="pic sm">${t.e}</div><div class="word">${t.w}</div>`,
+    opts:Array.from({length:max},(_,i)=>({h:num(i+1),ok:i+1===n})),
+    hint:'Хлопни в ладоши на каждый слог. Сколько гласных букв — столько и слогов.'};
+}
+function compareTask(R,mode){
+  let L,Rv,lh,rh;const eq=Math.random()<.22;
+  if(mode==='pics'){const e=pick(COUNT_ITEMS);L=1+rnd(8);Rv=eq?L:1+rnd(8);if(!eq&&Rv===L)Rv=L%8+1;lh=`<div class="grp cmpgrp">${items(L,e)}</div>`;rh=`<div class="grp cmpgrp">${items(Rv,e)}</div>`;}
+  else if(mode==='nums'){L=rnd(21);Rv=eq?L:rnd(21);if(!eq&&Rv===L)Rv=(L+3)%21;lh=`<div class="expr">${L}</div>`;rh=`<div class="expr">${Rv}</div>`;}
+  else{const a=1+rnd(9),b=1+rnd(9);L=a+b;Rv=eq?L:L+pick([-2,-1,1,2]);lh=`<div class="expr">${a}+${b}</div>`;rh=`<div class="expr">${Rv}</div>`;}
+  const ans=L>Rv?'>':L<Rv?'<':'=';
+  return {text:'Больше, меньше или равно?',show:`<div class="cmp">${lh}<span class="cmpgap">?</span>${rh}</div>`,
+    opts:['<','=','>'].map(x=>({h:`<span class="num">${x}</span>`,ok:x===ans})),
+    visual:mode==='expr'?()=>dots(L):null,
+    hint:'Значок открывается, как клювик, к тому, что больше. Если поровну — ставим «=».'};
+}
+function composeTask(R,max){
+  const n=uniqPick(R,()=>3+rnd(max-2),x=>'h'+x+'_'+rnd(99)),a=1+rnd(n-1),left=Math.random()<.5;
+  return {text:'Засели домик',
+    show:`<div class="house"><div class="roof">${n}</div><div class="rooms"><span>${left?a:'<b class="q">?</b>'}</span><span>${left?'<b class="q">?</b>':a}</span></div></div>`,
+    opts:numOpts(n-a,max>6?4:3,max),visual:()=>dots(n,n-a),
+    hint:`В домике живёт число ${n}. В одной комнате ${a}. Сколько нужно во второй, чтобы вместе было ${n}?`};
+}
+const STORY_HEROES=[{n:'Уху',g:'Уху',d:'Уху',m:1},{n:'Лисёнок',g:'Лисёнка',d:'Лисёнку',m:1},{n:'Зайка',g:'Зайки',d:'Зайке',m:0},
+  {n:'Ёжик',g:'Ёжика',d:'Ёжику',m:1},{n:'Лягушонок',g:'Лягушонка',d:'Лягушонку',m:1},{n:'Котёнок',g:'Котёнка',d:'Котёнку',m:1},{n:'Пингвинёнок',g:'Пингвинёнка',d:'Пингвинёнку',m:1}];
+const STORY_ITEMS=['🍎','🍄','🥕','🌰','⭐','🍓','🐟','🎈'];
+function storyTask(R,max){
+  const [A,B]=sample(STORY_HEROES,2),o=pick(STORY_ITEMS),v=(h,m,f)=>h.m?m:f,kind=rnd(4);let text,ans,vis;
+  if(kind<2){const a=1+rnd(max-2),b=1+rnd(max-a);ans=a+b;vis=()=>dots(a+b);
+    text=kind===0?`У ${A.g} было ${a} ${o}. ${B.n} ${v(B,'принёс','принесла')} ещё ${b} ${o}. Сколько ${o} стало у ${A.g}?`
+                 :`${A.n} ${v(A,'нашёл','нашла')} ${a} ${o}, а потом ещё ${b} ${o}. Сколько всего ${o}?`;}
+  else if(kind===2){const a=3+rnd(max-2),b=1+rnd(a-1);ans=a-b;vis=()=>dots(a,b);
+    text=`У ${A.g} было ${a} ${o}. ${v(A,'Он','Она')} ${v(A,'отдал','отдала')} ${b} ${o} ${B.d}. Сколько ${o} осталось у ${A.g}?`;}
+  else{const a=4+rnd(max-3),b=2+rnd(a-2);ans=a-b;vis=()=>dots(a,b);
+    text=`На полянке сидели ${a} 🐦. Потом ${b} 🐦 улетели. Сколько 🐦 осталось?`;}
+  return {text:'Реши задачку',show:`<div class="riddle story">${text}</div>`,opts:numOpts(ans,4,max),visual:vis,
+    hint:'Прочитайте задачку вместе. Что-то прибавилось или убавилось?'};
+}
+const SUDOKU_SETS=[['🍎','🍌','🍇','🍐'],['🐱','🐶','🐰','🦊'],['⭐','🌙','☀️','☁️'],['🚗','🚀','⛵','🚂']];
+function sudokuTask(R,extra){
+  let g=[[0,1,2,3],[2,3,0,1],[1,0,3,2],[3,2,1,0]];
+  const perm=shuffle([0,1,2,3]);g=g.map(r=>r.map(v=>perm[v]));
+  if(rnd(2))g=[g[1],g[0],g[2],g[3]];if(rnd(2))g=[g[0],g[1],g[3],g[2]];if(rnd(2))g=[g[2],g[3],g[0],g[1]];
+  if(rnd(2))g=g[0].map((_,c)=>g.map(r=>r[c]));
+  if(rnd(2))g=g.map(r=>[r[1],r[0],r[2],r[3]]);if(rnd(2))g=g.map(r=>[r[0],r[1],r[3],r[2]]);
+  const set=pick(SUDOKU_SETS),tr=rnd(4),tc=rnd(4),box=(r,c)=>Math.floor(r/2)*2+Math.floor(c/2);
+  const free=[];for(let r=0;r<4;r++)for(let c=0;c<4;c++)if(r!==tr&&c!==tc&&box(r,c)!==box(tr,tc))free.push(r*4+c);
+  const blanks=new Set(sample(free,Math.min(extra,free.length)));
+  const cells=g.map((row,r)=>row.map((v,c)=>r===tr&&c===tc?'<div class="sc ask">?</div>':blanks.has(r*4+c)?'<div class="sc empty"></div>':`<div class="sc">${set[v]}</div>`).join('')).join('');
+  return {text:'Чего не хватает в клетке?',show:`<div class="sudoku">${cells}</div>`,
+    opts:shuffle([0,1,2,3]).map(v=>({h:emo(set[v]),ok:v===g[tr][tc]})),
+    hint:'В каждой строке, в каждом столбике и в каждом квадратике 2×2 все картинки разные.'};
+}
+const SEQS=[['🥚','🐣','🐥'],['🌰','🌱','🌳'],['☁️','🌧️','🌈'],['❄️','⛄','💧'],['🌱','🌷','💐'],['🌾','🍞','🥪'],['🌅','☀️','🌙'],['🌸','🍏','🍎'],['👶','🧒','🧑']];
+function sequenceTask(R,first){
+  const sq=uniqPick(R,()=>pick(SEQS),x=>'q'+x.join(''));
+  const cell=e=>`<div class="cell">${e}</div>`,arrow='<span class="arrow">→</span>';
+  if(!first){const others=sample([...new Set(SEQS.filter(x=>x!==sq).flat())].filter(e=>!sq.includes(e)),2);
+    return {text:'Что будет потом?',show:`<div class="row seq">${sq.slice(0,2).map(cell).join(arrow)}${arrow}<div class="cell ask">?</div></div>`,
+      opts:shuffle([{h:emo(sq[2]),ok:true},...others.map(e=>({h:emo(e)}))]),hint:'Подумай, что бывает сначала, а что потом.'};}
+  return {text:'Что было сначала?',show:`<div class="row seq">${shuffle(sq).map(cell).join('')}</div>`,
+    opts:shuffle(sq.map((e,i)=>({h:emo(e),ok:i===0}))),hint:'Расставь картинки по порядку: что было раньше всего?'};
+}
+function genRead(level,R){
+  const lv=mixLevel(level),r=Math.random();
+  if(lv===4&&r<.35)return sylCountTask(R,false);
+  if(lv===5&&r<.45)return missLetterTask(R,'vowel');
+  if(lv===6)return pick([()=>missLetterTask(R,'any'),()=>missLetterTask(R,'vowel'),()=>sylCountTask(R,true),()=>genRead0(5,R)])();
+  if(lv>=7)return pick([()=>missLetterTask(R,'long'),()=>missLetterTask(R,'any'),()=>sylCountTask(R,true),()=>genRead0(4,R),()=>genRead0(5,R)])();
+  return genRead0(lv,R);
+}
+function genMath(level,R){
+  const lv=mixLevel(level),r=Math.random();
+  if(lv===2&&r<.35)return compareTask(R,'pics');
+  if(lv===3&&r<.4)return composeTask(R,6);
+  if(lv===4&&r<.4)return pick([()=>compareTask(R,'nums'),()=>composeTask(R,10)])();
+  if(lv===5&&r<.3)return composeTask(R,10);
+  if(lv===6)return pick([()=>storyTask(R,10),()=>storyTask(R,10),()=>compareTask(R,'nums'),()=>genMath0(5,R)])();
+  if(lv>=7)return pick([()=>storyTask(R,20),()=>storyTask(R,20),()=>compareTask(R,'expr'),()=>genMath0(5,R)])();
+  return genMath0(lv,R);
+}
+function genLogic(level,R){
+  const lv=mixLevel(level),r=Math.random();
+  if(lv>=2&&lv<=4&&r<.3)return sequenceTask(R,false);
+  if(lv===5&&r<.3)return sequenceTask(R,true);
+  if(lv===6)return pick([()=>sudokuTask(R,2),()=>sudokuTask(R,2),()=>sequenceTask(R,true),()=>genLogic0(5,R)])();
+  if(lv>=7)return pick([()=>sudokuTask(R,5),()=>sudokuTask(R,4),()=>sequenceTask(R,true),()=>genLogic0(5,R)])();
+  return genLogic0(lv,R);
+}
 const GEN={read:genRead,math:genMath,logic:genLogic};
+/* Used by tests: generate one task without playing. */
+window.__uhuGen=(subj,lv)=>GEN[subj](lv,{used:new Set(),level:lv});
 
 /* ---------- runner engine (world units = tiles, y up from the floor) ---------- */
 const PHYS={g:83,v:18.7,pad:1.45,dt:1/120};
@@ -1829,7 +1964,7 @@ $('#runStage').addEventListener('pointerdown',e=>{if(!R||R.phase!=='run'||e.targ
 ['pointerup','pointercancel','pointerleave'].forEach(t=>$('#runStage').addEventListener(t,()=>{if(R)R.input.hold=false;}));
 function finishRound(){
   const s=R.subj,pts=R.pts;let msg='';
-  if(pts>=4.5){P.good[s]++;if(P.good[s]>=2&&P.levels[s]<5){P.levels[s]++;P.good[s]=0;msg='Ты так хорошо справляешься, что задания станут чуть сложнее!';}}
+  if(pts>=4.5){P.good[s]++;if(P.good[s]>=2&&P.levels[s]<MAX_LEVEL){P.levels[s]++;P.good[s]=0;msg='Ты так хорошо справляешься, что задания станут чуть сложнее!';}}
   else if(pts<2.5){P.good[s]=0;if(P.levels[s]>1)P.levels[s]--;}
   else P.good[s]=0;
   if(R.lastCall)pendingLock=true;
@@ -2271,7 +2406,7 @@ function updateMap(){
   $('#skyTitle').textContent='Небо № '+(sky+1);
   $('#skyCount').textContent=`★ ${n} из ${PER_SKY}`;
   $('#bubble').textContent=chapter()[1];
-  $$('[data-lvl]').forEach(el=>{const l=P.levels[el.dataset.lvl];el.innerHTML=Array.from({length:5},(_,i)=>`<i class="${i<l?'on':''}"></i>`).join('');});
+  $$('[data-lvl]').forEach(el=>{const l=P.levels[el.dataset.lvl];el.innerHTML=Array.from({length:MAX_LEVEL},(_,i)=>`<i class="${i<l?'on':''}"></i>`).join('');});
   $('#wardNote').textContent=HEROES.find(h=>h.id===P.hero).name;
   $('#chalNote').textContent=!P.chGate?'5 режимов и строитель':P.chMs>0?'открыто ещё '+fmtMs(P.chMs):'ключи: '+KEY_SUBJ.filter(k=>P.keys[k]).length+' из 3';
   updateTimePill();
@@ -2430,7 +2565,7 @@ $('#parents').addEventListener('click',e=>{
   else if(id==='pinSet'||id==='pinChange')askPin('set',backToParents,backToParents);
   else if(id==='pinRemove'){P.pin='';save();renderParents();}
 });
-$('#levelsCard').addEventListener('click',e=>{const b=e.target.closest('[data-s]');if(!b)return;const s=b.dataset.s;P.levels[s]=clamp(P.levels[s]+(+b.dataset.d),1,5);P.good[s]=0;save();renderParents();});
+$('#levelsCard').addEventListener('click',e=>{const b=e.target.closest('[data-s]');if(!b)return;const s=b.dataset.s;P.levels[s]=clamp(P.levels[s]+(+b.dataset.d),1,MAX_LEVEL);P.good[s]=0;save();renderParents();});
 $('#tChGate').addEventListener('click',()=>{P.chGate=!P.chGate;save();renderParents();});
 $('#chMinSeg').addEventListener('click',e=>{const b=e.target.closest('[data-chmin]');if(!b)return;P.chMin=+b.dataset.chmin;save();renderParents();});
 $('#chOpenNow').addEventListener('click',()=>{P.chMs+=P.chMin*60000;save();toast('Испытание открыто');renderParents();});
