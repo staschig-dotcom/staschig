@@ -63,7 +63,7 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
 .place{background:var(--card);border-radius:var(--r);padding:12px 12px 10px;display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;box-shadow:0 5px 0 #18215a;min-height:112px}
 .place:active{transform:translateY(3px);box-shadow:0 2px 0 #18215a}
 .place .glyph{font-family:var(--f-display);font-size:34px;line-height:1;color:var(--g)}
-.place b{font-size:18px;font-weight:900}
+.place b{font-size:18px;font-weight:900;line-height:1.25}
 .place small{color:var(--muted);font-size:13px;font-weight:700}
 .lvl{display:flex;gap:4px;margin-top:auto}
 .lvl i{width:9px;height:9px;border-radius:50%;background:var(--card-hi)}
@@ -312,7 +312,7 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
 .mapL .bubble{font-size:14px;padding:8px 12px;line-height:1.3}
 #map .places{flex:1;grid-template-columns:repeat(3,1fr);grid-template-rows:1fr 1fr;align-content:stretch;gap:10px}
 #map .places .place{min-height:0;padding:10px}
-#map .places .place b{font-size:16px;line-height:1.15}
+#map .places .place b{font-size:16px;line-height:1.3}
 #map .places .place small{font-size:12px}
 #map .places .place .glyph{font-size:26px}
 #run{flex-direction:row;gap:12px}
@@ -534,6 +534,8 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
       <div class="col panel scroll">
         <div class="label">Старт</div>
         <div class="seg" id="bModes"></div>
+        <div class="label">Музыка</div>
+        <div class="seg" id="bMusic"></div>
         <div class="label">Что ставим</div>
         <div class="tools btools" id="bTools"></div>
         <p class="note" style="font-size:13px;margin:0">Тап по клетке — поставить или убрать. Двигай поле пальцем.</p>
@@ -563,7 +565,7 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
       <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button>
       <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button>
       <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
-      <button data-k="x" aria-label="Отмена" style="font-size:16px">Отмена</button><button data-k="0">0</button><button data-k="b" aria-label="Стереть">⌫</button>
+      <button data-k="x" aria-label="Отмена" style="font-size:26px">✕</button><button data-k="0">0</button><button data-k="b" aria-label="Стереть">⌫</button>
     </div>
   </section>
 
@@ -803,6 +805,8 @@ const RUN_THEMES={
 };
 const PORTAL_COLORS=['#29e3ff','#ff4fd8','#ffd45c','#4dffa8'];
 const COOLDOWN=3*3600*1000, GRACE=3*60*1000;
+/* Music a builder level can use (the child picks it). */
+const BUILD_MUSIC=[['challenge','Неоновый бит'],['king','Горный король'],['joplin','Регтайм'],['korob','Коробейники'],['turca','Турецкий марш'],['bells','Бубенцы'],['run','Ода к радости'],['elise','К Элизе'],['lullaby','Колыбельная']];
 const LEVEL_MUSIC=['challenge','challenge','challenge','king','king','joplin','joplin','joplin','joplin','king','king','challenge'];
 const STAR_POINTS=4;/* points out of 5 needed for a star: 1 for a first-try answer, 1/2 for a second try */
 
@@ -917,6 +921,14 @@ const ELISE=[...ELISE_A,[68,1],[71,1],[72,2],[0,1],[64,1],...ELISE_A,[72,1],[71,
 const KING_A=[[59,1],[61,1],[62,1],[64,1],[66,1],[62,1],[66,2],[65,1],[61,1],[65,2],[64,1],[60,1],[64,2],
   [59,1],[61,1],[62,1],[64,1],[66,1],[62,1],[66,1],[71,1],[69,1],[66,1],[62,1],[66,1],[69,4]];
 const KING=[...KING_A,...KING_A,...KING_A.map(([m,l])=>[m+7,l]),...KING_A];
+/* Korobeiniki (Russian folk song, 19th c.), Mozart "Rondo alla Turca" (1783), Pierpont "Jingle Bells" (1857). */
+const KOROB=[[76,2],[71,1],[72,1],[74,2],[72,1],[71,1],[69,2],[69,1],[72,1],[76,2],[74,1],[72,1],[71,3],[72,1],[74,2],[76,2],[72,2],[69,2],[69,4],
+  [74,3],[77,1],[81,2],[79,1],[77,1],[76,3],[72,1],[76,2],[74,1],[72,1],[71,2],[71,1],[72,1],[74,2],[76,2],[72,2],[69,2],[69,4]];
+const TURCA=[[71,1],[69,1],[68,1],[69,1],[72,4],[74,1],[72,1],[71,1],[72,1],[76,4],[77,1],[76,1],[75,1],[76,1],[83,1],[81,1],[80,1],[81,1],[83,1],[81,1],[80,1],[81,1],[84,4],
+  [81,2],[84,2],[83,2],[81,2],[79,2],[81,2],[83,2],[81,2],[79,2],[81,2],[83,2],[81,2],[79,2],[78,2],[76,4],[0,4]];
+const BELLS=[[64,2],[64,2],[64,4],[64,2],[64,2],[64,4],[64,2],[67,2],[60,3],[62,1],[64,8],[65,2],[65,2],[65,3],[65,1],[65,2],[64,2],[64,2],[64,1],[64,1],
+  [64,2],[62,2],[62,2],[64,2],[62,4],[67,4],[64,2],[64,2],[64,4],[64,2],[64,2],[64,4],[64,2],[67,2],[60,3],[62,1],[64,8],[65,2],[65,2],[65,3],[65,1],
+  [65,2],[64,2],[64,2],[64,1],[64,1],[67,2],[67,2],[65,2],[62,2],[60,8]];
 const RAG_A=[[62,1],[63,1],[64,1],[72,2],[64,1],[72,2],[64,1],[72,6]];
 const JOPLIN=[...RAG_A,[72,1],[74,1],[75,1],[76,1],[72,1],[74,1],[76,2],[71,1],[74,2],[72,5],
   ...RAG_A,[69,1],[67,1],[66,1],[69,1],[72,1],[76,2],[74,1],[72,1],[69,1],[74,6]];
@@ -941,7 +953,10 @@ const TRACKS={
   challenge:{bpm:128,div:2,play:challengeStep},
   king:melTrack({song:KING,bpm:100,div:2,bar:8,bass:[47,47,47,47, 47,47,47,47, 42,42,42,42, 47,47,47,47],style:'stomp',drums:.2,voice:'chip',legato:.9,
     bpmAt:step=>100+Math.min(6,Math.floor(step/128)%7)*12}),
-  joplin:melTrack({song:JOPLIN,bpm:96,div:2,bar:8,bass:[48,48,43,48,48,48,50,43],style:'rag',voice:'chip',legato:1.1})
+  joplin:melTrack({song:JOPLIN,bpm:96,div:2,bar:8,bass:[48,48,43,48,48,48,50,43],style:'rag',voice:'chip',legato:1.1}),
+  korob:melTrack({song:KOROB,bpm:120,div:2,bar:8,bass:[45,45,40,45,50,48,40,45],style:'stomp',drums:.18,voice:'chip',legato:1}),
+  turca:melTrack({song:TURCA,bpm:72,div:4,bar:8,bass:[45,45,45,45,45,40,45,40,45,40,45],style:'stomp',voice:'chip',legato:1}),
+  bells:melTrack({song:BELLS,bpm:120,div:2,bar:8,bass:[48,48,48,48,53,48,43,43,48,48,48,48,53,48,43,48],style:'rag',drums:.12,legato:1.2})
 };
 const music={track:null,step:0,nextT:0,t0:0,timer:null};
 function setTrack(name,restart){
@@ -1911,7 +1926,7 @@ function levelFromCustom(cl){
   const len=Math.max(24,cl.cells.reduce((a,c)=>Math.max(a,c[1]),0)+10);
   const busy=new Set(cl.cells.map(c=>c[1])),safe=[];
   for(let x=6;x<len;x+=6){let s=x;while(s<len&&(busy.has(s)||busy.has(s+1)||busy.has(s-1)))s++;if(s<len)safe.push(s);}
-  return {objs,safe,len,speed:cl.speed||7,mode:cl.mode||'cube',ceil:BUILD_CEIL};
+  return {objs,safe,len,speed:cl.speed||7,mode:cl.mode||'cube',ceil:BUILD_CEIL,music:cl.music||'challenge'};
 }
 function startChallenge(n,practice){
   parts=[];trail=[];
@@ -1933,7 +1948,7 @@ function chRestart(full){
   if(cp){CH.c.y=cp.y;CH.c.gd=cp.gd;CH.W.objs.forEach(o=>{if(o.x<cp.x&&(o.k==='portal'||o.k==='orb'||o.k==='pad'))o.used=true;});}
   CH.state='play';CH.input.hold=false;CH.input.buffer=0;CH.attempt++;
   CH.camX=CH.c.x-2.2;
-  if(!cp)setTrack(CH.n>=0?LEVEL_MUSIC[CH.n]:'challenge',true);
+  if(!cp)setTrack(CH.n>=0?LEVEL_MUSIC[CH.n]:(lv.music||'challenge'),true);
   $('#chAttempt').textContent=CH.practice?'Тренировка':'Попытка '+CH.attempt;
 }
 function chLoop(ts){
@@ -2104,6 +2119,11 @@ function renderMine(){
     </div>`).join(''):'<p class="note">Пока нет своих уровней.</p>')
     +(customs.length<MAX_CUSTOM?'<button class="btn2 main" id="newLevel" style="align-self:flex-start">Построить новый уровень</button>':`<p class="note">Можно хранить до ${MAX_CUSTOM} уровней. Удали старый, чтобы построить новый.</p>`);
 }
+function renderBMusic(){
+  const m=B.level.music||'challenge';
+  $('#bMusic').innerHTML=BUILD_MUSIC.map(([id,n])=>`<button data-bmusic="${id}" class="${m===id?'on':''}">${id===m?'♪ ':''}${n}</button>`).join('');
+}
+$('#bMusic').addEventListener('click',e=>{const b=e.target.closest('[data-bmusic]');if(!b)return;ac();B.level.music=b.dataset.bmusic;renderBMusic();setTrack(B.level.music,true);});
 function openBuilder(idx,keep){
   if(!keep||!B){
     const src=idx!=null&&customs[idx]?clone(customs[idx]):{name:'Мой уровень '+(customs.length+1),mode:'cube',speed:7,cells:[]};
@@ -2111,9 +2131,10 @@ function openBuilder(idx,keep){
   }
   $('#bTools').innerHTML=TOOLS.map(([id,n])=>{const g=id.startsWith('g:')?MODES[id.slice(2)]:null;
     return `<button class="tool${B.tool===id?' on':''}" data-tool="${id}"${g?` style="color:${g.col}"`:''}>${g?'Ворота '+n:n}</button>`;}).join('');
+  renderBMusic();
   $('#bModes').innerHTML=Object.entries(MODES).map(([id,m])=>`<button data-bmode="${id}" class="${B.level.mode===id?'on':''}">${m.name}</button>`).join('');
   $('#bName').textContent=B.level.name;
-  show('build');setTrack('lullaby');requestAnimationFrame(drawBuilder);
+  show('build');setTrack(B.level.music||'challenge');requestAnimationFrame(drawBuilder);
 }
 function cellsToObjs(){return levelFromCustom(B.level).objs;}
 function drawBuilder(){
