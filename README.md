@@ -67,4 +67,6 @@
 
 **Обновление** ставится поверх старой версии: тот же пакет `ru.staschig.zvezdy` и тот же ключ подписи (`keystore/debug.keystore` — не менять, иначе Android откажется обновлять), прогресс хранится под прежними ключами.
 
+**RuStore.** Релизная сборка подписывается отдельным секретным ключом из секретов GitHub (`KIDS_KEYSTORE_B64`, `KIDS_KEYSTORE_PASSWORD`; в репозитории ключа нет) и публикуется в релиз `kids-rustore-latest` (APK и AAB). Материалы для карточки — `kidsgame/store/` (тексты, иконка 512×512, скриншоты 1920×1080, политика конфиденциальности). RuStore-версия подписана другим ключом, поэтому не ставится поверх домашней: прогресс переносится кодом из раздела «Для взрослых».
+
 **APK**: релиз `kids-apk-latest` → `SovenokUhu.apk` (https://github.com/staschig-dotcom/staschig/releases/download/kids-apk-latest/SovenokUhu.apk).

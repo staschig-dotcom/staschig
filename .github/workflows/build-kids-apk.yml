@@ -37,6 +37,35 @@ jobs:
           ./gradlew --no-daemon :kidsgame:assembleDebug
           cp kidsgame/build/outputs/apk/debug/kidsgame-debug.apk SovenokUhu.apk
 
+      # Релизная сборка для RuStore, подписанная секретным ключом.
+      # Секреты: KIDS_KEYSTORE_B64 (ключ в base64) и KIDS_KEYSTORE_PASSWORD.
+      # Без секретов собирается неподписанный релиз — только проверка сборки.
+      - name: Release APK and AAB for RuStore
+        env:
+          KIDS_KEYSTORE_B64: ${{ secrets.KIDS_KEYSTORE_B64 }}
+          KIDS_KEYSTORE_PASSWORD: ${{ secrets.KIDS_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -n "$KIDS_KEYSTORE_B64" ]; then
+            echo "$KIDS_KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/kids-release.p12"
+            export KIDS_KEYSTORE_FILE="$RUNNER_TEMP/kids-release.p12"
+          fi
+          ./gradlew --no-daemon :kidsgame:assembleRelease :kidsgame:bundleRelease
+          if [ -n "$KIDS_KEYSTORE_B64" ]; then
+            cp kidsgame/build/outputs/apk/release/kidsgame-release.apk SovenokUhu-release.apk
+            cp kidsgame/build/outputs/bundle/release/kidsgame-release.aab SovenokUhu-release.aab
+            echo "SIGNED=true" >> "$GITHUB_ENV"
+          fi
+          rm -f "$RUNNER_TEMP/kids-release.p12"
+
+      - uses: actions/upload-artifact@v4
+        if: env.SIGNED == 'true'
+        with:
+          name: SovenokUhu-release-rustore
+          path: |
+            SovenokUhu-release.apk
+            SovenokUhu-release.aab
+          if-no-files-found: error
+
       - uses: actions/upload-artifact@v4
         with:
           name: SovenokUhu-apk
@@ -56,5 +85,19 @@ jobs:
             --target "$GITHUB_SHA" \
             --title "Совёнок Уху $VER — последняя сборка" \
             --notes "Детская игра, версия $VER. Сборка из коммита ${GITHUB_SHA::7}. Скачайте SovenokUhu.apk и установите на Android поверх старой версии." \
+            --latest=false
+
+      # Подписанная версия для загрузки в RuStore (появляется, когда заданы секреты).
+      - name: Publish RuStore release
+        if: env.SIGNED == 'true' && (github.ref_name == 'claude/wizardly-lamport-o0mqtg' || github.ref_name == github.event.repository.default_branch)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VER=$(sed -n 's/.*versionName = "\(.*\)".*/\1/p' kidsgame/build.gradle.kts)
+          gh release delete kids-rustore-latest --yes --cleanup-tag || true
+          gh release create kids-rustore-latest SovenokUhu-release.apk SovenokUhu-release.aab \
+            --target "$GITHUB_SHA" \
+            --title "Совёнок Уху $VER — для RuStore" \
+            --notes "Релизная сборка, подписанная ключом для RuStore. Для загрузки в RuStore. Не ставится поверх домашней (debug) версии." \
             --latest=false
 

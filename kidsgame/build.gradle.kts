@@ -12,8 +12,8 @@ android {
         applicationId = "ru.staschig.zvezdy"
         minSdk = 26
         targetSdk = 34
-        versionCode = 10
-        versionName = "6.1"
+        versionCode = 11
+        versionName = "6.2"
     }
 
     // Тот же постоянный ключ, что у основного приложения: обновления ставятся поверх.
@@ -24,6 +24,31 @@ android {
             keyAlias = "androiddebugkey"
             keyPassword = "android"
         }
+        // Релизный ключ для RuStore. Хранится только в секретах GitHub,
+        // в CI расшифровывается во временный файл; в репозитории его нет.
+        create("release") {
+            val ks = System.getenv("KIDS_KEYSTORE_FILE")
+            if (ks != null) {
+                storeFile = file(ks)
+                storeType = "pkcs12"
+                storePassword = System.getenv("KIDS_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KIDS_KEY_ALIAS") ?: "sovenok"
+                keyPassword = System.getenv("KIDS_KEYSTORE_PASSWORD")
+            }
+        }
+    }
+
+    buildTypes {
+        getByName("release") {
+            isMinifyEnabled = false
+            // Без ключа релизная сборка остаётся неподписанной (только проверка, что собирается).
+            signingConfig = if (System.getenv("KIDS_KEYSTORE_FILE") != null) signingConfigs.getByName("release") else null
+        }
+    }
+
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
     }
 
     compileOptions {

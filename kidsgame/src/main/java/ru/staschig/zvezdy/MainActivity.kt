@@ -2,6 +2,7 @@ package ru.staschig.zvezdy
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.os.SystemClock
 import android.webkit.JavascriptInterface
@@ -51,12 +52,22 @@ class MainActivity : Activity() {
         } catch (e: Exception) {
             ""
         }
-        web.addJavascriptInterface(NativeClock(version), "UhuNative")
+        web.addJavascriptInterface(NativeClock(version) { text -> runOnUiThread { shareText(text) } }, "UhuNative")
         setContentView(web)
         hideSystemBars()
 
         if (savedInstanceState != null) web.restoreState(savedInstanceState)
         else web.loadUrl("https://appassets.androidplatform.net/assets/index.html")
+    }
+
+    // Код прогресса отправляется через стандартное меню «Поделиться» (например, себе в мессенджер).
+    private fun shareText(text: String) {
+        val send = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_SUBJECT, "Прогресс Совёнка Уху")
+            putExtra(Intent.EXTRA_TEXT, text)
+        }
+        startActivity(Intent.createChooser(send, "Сохранить код прогресса"))
     }
 
     private fun hideSystemBars() {
@@ -105,10 +116,13 @@ class MainActivity : Activity() {
     }
 }
 
-private class NativeClock(private val versionName: String) {
+private class NativeClock(private val versionName: String, private val onShare: (String) -> Unit) {
     @JavascriptInterface
     fun uptime(): Long = SystemClock.elapsedRealtime()
 
     @JavascriptInterface
     fun version(): String = versionName
+
+    @JavascriptInterface
+    fun share(text: String) = onShare(text)
 }

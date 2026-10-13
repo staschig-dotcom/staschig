@@ -26,7 +26,7 @@ html{height:100%;box-sizing:border-box;background:var(--sky)}
 body{height:100%;margin:0;color:var(--ink);font-family:var(--f-body);font-weight:600;font-size:18px;
   background:radial-gradient(120% 70% at 50% 0%,var(--sky2) 0%,var(--sky) 70%) var(--sky);
   -webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;overflow:hidden;touch-action:manipulation}
-#app{height:100%;max-width:640px;margin:0 auto;position:relative}
+#app{height:100%;max-width:1280px;margin:0 auto;position:relative}
 .screen{position:absolute;inset:0;display:flex;flex-direction:column;padding:12px 16px 16px;gap:12px;overflow:hidden}
 button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;touch-action:manipulation}
 button:focus-visible{outline:4px solid var(--star);outline-offset:3px}
@@ -406,6 +406,7 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
 .qcard .word{font-size:clamp(26px,min(11vh,4.6vw),56px);letter-spacing:.03em}
 
 .swatch{display:inline-block;width:14px;height:14px;border-radius:4px;border:2px solid;vertical-align:-2px;margin-right:5px}
+#progCode{width:100%;font:12px/1.35 monospace;background:var(--card-hi);color:var(--ink);border:0;border-radius:10px;padding:8px;word-break:break-all;resize:vertical}
 </style>
 </head>
 <body>
@@ -622,6 +623,13 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
       <p class="note" id="chNote"></p>
       <div class="btnrow" style="justify-content:flex-start"><button class="btn2" id="chOpenNow">Открыть сейчас</button></div>
     </div>
+    <div class="pcard">
+      <div class="ptitle">Перенос прогресса</div>
+      <p class="note">Код прогресса переносит звёзды, уровни, ключи, друзей, наряды, свои уровни и настройки в другую установку игры — например, из домашней версии в версию из RuStore. Рисунки не переносятся.</p>
+      <div class="btnrow" style="justify-content:flex-start"><button class="btn2 main" id="expBtn">Отправить код прогресса</button><button class="btn2" id="impBtn">Вставить код</button></div>
+      <textarea id="progCode" rows="3" hidden spellcheck="false"></textarea>
+      <div class="btnrow" style="justify-content:flex-start" id="impRow" hidden><button class="btn2 main" id="impApply">Загрузить прогресс</button></div>
+    </div>
     <div class="pcard" id="levelsCard"></div>
     <div class="pcard">
       <div class="prow"><div class="grow">Музыка<small>Мелодии в общественном достоянии в собственной аранжировке: «Ah vous dirai-je, Maman» (1761), Бетховен — «Ода к радости» и «К Элизе», Григ — «В пещере горного короля», Джоплин — «The Entertainer», а также собственная мелодия Испытания. Записи не используются: всё играет синтезатор внутри игры.</small></div><button class="toggle" id="tMusic"></button></div>
@@ -631,6 +639,7 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
       <p class="note">Голоса в игре нет, поэтому в первый раз объясните ребёнку задания. У каждого типа задания своя иконка. На каждое задание две попытки. После первой ошибки вверху появляется подсказка, а порталы на 1,5 секунды блокируются, чтобы нельзя было быстро перебирать ответы. После второй ошибки правильный портал светится, и Уху проходит через него без очка.</p>
       <p class="note">Раунд — 5 заданий. Ответ с первой попытки даёт 1 очко, со второй — ½. Звезда — от 4 очков. Уровень растёт сам после двух раундов подряд почти без ошибок и снижается, если ошибок много. Прогресс хранится только в этом телефоне.</p>
       <div><button class="danger" id="resetBtn">Сбросить прогресс</button></div>
+      <p class="note">Конфиденциальность: игра не собирает и не передаёт никаких данных, не использует интернет, рекламу и покупки. Всё хранится только на этом телефоне.</p>
       <p class="note" id="verNote"></p>
     </div>
     </div>
@@ -2640,6 +2649,30 @@ $('#levelsCard').addEventListener('click',e=>{const b=e.target.closest('[data-s]
 $('#tChGate').addEventListener('click',()=>{P.chGate=!P.chGate;save();renderParents();});
 $('#chMinSeg').addEventListener('click',e=>{const b=e.target.closest('[data-chmin]');if(!b)return;P.chMin=+b.dataset.chmin;save();renderParents();});
 $('#chOpenNow').addEventListener('click',()=>{P.chMs+=P.chMin*60000;save();toast('Испытание открыто');renderParents();});
+/* Progress transfer between installs: a text code shared through Android's share sheet. */
+const CODE_PREFIX='UHU1.';
+function progressCode(){
+  const data={v:1,P,customs};
+  return CODE_PREFIX+btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+}
+$('#expBtn').addEventListener('click',()=>{
+  const code=progressCode(),ta=$('#progCode');
+  ta.value=code;ta.readOnly=true;ta.hidden=false;$('#impRow').hidden=true;
+  let shared=false;try{if(window.UhuNative&&window.UhuNative.share){window.UhuNative.share(code);shared=true;}}catch(e){}
+  if(!shared){ta.select();try{navigator.clipboard.writeText(code).then(()=>toast('Код скопирован'),()=>toast('Выделите код и скопируйте'));}catch(e){toast('Выделите код и скопируйте');}}
+});
+$('#impBtn').addEventListener('click',()=>{const ta=$('#progCode');ta.value='';ta.readOnly=false;ta.hidden=false;ta.placeholder='Вставьте сюда код, который начинается с UHU1.';$('#impRow').hidden=false;ta.focus();});
+let impArmed=0;
+$('#impApply').addEventListener('click',()=>{
+  const raw=$('#progCode').value.replace(/\s+/g,''),i=raw.indexOf(CODE_PREFIX);
+  let data=null;
+  try{if(i<0)throw 0;data=JSON.parse(decodeURIComponent(escape(atob(raw.slice(i+CODE_PREFIX.length)))));}catch(e){data=null;}
+  if(!data||!data.P||typeof data.P.stars!=='number'){toast('Код не подходит. Скопируйте его целиком');sfx.no();return;}
+  const b=$('#impApply');
+  if(Date.now()-impArmed>4000){impArmed=Date.now();b.textContent=`Заменить прогресс? (★ ${data.P.stars}) Нажмите ещё раз`;setTimeout(()=>{b.textContent='Загрузить прогресс';},4000);return;}
+  try{localStorage.setItem(STORE,JSON.stringify(data.P));localStorage.setItem(CUSTOM,JSON.stringify(Array.isArray(data.customs)?data.customs:[]));}catch(e){toast('Не удалось сохранить');return;}
+  toast('Прогресс загружен');setTimeout(()=>location.reload(),600);
+});
 $('#tMusic').addEventListener('click',()=>{setMusic(!P.music);save();renderParents();});
 $('#tSound').addEventListener('click',()=>{P.sound=!P.sound;save();renderParents();sfx.tick();});
 let resetArmed=0;
