@@ -89,7 +89,7 @@ object CalendarRepo {
         val day = when (eventDay) {
             today -> "Сегодня"
             tomorrow -> "Завтра"
-            else -> String.format(Locale.US, "%02d.%02d", eventDay % 10000 / 100, eventDay % 100)
+            else -> String.format(Locale.US, "%02d.%02d", eventDay % 100, eventDay % 10000 / 100)
         }
         return if (e.allDay) "$day, весь день" else "$day ${hm(e.begin, tz)}"
     }
