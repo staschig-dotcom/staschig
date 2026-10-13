@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Инфо-виджет</string>
+    <string name="widget_name">Часы, погода, сообщения</string>
+    <string name="widget_description">Время, погода и последние уведомления приложений</string>
+    <string name="listener_name">Инфо-виджет: сообщения на рабочем столе</string>
+    <string name="weather_not_set">Погода: укажите город</string>
+    <string name="messages_empty">Новых сообщений нет</string>
+    <string name="messages_no_access">Нажмите, чтобы разрешить показ сообщений</string>
+</resources>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.InfoWidget" parent="@android:style/Theme.Material.Light.DarkActionBar">
+        <item name="android:colorPrimary">#FF1F2937</item>
+        <item name="android:colorPrimaryDark">#FF111827</item>
+        <item name="android:colorAccent">#FF2563EB</item>
+    </style>
+</resources>

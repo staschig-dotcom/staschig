@@ -26,12 +26,34 @@ jobs:
           chmod +x gradlew
           ./gradlew --no-daemon testDebugUnitTest assembleDebug
           cp app/build/outputs/apk/debug/app-debug.apk GuitarPractice.apk
+          cp widget/build/outputs/apk/debug/widget-debug.apk InfoWidget.apk
 
       - uses: actions/upload-artifact@v4
         with:
           name: GuitarPractice-apk
           path: GuitarPractice.apk
           if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: InfoWidget-apk
+          path: InfoWidget.apk
+          if-no-files-found: error
+
+      # Виджет «часы + погода + сообщения»:
+      # https://github.com/<owner>/<repo>/releases/latest/download/InfoWidget.apk не подходит (latest занят гитарой),
+      # поэтому постоянная ссылка: /releases/download/widget-latest/InfoWidget.apk
+      - name: Publish widget release
+        if: github.ref_name == 'claude/loving-galileo-06lzk4' || github.ref_name == github.event.repository.default_branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete widget-latest --yes --cleanup-tag || true
+          gh release create widget-latest InfoWidget.apk \
+            --target "$GITHUB_SHA" \
+            --title "Инфо-виджет — последняя сборка" \
+            --notes "Часы + погода + сообщения приложений. Сборка из ${GITHUB_SHA::7}." \
+            --latest=false
 
       # Постоянная ссылка для телефона:
       # https://github.com/<owner>/<repo>/releases/latest/download/GuitarPractice.apk
