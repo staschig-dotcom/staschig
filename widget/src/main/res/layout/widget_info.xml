@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:background="@drawable/widget_bg"
     android:orientation="vertical"
-    android:padding="14dp">
+    android:padding="18dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -29,7 +29,7 @@
                 android:format24Hour="HH:mm"
                 android:includeFontPadding="false"
                 android:textColor="#FFFFFFFF"
-                android:textSize="48sp" />
+                android:textSize="72sp" />
 
             <TextClock
                 android:id="@+id/date"
@@ -39,7 +39,7 @@
                 android:format24Hour="EEEE, d MMMM"
                 android:singleLine="true"
                 android:textColor="#CCFFFFFF"
-                android:textSize="14sp" />
+                android:textSize="17sp" />
         </LinearLayout>
 
         <LinearLayout
@@ -56,18 +56,90 @@
                 android:layout_height="wrap_content"
                 android:singleLine="true"
                 android:textColor="#FFFFFFFF"
-                android:textSize="28sp" />
+                android:textSize="36sp" />
 
             <TextView
                 android:id="@+id/weather_desc"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="end"
-                android:maxWidth="150dp"
-                android:maxLines="3"
+                android:maxWidth="160dp"
+                android:maxLines="4"
                 android:textColor="#CCFFFFFF"
-                android:textSize="12sp" />
+                android:textSize="13sp" />
         </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/events_block"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/event_0"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:paddingTop="3dp"
+            android:singleLine="true"
+            android:textColor="#FFFFFFFF"
+            android:textSize="15sp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/event_1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:paddingTop="3dp"
+            android:singleLine="true"
+            android:textColor="#FFFFFFFF"
+            android:textSize="15sp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/event_2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:paddingTop="3dp"
+            android:singleLine="true"
+            android:textColor="#FFFFFFFF"
+            android:textSize="15sp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/event_3"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:paddingTop="3dp"
+            android:singleLine="true"
+            android:textColor="#FFFFFFFF"
+            android:textSize="15sp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/event_4"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:paddingTop="3dp"
+            android:singleLine="true"
+            android:textColor="#FFFFFFFF"
+            android:textSize="15sp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/events_hint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="3dp"
+            android:singleLine="true"
+            android:textColor="#99FFFFFF"
+            android:textSize="13sp" />
     </LinearLayout>
 
     <ImageView

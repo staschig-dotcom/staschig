@@ -69,7 +69,27 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            android:text="3. Виджет"
+            android:text="3. Календарь"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/calendar_status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp" />
+
+        <Button
+            android:id="@+id/calendar_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Разрешить доступ к календарю" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="4. Виджет"
             android:textSize="18sp"
             android:textStyle="bold" />
 
@@ -77,12 +97,45 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="Долгое нажатие на рабочем столе → Виджеты → «Инфо-виджет». Размер меняется растягиванием." />
+            android:text="Виджет занимает весь экран (4×6). Сначала сделайте пустой экран: долгое нажатие на рабочем столе → пролистайте вправо до пустой страницы (или уберите с главного экрана значки). Затем нажмите кнопку ниже или: долгое нажатие → Виджеты → «Инфо-виджет». Если не встал на весь экран — долгое нажатие на виджет и растяните за края." />
 
         <Button
             android:id="@+id/pin_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Добавить на рабочий стол" />
+
+        <LinearLayout
+            android:id="@+id/miui_block"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="5. Xiaomi (MIUI) — обязательно"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="MIUI выгружает фоновые службы: без этих двух настроек сообщения в виджете перестанут обновляться через несколько часов, а погода — после перезагрузки.\n1) Автозапуск — включить для «Инфо-виджет».\n2) Контроль активности (батарея) — «Нет ограничений»." />
+
+            <Button
+                android:id="@+id/miui_autostart"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Автозапуск" />
+
+            <Button
+                android:id="@+id/miui_battery"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Батарея: без ограничений" />
+        </LinearLayout>
     </LinearLayout>
 </ScrollView>

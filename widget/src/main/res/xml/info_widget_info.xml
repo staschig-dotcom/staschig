@@ -1,11 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Рассчитан на весь главный экран Xiaomi Mi 10T (MIUI, сетка 4×6, экран ≈ 393×873 dp).
+  MIUI считает размер в ячейках по minWidth/minHeight: 4 колонки ≥ 250dp, 6 рядов ≥ 390dp.
+  На Android 12+ лаунчеры, которые это поддерживают, берут targetCell*.
+-->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:minWidth="250dp"
-    android:minHeight="180dp"
+    android:minHeight="390dp"
     android:minResizeWidth="180dp"
-    android:minResizeHeight="110dp"
+    android:minResizeHeight="250dp"
+    android:maxResizeWidth="600dp"
+    android:maxResizeHeight="1000dp"
     android:targetCellWidth="4"
-    android:targetCellHeight="3"
+    android:targetCellHeight="6"
     android:resizeMode="horizontal|vertical"
     android:updatePeriodMillis="0"
     android:initialLayout="@layout/widget_info"

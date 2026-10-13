@@ -16,7 +16,12 @@ import java.util.concurrent.TimeUnit
 class WeatherWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) {
 
     override fun doWork(): Result {
-        val place = Prefs.place(applicationContext) ?: return Result.success()
+        // Заодно раз в 30 минут перерисовываем виджет: прошедшие события календаря уходят из списка.
+        val place = Prefs.place(applicationContext)
+        if (place == null) {
+            Widgets.updateAll(applicationContext)
+            return Result.success()
+        }
         return try {
             Prefs.setWeather(applicationContext, WeatherApi.forecast(place))
             Widgets.updateAll(applicationContext)
@@ -34,7 +39,7 @@ class WeatherWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params
 
         private val network = Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
 
-        /** Раз в 30 минут — чаще не нужно: Open-Meteo обновляет данные примерно раз в 15 минут. */
+        /** Раз в 30 минут: чаще погоде не нужно (Open-Meteo обновляется ~раз в 15 минут). */
         fun schedule(ctx: Context) {
             val req = PeriodicWorkRequestBuilder<WeatherWorker>(30, TimeUnit.MINUTES)
                 .setConstraints(network)

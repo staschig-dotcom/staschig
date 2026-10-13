@@ -9,6 +9,7 @@ class InfoWidgetProvider : AppWidgetProvider() {
     override fun onEnabled(context: Context) {
         WeatherWorker.schedule(context)
         WeatherWorker.refreshNow(context)
+        CalendarWatchWorker.schedule(context)
     }
 
     override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
@@ -16,9 +17,11 @@ class InfoWidgetProvider : AppWidgetProvider() {
         @Suppress("DEPRECATION")
         manager.notifyAppWidgetViewDataChanged(ids, R.id.messages)
         WeatherWorker.schedule(context)
+        CalendarWatchWorker.schedule(context)
     }
 
     override fun onDisabled(context: Context) {
         WeatherWorker.cancel(context)
+        CalendarWatchWorker.cancel(context)
     }
 }
