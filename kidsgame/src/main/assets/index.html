@@ -404,6 +404,8 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
 .arrow{color:var(--muted);font-size:20px;font-weight:900}
 .qcard .row.seq{flex-wrap:nowrap;gap:4px}
 .qcard .word{font-size:clamp(26px,min(11vh,4.6vw),56px);letter-spacing:.03em}
+
+.swatch{display:inline-block;width:14px;height:14px;border-radius:4px;border:2px solid;vertical-align:-2px;margin-right:5px}
 </style>
 </head>
 <body>
@@ -561,6 +563,8 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
         <div class="seg" id="bModes"></div>
         <div class="label">Музыка</div>
         <div class="seg" id="bMusic"></div>
+        <div class="label">Фон</div>
+        <div class="seg" id="bBg"></div>
         <div class="label">Что ставим</div>
         <div class="tools btools" id="bTools"></div>
         <p class="note" style="font-size:13px;margin:0">Тап по клетке — поставить или убрать. Двигай поле пальцем.</p>
@@ -832,7 +836,18 @@ const RUN_THEMES={
 const PORTAL_COLORS=['#29e3ff','#ff4fd8','#ffd45c','#4dffa8'];
 const COOLDOWN=3*3600*1000, GRACE=3*60*1000;
 /* Music a builder level can use (the child picks it). */
-const BUILD_MUSIC=[['challenge','Неоновый бит'],['king','Горный король'],['joplin','Регтайм'],['korob','Коробейники'],['turca','Турецкий марш'],['bells','Бубенцы'],['run','Ода к радости'],['elise','К Элизе'],['lullaby','Колыбельная']];
+/* Backgrounds a builder level can use. */
+const BG_THEMES=[
+ ['neon','Неон',TH_GREEN],
+ ['space','Космос',{bg1:'#05051a',bg2:'#1a0f4a',line:'#a99bff',block:'rgba(169,155,255,.16)',floor:'#05041a',deco:'stars'}],
+ ['ocean','Океан',{bg1:'#0a5a8a',bg2:'#021a33',line:'#4de3ff',block:'rgba(77,227,255,.16)',floor:'#021226',deco:'bubbles'}],
+ ['sunset','Закат',{bg1:'#ff8a5c',bg2:'#5b1a6e',line:'#ffd45c',block:'rgba(255,212,92,.18)',floor:'#2a0a3a',deco:'sun'}],
+ ['candy','Конфеты',{bg1:'#ffb3d9',bg2:'#a35ad6',line:'#ffffff',block:'rgba(255,255,255,.22)',floor:'#6a2a8a',deco:'hearts'}],
+ ['winter','Зима',{bg1:'#a8dcff',bg2:'#3a6aa8',line:'#ffffff',block:'rgba(255,255,255,.22)',floor:'#24456e',deco:'snow'}],
+ ['lava','Вулкан',{bg1:'#4a0e00',bg2:'#120200',line:'#ff5a1f',block:'rgba(255,90,31,.18)',floor:'#1a0400',deco:'embers'}]
+];
+function bgTheme(id){const b=BG_THEMES.find(x=>x[0]===id);return b?b[2]:TH_GREEN;}
+const BUILD_MUSIC=[['laser','⚡ Лазерный бит'],['drive','⚡ Космический драйв'],['pixel','⚡ Пиксельный рейв'],['challenge','Неоновый бит'],['king','Горный король'],['joplin','Регтайм'],['korob','Коробейники'],['turca','Турецкий марш'],['bells','Бубенцы'],['run','Ода к радости'],['elise','К Элизе'],['lullaby','Колыбельная']];
 const LEVEL_MUSIC=['challenge','challenge','challenge','king','king','joplin','joplin','joplin','joplin','king','king','challenge'];
 const STAR_POINTS=4;/* points out of 5 needed for a star: 1 for a first-try answer, 1/2 for a second try */
 
@@ -959,6 +974,21 @@ const RAG_A=[[62,1],[63,1],[64,1],[72,2],[64,1],[72,2],[64,1],[72,6]];
 const JOPLIN=[...RAG_A,[72,1],[74,1],[75,1],[76,1],[72,1],[74,1],[76,2],[71,1],[74,2],[72,5],
   ...RAG_A,[69,1],[67,1],[66,1],[69,1],[72,1],[76,2],[74,1],[72,1],[69,1],[74,6]];
 function events(song){const ev={};let t=0;song.forEach(([m,l])=>{if(m)ev[t]=[m,l];t+=l;});return {ev,len:t};}
+/* Original electronic tracks for the builder: four-on-the-floor kick, claps, hats, bass, arpeggio and a lead. Steps are 16ths. */
+function edmTrack(o){
+  const bars=o.chords.length;
+  return {bpm:o.bpm,div:4,play(step,t,sp){
+    const i=step%16,bar=Math.floor(step/16)%bars,[root,minor]=o.chords[bar],tones=[0,minor?3:4,7,12],intro=step<64;
+    if(i%4===0)kick(t,.24);
+    if(i===4||i===12)noise(musicBus,t,.13,.12,'bandpass',1500);
+    if(!intro||i%2){noise(musicBus,t,i%4===2?.09:.03,i%4===2?.05:.03,'highpass',8000);}
+    if(o.bass==='roll'&&i%4)osc(musicBus,'triangle',mtof(root),t,sp*.8,.1);
+    if(o.bass==='off'&&i%4===2){osc(musicBus,'sawtooth',mtof(root),t,sp*1.6,.045);osc(musicBus,'triangle',mtof(root),t,sp*1.6,.08);}
+    if(o.bass==='chip'&&i%2===0)osc(musicBus,'square',mtof(root+(i%8===4?12:0)),t,sp*.9,.035);
+    const a=tones[o.arp[i]%4]+(o.arp[i]>3?12:0);osc(musicBus,'square',mtof(root+24+a),t,sp*.7,.018);
+    if(!intro&&i%2===0){const n=o.lead[(Math.floor(step/2))%o.lead.length];if(n>=0){const f=mtof(o.scale[n]);osc(musicBus,'sawtooth',f,t,sp*1.9,.016);osc(musicBus,'sine',f,t,sp*1.9,.03);}}
+  }};
+}
 function melTrack(o){
   const {ev,len}=events(o.song);
   return {bpm:o.bpm,div:o.div,bpmAt:o.bpmAt,play(step,t,sp){
@@ -982,6 +1012,12 @@ const TRACKS={
   joplin:melTrack({song:JOPLIN,bpm:96,div:2,bar:8,bass:[48,48,43,48,48,48,50,43],style:'rag',voice:'chip',legato:1.1}),
   korob:melTrack({song:KOROB,bpm:120,div:2,bar:8,bass:[45,45,40,45,50,48,40,45],style:'stomp',drums:.18,voice:'chip',legato:1}),
   turca:melTrack({song:TURCA,bpm:72,div:4,bar:8,bass:[45,45,45,45,45,40,45,40,45,40,45],style:'stomp',voice:'chip',legato:1}),
+  laser:edmTrack({bpm:128,chords:[[45,1],[41,0],[48,0],[43,0]],arp:[0,1,2,3,2,1,2,3,0,1,2,3,3,2,1,2],bass:'roll',
+    lead:[4,-1,5,4,2,-1,0,2,4,-1,5,7,5,-1,4,2,2,-1,4,2,0,-1,1,0,1,2,4,-1,5,4,2,-1],scale:[57,60,62,64,67,69,72,74,76]}),
+  drive:edmTrack({bpm:140,chords:[[40,1],[36,0],[43,0],[38,0]],arp:[0,2,1,3,0,2,1,3,0,2,1,3,3,1,2,0],bass:'off',
+    lead:[4,-1,4,3,2,-1,3,4,5,-1,4,-1,3,2,1,-1,2,-1,2,3,4,-1,3,2,1,-1,0,-1,1,2,-1,-1],scale:[64,67,69,71,74,76,79]}),
+  pixel:edmTrack({bpm:122,chords:[[48,0],[43,0],[45,1],[41,0]],arp:[0,1,2,1,0,1,2,3,0,1,2,1,0,2,3,2],bass:'chip',
+    lead:[2,3,4,3,2,0,1,2,3,-1,3,4,5,4,3,-1,2,3,2,1,0,1,2,-1,1,-1,0,-1,0,-1,-1,-1],scale:[72,74,76,79,81,84]}),
   bells:melTrack({song:BELLS,bpm:120,div:2,bar:8,bass:[48,48,48,48,53,48,43,43,48,48,48,48,53,48,43,48],style:'rag',drums:.12,legato:1.2})
 };
 const music={track:null,step:0,nextT:0,t0:0,timer:null};
@@ -1739,13 +1775,43 @@ function drawHero(g,c,cx,cy,s,time,th){
   g.restore();
 }
 function starShape(g,x,y,r){g.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,q=i%2?r*.45:r;g.lineTo(x+Math.cos(a)*q,y+Math.sin(a)*q);}g.closePath();}
+/* Background decoration of a theme: neon squares by default, or a picture for builder backgrounds. */
+function drawDeco(g,w,h,T,floorY,camX,th,time,pulse){
+  const d=th.deco||'squares',wrap=(v,m)=>((v%m)+m)%m;
+  g.save();
+  if(d==='squares'){
+    g.strokeStyle=th.line;g.lineWidth=2;g.globalAlpha=.09+.05*pulse;const span=w+T*4;
+    for(let i=0;i<9;i++){const s=T*(1.1+(i%3)*.8),x=wrap(i*span/9-camX*T*.25,span)-T*2,y=floorY*(.08+((i*37)%7)*.11);g.strokeRect(x,y,s,s);}
+  }else if(d==='stars'){
+    for(let i=0;i<70;i++){const x=wrap(i*97.3-camX*T*.08,w),y=(i*53.7)%floorY,tw=.4+.6*Math.abs(Math.sin(time*1.5+i));g.globalAlpha=tw;g.fillStyle='#ffffff';g.fillRect(x,y,i%7?1.5:2.5,i%7?1.5:2.5);}
+    g.globalAlpha=.9;const px=wrap(w*.75-camX*T*.03,w+200)-100;g.fillStyle='#ff9ad5';g.beginPath();g.arc(px,floorY*.3,T*.9,0,7);g.fill();
+    g.strokeStyle='#ffd45c';g.lineWidth=T*.12;g.beginPath();g.ellipse(px,floorY*.3,T*1.5,T*.35,-.3,0,7);g.stroke();
+  }else if(d==='bubbles'){
+    g.strokeStyle='rgba(200,240,255,.6)';g.lineWidth=2;
+    for(let i=0;i<22;i++){const r=3+(i%5)*2.5,x=wrap(i*71-camX*T*.15+Math.sin(time+i)*8,w),y=floorY-wrap(time*(25+i%4*10)+i*57,floorY+30);g.globalAlpha=.6;g.beginPath();g.arc(x,y,r,0,7);g.stroke();}
+    g.globalAlpha=.15;g.fillStyle='#ffffff';for(let i=0;i<4;i++){const x=wrap(i*w/3.5-camX*T*.05,w+120)-60;g.beginPath();g.moveTo(x,0);g.lineTo(x+40,0);g.lineTo(x+110,floorY);g.lineTo(x+60,floorY);g.closePath();g.fill();}
+  }else if(d==='sun'){
+    const cx=w*.62,cy=floorY*.72,r=Math.min(w,h)*.28;
+    const sg=g.createLinearGradient(0,cy-r,0,cy+r);sg.addColorStop(0,'#fff27a');sg.addColorStop(1,'#ff4f9a');g.fillStyle=sg;
+    g.beginPath();g.arc(cx,cy,r,0,7);g.fill();g.fillStyle=th.bg2;
+    for(let i=0;i<6;i++){const y=cy+r*(.1+i*.16),hh=2+i*1.6;g.globalAlpha=.85;g.fillRect(cx-r,y,r*2,hh);}
+    g.globalAlpha=.35;g.fillStyle='#3a0a4a';for(let i=0;i<5;i++){const x=wrap(i*w/4-camX*T*.2,w+160)-80,hh=floorY*(.18+(i%3)*.06);g.beginPath();g.moveTo(x-80,floorY);g.lineTo(x,floorY-hh);g.lineTo(x+80,floorY);g.closePath();g.fill();}
+  }else if(d==='hearts'){
+    for(let i=0;i<16;i++){const x=wrap(i*83-camX*T*.12+Math.sin(time*.8+i)*10,w),y=wrap(i*47-time*18,floorY+20)-10;g.globalAlpha=.35;
+      if(i%2){g.fillStyle='#ff4f9a';heartPath(g,x,y,6+(i%3)*3);g.fill();}else{g.fillStyle='#ffffff';g.beginPath();g.arc(x,y,5+(i%3)*2,0,7);g.fill();g.fillStyle='#ff9ad5';g.fillRect(x-1,y-6,2,12);}}
+  }else if(d==='snow'){
+    g.fillStyle='#ffffff';for(let i=0;i<60;i++){const x=wrap(i*37.7-camX*T*.1+Math.sin(time*.9+i)*12,w),y=wrap(time*(18+i%5*8)+i*29,floorY);g.globalAlpha=.8;g.beginPath();g.arc(x,y,1.5+(i%3),0,7);g.fill();}
+    g.globalAlpha=.25;g.fillStyle='#ffffff';for(let i=0;i<4;i++){const x=wrap(i*w/3-camX*T*.06,w+240)-120;g.beginPath();g.moveTo(x-120,floorY);g.lineTo(x,floorY*.45);g.lineTo(x+120,floorY);g.closePath();g.fill();}
+  }else if(d==='embers'){
+    for(let i=0;i<40;i++){const x=wrap(i*53-camX*T*.1+Math.sin(time*2+i)*6,w),y=floorY-wrap(time*(30+i%5*12)+i*41,floorY);g.globalAlpha=Math.max(0,y/floorY);g.fillStyle=i%3?'#ff7a2a':'#ffd45c';g.fillRect(x,y,3,3);}
+    g.globalAlpha=.3;g.fillStyle='#ff3a00';g.beginPath();g.moveTo(w*.15,floorY);g.lineTo(w*.35,floorY*.45);g.lineTo(w*.45,floorY*.45);g.lineTo(w*.65,floorY);g.closePath();g.fill();
+  }
+  g.restore();
+}
 function drawWorld(V,objs,th,time,extra){
   const {g,w,h,T,floorY,camX}=V,pulse=1-beatPhase(),C=V.ceil;
   const grd=g.createLinearGradient(0,0,0,h);grd.addColorStop(0,th.bg1);grd.addColorStop(1,th.bg2);g.fillStyle=grd;g.fillRect(0,0,w,h);
-  g.strokeStyle=th.line;g.lineWidth=2;g.globalAlpha=.09+.05*pulse;
-  const span=w+T*4;
-  for(let i=0;i<9;i++){const s=T*(1.1+(i%3)*.8),x=((i*span/9-camX*T*.25)%span+span)%span-T*2,y=floorY*(.08+((i*37)%7)*.11);g.strokeRect(x,y,s,s);}
-  g.globalAlpha=1;
+  drawDeco(g,w,h,T,floorY,camX,th,time,pulse);
   g.fillStyle=th.floor;g.fillRect(0,floorY,w,h-floorY);
   g.strokeStyle=th.line;g.globalAlpha=.22;g.lineWidth=1;
   for(let gx=Math.floor(camX)-1;gx<camX+w/T+2;gx++){const sx=(gx-camX)*T;g.beginPath();g.moveTo(sx,floorY);g.lineTo(sx-T*.7,h);g.stroke();}
@@ -2061,7 +2127,7 @@ function levelFromCustom(cl){
   const len=Math.max(24,cl.cells.reduce((a,c)=>Math.max(a,c[1]),0)+10);
   const busy=new Set(cl.cells.map(c=>c[1])),safe=[];
   for(let x=6;x<len;x+=6){let s=x;while(s<len&&(busy.has(s)||busy.has(s+1)||busy.has(s-1)))s++;if(s<len)safe.push(s);}
-  return {objs,safe,len,speed:cl.speed||7,mode:cl.mode||'cube',ceil:BUILD_CEIL,music:cl.music||'challenge'};
+  return {objs,safe,len,speed:cl.speed||7,mode:cl.mode||'cube',ceil:BUILD_CEIL,music:cl.music||'challenge',bg:cl.bg||'neon'};
 }
 function startChallenge(n,practice){
   parts=[];trail=[];
@@ -2071,7 +2137,7 @@ function startChallenge(n,practice){
 function startCustom(i,fromBuilder){
   parts=[];trail=[];
   const cl=fromBuilder?B.level:customs[i];
-  CH={n:-1,custom:i,fromBuilder,practice:false,lv:levelFromCustom(cl),th:TH_GREEN,attempt:0,cp:null,cps:[],state:'play',input:{hold:false,buffer:0},lastTs:0,lastCall:false};
+  CH={n:-1,custom:i,fromBuilder,practice:false,lv:levelFromCustom(cl),th:bgTheme(cl.bg),attempt:0,cp:null,cps:[],state:'play',input:{hold:false,buffer:0},lastTs:0,lastCall:false};
   $('#chOver').hidden=true;show('chal');chRestart(true);requestAnimationFrame(chLoop);
 }
 function chRestart(full){
@@ -2254,6 +2320,11 @@ function renderMine(){
     </div>`).join(''):'<p class="note">Пока нет своих уровней.</p>')
     +(customs.length<MAX_CUSTOM?'<button class="btn2 main" id="newLevel" style="align-self:flex-start">Построить новый уровень</button>':`<p class="note">Можно хранить до ${MAX_CUSTOM} уровней. Удали старый, чтобы построить новый.</p>`);
 }
+function renderBBg(){
+  const cur=B.level.bg||'neon';
+  $('#bBg').innerHTML=BG_THEMES.map(([id,n,th])=>`<button data-bbg="${id}" class="${cur===id?'on':''}"><i class="swatch" style="background:linear-gradient(${th.bg1},${th.bg2});border-color:${th.line}"></i>${n}</button>`).join('');
+}
+$('#bBg').addEventListener('click',e=>{const b=e.target.closest('[data-bbg]');if(!b)return;B.level.bg=b.dataset.bbg;renderBBg();drawBuilder();});
 function renderBMusic(){
   const m=B.level.music||'challenge';
   $('#bMusic').innerHTML=BUILD_MUSIC.map(([id,n])=>`<button data-bmusic="${id}" class="${m===id?'on':''}">${id===m?'♪ ':''}${n}</button>`).join('');
@@ -2266,7 +2337,7 @@ function openBuilder(idx,keep){
   }
   $('#bTools').innerHTML=TOOLS.map(([id,n])=>{const g=id.startsWith('g:')?MODES[id.slice(2)]:null;
     return `<button class="tool${B.tool===id?' on':''}" data-tool="${id}"${g?` style="color:${g.col}"`:''}>${g?'Ворота '+n:n}</button>`;}).join('');
-  renderBMusic();
+  renderBMusic();renderBBg();
   $('#bModes').innerHTML=Object.entries(MODES).map(([id,m])=>`<button data-bmode="${id}" class="${B.level.mode===id?'on':''}">${m.name}</button>`).join('');
   $('#bName').textContent=B.level.name;
   show('build');setTrack(B.level.music||'challenge');requestAnimationFrame(drawBuilder);
@@ -2275,9 +2346,9 @@ function cellsToObjs(){return levelFromCustom(B.level).objs;}
 function drawBuilder(){
   if(cur!=='build'||!B)return;
   const V=view($('#bCanvas'),'build',B.camX,BUILD_CEIL);B.V=V;
-  drawWorld(V,cellsToObjs(),TH_GREEN,performance.now()/1000,{grid:true});
+  drawWorld(V,cellsToObjs(),bgTheme(B.level.bg),performance.now()/1000,{grid:true});
   const sx=(0-V.camX)*V.T+V.T/2,sy=V.floorY-V.T/2;
-  drawHero(V.g,{mode:B.level.mode,rot:0},sx,sy,V.T*.9,1,TH_GREEN);
+  drawHero(V.g,{mode:B.level.mode,rot:0},sx,sy,V.T*.9,1,bgTheme(B.level.bg));
   const len=levelFromCustom(B.level).len,fx=(len-V.camX)*V.T;
   if(fx<V.w){V.g.fillStyle='#ffd45c';V.g.fillRect(fx,V.floorY-BUILD_CEIL*V.T,4,BUILD_CEIL*V.T);}
   $('#bPos').value=String(Math.round(B.camX));

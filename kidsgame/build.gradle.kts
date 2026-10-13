@@ -12,8 +12,8 @@ android {
         applicationId = "ru.staschig.zvezdy"
         minSdk = 26
         targetSdk = 34
-        versionCode = 9
-        versionName = "6.0"
+        versionCode = 10
+        versionName = "6.1"
     }
 
     // Тот же постоянный ключ, что у основного приложения: обновления ставятся поверх.
