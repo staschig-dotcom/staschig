@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.content.pm.PackageManager
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
+import androidx.core.app.NotificationCompat
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -55,11 +56,30 @@ class NotificationsListener : NotificationListenerService() {
 
         val e = n.extras
         val title = e.getCharSequence(Notification.EXTRA_TITLE)?.toString().orEmpty().trim()
-        val text = (e.getCharSequence(Notification.EXTRA_BIG_TEXT) ?: e.getCharSequence(Notification.EXTRA_TEXT))
-            ?.toString().orEmpty().trim()
+        val text = chatText(n)
+            ?: (e.getCharSequence(Notification.EXTRA_BIG_TEXT) ?: e.getCharSequence(Notification.EXTRA_TEXT))
+                ?.toString().orEmpty().trim()
         if (title.isEmpty() && text.isEmpty()) return null
 
         return AppMessage(sbn.key, sbn.packageName, appLabel(sbn.packageName), title, text, sbn.postTime)
+    }
+
+    /**
+     * Мессенджеры (Telegram, WhatsApp, VK…) кладут в EXTRA_TEXT только последнее сообщение или «3 новых сообщения»,
+     * а вся непрочитанная переписка лежит в MessagingStyle — берём последние сообщения оттуда.
+     */
+    private fun chatText(n: Notification): String? {
+        val style = NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(n) ?: return null
+        val group = style.isGroupConversation
+        return style.messages.takeLast(MAX_CHAT_MESSAGES).mapNotNull { m ->
+            val t = m.text?.toString()?.trim().orEmpty()
+            val who = m.person?.name?.toString()
+            when {
+                t.isEmpty() -> null
+                group && !who.isNullOrBlank() -> "$who: $t"
+                else -> t
+            }
+        }.joinToString("\n").ifEmpty { null }
     }
 
     private fun appLabel(pkg: String): String = try {
@@ -75,6 +95,8 @@ class NotificationsListener : NotificationListenerService() {
             Notification.CATEGORY_PROGRESS,
             Notification.CATEGORY_SYSTEM,
         )
+
+        private const val MAX_CHAT_MESSAGES = 10
 
         /** PendingIntent нельзя сохранить на диск — держим в памяти, пока сервис жив. */
         val intents = ConcurrentHashMap<String, PendingIntent>()

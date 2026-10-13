@@ -34,4 +34,11 @@ object Prefs {
     fun setBgOpacity(ctx: Context, percent: Int) {
         sp(ctx).edit().putInt("bg_opacity", percent.coerceIn(0, 100)).apply()
     }
+
+    /** Сколько строк текста сообщения показывать: 2, 5 или 0 = целиком. */
+    fun messageLines(ctx: Context): Int = sp(ctx).getInt("message_lines", 5)
+
+    fun setMessageLines(ctx: Context, lines: Int) {
+        sp(ctx).edit().putInt("message_lines", lines).apply()
+    }
 }

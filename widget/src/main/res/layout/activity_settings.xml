@@ -68,6 +68,37 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Длина текста сообщения в виджете:" />
+
+        <RadioGroup
+            android:id="@+id/msg_lines"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/msg_lines_2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="2 строки" />
+
+            <RadioButton
+                android:id="@+id/msg_lines_5"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="5 строк" />
+
+            <RadioButton
+                android:id="@+id/msg_lines_all"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Целиком" />
+        </RadioGroup>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
             android:text="3. Календарь"
             android:textSize="18sp"

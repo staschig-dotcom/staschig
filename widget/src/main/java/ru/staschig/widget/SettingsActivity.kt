@@ -12,6 +12,7 @@ import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.EditText
+import android.widget.RadioGroup
 import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
@@ -56,6 +57,26 @@ class SettingsActivity : Activity() {
         findViewById<Button>(R.id.miui_autostart).setOnClickListener { Xiaomi.openAutostart(this) }
         findViewById<Button>(R.id.miui_battery).setOnClickListener { Xiaomi.openAppDetails(this) }
         findViewById<View>(R.id.miui_block).visibility = if (Xiaomi.isXiaomi) View.VISIBLE else View.GONE
+
+        val linesGroup = findViewById<RadioGroup>(R.id.msg_lines)
+        linesGroup.check(
+            when (Prefs.messageLines(this)) {
+                2 -> R.id.msg_lines_2
+                0 -> R.id.msg_lines_all
+                else -> R.id.msg_lines_5
+            },
+        )
+        linesGroup.setOnCheckedChangeListener { _, id ->
+            Prefs.setMessageLines(
+                this,
+                when (id) {
+                    R.id.msg_lines_2 -> 2
+                    R.id.msg_lines_all -> 0
+                    else -> 5
+                },
+            )
+            Widgets.updateAll(this)
+        }
 
         val opacityLabel = findViewById<TextView>(R.id.opacity_label)
         val opacitySeek = findViewById<SeekBar>(R.id.opacity_seek)

@@ -12,12 +12,14 @@ class MessagesService : RemoteViewsService() {
 
     private class Factory(private val ctx: Context) : RemoteViewsFactory {
         private var items: List<AppMessage> = emptyList()
+        private var maxLines = 5
         private val icons = HashMap<String, Bitmap?>()
 
         override fun onCreate() {}
 
         override fun onDataSetChanged() {
             items = NotificationStore.load(ctx)
+            maxLines = Prefs.messageLines(ctx).let { if (it <= 0) Int.MAX_VALUE else it }
         }
 
         override fun onDestroy() {
@@ -33,6 +35,7 @@ class MessagesService : RemoteViewsService() {
             v.setTextViewText(R.id.msg_time, Widgets.shortTime(ctx, m.time))
             v.setTextViewText(R.id.msg_title, m.title)
             v.setTextViewText(R.id.msg_text, m.text)
+            v.setInt(R.id.msg_text, "setMaxLines", maxLines)
             icon(m.pkg)?.let { v.setImageViewBitmap(R.id.msg_icon, it) }
             v.setOnClickFillInIntent(
                 R.id.msg_root,
