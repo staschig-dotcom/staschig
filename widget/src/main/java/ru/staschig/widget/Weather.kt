@@ -54,15 +54,42 @@ data class Weather(
 /** Open-Meteo: бесплатно, без ключа. https://open-meteo.com */
 object WeatherApi {
 
+    /** Open-Meteo, при недоступности — wttr.in (у некоторых провайдеров и VPN Open-Meteo не открывается). */
     @Throws(IOException::class)
-    fun geocode(query: String): Place? {
+    fun geocode(query: String): Place? = withFallback(
+        { openMeteoGeocode(query) },
+        { Wttr.place(query) },
+    )
+
+    @Throws(IOException::class)
+    fun forecast(place: Place, now: Long = System.currentTimeMillis()): Weather = withFallback(
+        { openMeteoForecast(place, now) },
+        { Wttr.forecast(place, now) },
+    )
+
+    private fun <T> withFallback(primary: () -> T, backup: () -> T): T {
+        val first = try {
+            return primary()
+        } catch (e: IOException) {
+            e
+        }
+        try {
+            return backup()
+        } catch (e: IOException) {
+            throw IOException("Open-Meteo: ${describe(first)}; wttr.in: ${describe(e)}", e)
+        }
+    }
+
+    /** «UnknownHostException: …» вместо голого текста — по типу сразу видно, DNS это, SSL или таймаут. */
+    fun describe(e: Throwable): String = "${e.javaClass.simpleName}: ${e.message ?: ""}".trimEnd(' ', ':')
+
+    private fun openMeteoGeocode(query: String): Place? {
         val q = URLEncoder.encode(query.trim(), "UTF-8")
         val body = get("https://geocoding-api.open-meteo.com/v1/search?name=$q&count=1&language=ru&format=json")
         return parsePlace(body)
     }
 
-    @Throws(IOException::class)
-    fun forecast(place: Place, now: Long = System.currentTimeMillis()): Weather {
+    private fun openMeteoForecast(place: Place, now: Long): Weather {
         // Locale.US: иначе в русской локали дробная часть уйдёт через запятую и API вернёт ошибку.
         val url = String.format(
             Locale.US,
@@ -99,11 +126,13 @@ object WeatherApi {
         )
     }
 
-    private fun get(url: String): String {
+    internal fun get(url: String): String {
         val conn = URL(url).openConnection() as HttpURLConnection
         conn.connectTimeout = 15_000
         conn.readTimeout = 15_000
+        conn.setRequestProperty("User-Agent", "InfoWidget/0.1 (Android)")
         try {
+            if (conn.responseCode == 404) return "{}"
             if (conn.responseCode != 200) throw IOException("HTTP ${conn.responseCode}")
             return conn.inputStream.bufferedReader().use { it.readText() }
         } finally {
@@ -149,5 +178,67 @@ object WeatherCodes {
         71, 73, 75, 77, 85, 86 -> "🌨️"
         95, 96, 99 -> "⛈️"
         else -> "🌡️"
+    }
+}
+
+/** Запасной источник: wttr.in (формат j1). Коды погоды WWO переводим в WMO, чтобы остальной код не менялся. */
+object Wttr {
+
+    @Throws(IOException::class)
+    fun place(query: String): Place? {
+        val q = URLEncoder.encode(query.trim(), "UTF-8").replace("+", "%20")
+        return parsePlace(WeatherApi.get("https://wttr.in/$q?format=j1&lang=ru"), query.trim())
+    }
+
+    @Throws(IOException::class)
+    fun forecast(place: Place, now: Long): Weather {
+        val url = String.format(Locale.US, "https://wttr.in/%.4f,%.4f?format=j1&lang=ru", place.lat, place.lon)
+        return parseForecast(WeatherApi.get(url), place.name, now)
+    }
+
+    fun parsePlace(json: String, query: String): Place? {
+        val area = JSONObject(json).optJSONArray("nearest_area")?.optJSONObject(0) ?: return null
+        val name = query.replaceFirstChar { it.uppercase() }
+        return Place(name, area.getString("latitude").toDouble(), area.getString("longitude").toDouble())
+    }
+
+    fun parseForecast(json: String, place: String, now: Long): Weather {
+        val o = JSONObject(json)
+        val c = o.getJSONArray("current_condition").getJSONObject(0)
+        val day = o.getJSONArray("weather").getJSONObject(0)
+        val temp = c.getString("temp_C").toDouble()
+        val hour = java.util.Calendar.getInstance().apply { timeInMillis = now }.get(java.util.Calendar.HOUR_OF_DAY)
+        return Weather(
+            place = place,
+            temp = temp,
+            feels = c.optString("FeelsLikeC", c.getString("temp_C")).toDouble(),
+            code = toWmo(c.getString("weatherCode").toInt()),
+            isDay = hour in 7..19,
+            wind = c.optString("windspeedKmph", "0").toDouble() / 3.6,
+            min = day.optString("mintempC", c.getString("temp_C")).toDouble(),
+            max = day.optString("maxtempC", c.getString("temp_C")).toDouble(),
+            updated = now,
+        )
+    }
+
+    fun toWmo(wwo: Int): Int = when (wwo) {
+        113 -> 0
+        116 -> 2
+        119, 122 -> 3
+        143, 248, 260 -> 45
+        176, 263, 266, 293, 296 -> 61
+        299, 302 -> 63
+        305, 308 -> 65
+        353 -> 80
+        356 -> 81
+        359 -> 82
+        179, 227, 323, 326 -> 71
+        329, 332 -> 73
+        230, 335, 338 -> 75
+        368 -> 85
+        371 -> 86
+        182, 185, 281, 284, 311, 314, 317, 320, 350, 362, 365, 374, 377 -> 66
+        200, 386, 389, 392, 395 -> 95
+        else -> -1
     }
 }

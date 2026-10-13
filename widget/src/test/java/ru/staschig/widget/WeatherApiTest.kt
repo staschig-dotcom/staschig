@@ -34,4 +34,20 @@ class WeatherApiTest {
         assertEquals("0°", Weather.deg(-0.2))
         assertTrue(WeatherCodes.text(999) == "—")
     }
+
+    @Test
+    fun parsesWttrFallback() {
+        val json = """
+            {"current_condition":[{"temp_C":"8","FeelsLikeC":"5","weatherCode":"296","windspeedKmph":"18"}],
+             "nearest_area":[{"latitude":"55.752","longitude":"37.616","areaName":[{"value":"Moscow"}]}],
+             "weather":[{"maxtempC":"10","mintempC":"3"}]}
+        """.trimIndent()
+        val p = Wttr.parsePlace(json, "москва")!!
+        assertEquals("Москва", p.name)
+        assertEquals(55.752, p.lat, 1e-6)
+        val w = Wttr.parseForecast(json, p.name, 0L)
+        assertEquals(61, w.code)
+        assertEquals("Небольшой дождь\n+3°…+10°, ветер 5 м/с\nМосква", w.details)
+        assertNull(Wttr.parsePlace("{}", "x"))
+    }
 }

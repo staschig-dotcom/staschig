@@ -143,9 +143,11 @@ class SettingsActivity : Activity() {
                     ""
                 }
             } catch (e: IOException) {
-                "Нет связи с сервером погоды: ${e.message}"
+                "Нет связи с серверами погоды.\n${e.message}\n\n" +
+                    "Проверьте: интернет на телефоне; VPN (попробуйте выключить); " +
+                    "в MIUI — Настройки → Приложения → Инфо-виджет → «Ограничение трафика»: разрешить Wi-Fi и мобильные данные."
             } catch (e: Exception) {
-                "Ошибка: ${e.message}"
+                "Ошибка: ${WeatherApi.describe(e)}"
             }
             runOnUiThread {
                 if (isDestroyed) return@runOnUiThread
