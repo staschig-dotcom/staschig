@@ -99,6 +99,18 @@
             android:layout_marginTop="4dp"
             android:text="Виджет занимает весь экран (4×6). Сначала сделайте пустой экран: долгое нажатие на рабочем столе → пролистайте вправо до пустой страницы (или уберите с главного экрана значки). Затем нажмите кнопку ниже или: долгое нажатие → Виджеты → «Инфо-виджет». Если не встал на весь экран — долгое нажатие на виджет и растяните за края." />
 
+        <TextView
+            android:id="@+id/opacity_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp" />
+
+        <SeekBar
+            android:id="@+id/opacity_seek"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="100" />
+
         <Button
             android:id="@+id/pin_button"
             android:layout_width="wrap_content"

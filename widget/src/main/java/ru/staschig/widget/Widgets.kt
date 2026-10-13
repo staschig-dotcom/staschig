@@ -39,6 +39,7 @@ object Widgets {
 
     fun build(ctx: Context, widgetId: Int): RemoteViews {
         val v = RemoteViews(ctx.packageName, R.layout.widget_info)
+        v.setInt(R.id.widget_bg, "setImageAlpha", Prefs.bgOpacity(ctx) * 255 / 100)
 
         // Часы: нажатие открывает будильники.
         v.setOnClickPendingIntent(

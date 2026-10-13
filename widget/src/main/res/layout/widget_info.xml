@@ -1,11 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@drawable/widget_bg"
-    android:orientation="vertical"
-    android:padding="18dp">
+    android:layout_height="match_parent">
+
+    <!-- Подложка отдельной картинкой: ее прозрачность меняется из настроек (setImageAlpha), а углы остаются скругленными. -->
+    <ImageView
+        android:id="@+id/widget_bg"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:importantForAccessibility="no"
+        android:scaleType="fitXY"
+        android:src="@drawable/widget_bg" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="18dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -22,6 +34,9 @@
 
             <TextClock
                 android:id="@+id/clock"
+                android:shadowColor="#AA000000"
+                android:shadowDy="1"
+                android:shadowRadius="4"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="sans-serif-light"
@@ -33,6 +48,9 @@
 
             <TextClock
                 android:id="@+id/date"
+                android:shadowColor="#AA000000"
+                android:shadowDy="1"
+                android:shadowRadius="4"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:format12Hour="EEEE, d MMMM"
@@ -52,6 +70,9 @@
 
             <TextView
                 android:id="@+id/weather_main"
+                android:shadowColor="#AA000000"
+                android:shadowDy="1"
+                android:shadowRadius="4"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:singleLine="true"
@@ -60,6 +81,9 @@
 
             <TextView
                 android:id="@+id/weather_desc"
+                android:shadowColor="#AA000000"
+                android:shadowDy="1"
+                android:shadowRadius="4"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="end"
@@ -70,82 +94,11 @@
         </LinearLayout>
     </LinearLayout>
 
-    <LinearLayout
-        android:id="@+id/events_block"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="14dp"
-        android:orientation="vertical">
-
-        <TextView
-            android:id="@+id/event_0"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:paddingTop="3dp"
-            android:singleLine="true"
-            android:textColor="#FFFFFFFF"
-            android:textSize="15sp"
-            android:visibility="gone" />
-
-        <TextView
-            android:id="@+id/event_1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:paddingTop="3dp"
-            android:singleLine="true"
-            android:textColor="#FFFFFFFF"
-            android:textSize="15sp"
-            android:visibility="gone" />
-
-        <TextView
-            android:id="@+id/event_2"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:paddingTop="3dp"
-            android:singleLine="true"
-            android:textColor="#FFFFFFFF"
-            android:textSize="15sp"
-            android:visibility="gone" />
-
-        <TextView
-            android:id="@+id/event_3"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:paddingTop="3dp"
-            android:singleLine="true"
-            android:textColor="#FFFFFFFF"
-            android:textSize="15sp"
-            android:visibility="gone" />
-
-        <TextView
-            android:id="@+id/event_4"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:paddingTop="3dp"
-            android:singleLine="true"
-            android:textColor="#FFFFFFFF"
-            android:textSize="15sp"
-            android:visibility="gone" />
-
-        <TextView
-            android:id="@+id/events_hint"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingTop="3dp"
-            android:singleLine="true"
-            android:textColor="#99FFFFFF"
-            android:textSize="13sp" />
-    </LinearLayout>
 
     <ImageView
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="14dp"
         android:layout_marginBottom="8dp"
         android:background="#33FFFFFF"
         android:importantForAccessibility="no" />
@@ -165,6 +118,9 @@
 
         <TextView
             android:id="@+id/messages_empty"
+            android:shadowColor="#AA000000"
+            android:shadowDy="1"
+            android:shadowRadius="4"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:gravity="center"
@@ -172,4 +128,104 @@
             android:textColor="#99FFFFFF"
             android:textSize="13sp" />
     </FrameLayout>
+
+    <ImageView
+        android:id="@+id/events_divider"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="6dp"
+        android:background="#33FFFFFF"
+        android:importantForAccessibility="no" />
+
+    <LinearLayout
+        android:id="@+id/events_block"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="0dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/event_0"
+            android:shadowColor="#AA000000"
+            android:shadowDy="1"
+            android:shadowRadius="4"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:paddingTop="3dp"
+            android:singleLine="true"
+            android:textColor="#FFFFFFFF"
+            android:textSize="15sp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/event_1"
+            android:shadowColor="#AA000000"
+            android:shadowDy="1"
+            android:shadowRadius="4"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:paddingTop="3dp"
+            android:singleLine="true"
+            android:textColor="#FFFFFFFF"
+            android:textSize="15sp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/event_2"
+            android:shadowColor="#AA000000"
+            android:shadowDy="1"
+            android:shadowRadius="4"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:paddingTop="3dp"
+            android:singleLine="true"
+            android:textColor="#FFFFFFFF"
+            android:textSize="15sp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/event_3"
+            android:shadowColor="#AA000000"
+            android:shadowDy="1"
+            android:shadowRadius="4"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:paddingTop="3dp"
+            android:singleLine="true"
+            android:textColor="#FFFFFFFF"
+            android:textSize="15sp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/event_4"
+            android:shadowColor="#AA000000"
+            android:shadowDy="1"
+            android:shadowRadius="4"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:paddingTop="3dp"
+            android:singleLine="true"
+            android:textColor="#FFFFFFFF"
+            android:textSize="15sp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/events_hint"
+            android:shadowColor="#AA000000"
+            android:shadowDy="1"
+            android:shadowRadius="4"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="3dp"
+            android:singleLine="true"
+            android:textColor="#99FFFFFF"
+            android:textSize="13sp" />
+    </LinearLayout>
 </LinearLayout>
+</FrameLayout>

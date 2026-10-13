@@ -12,6 +12,7 @@ import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.EditText
+import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
 import java.io.IOException
@@ -55,6 +56,23 @@ class SettingsActivity : Activity() {
         findViewById<Button>(R.id.miui_autostart).setOnClickListener { Xiaomi.openAutostart(this) }
         findViewById<Button>(R.id.miui_battery).setOnClickListener { Xiaomi.openAppDetails(this) }
         findViewById<View>(R.id.miui_block).visibility = if (Xiaomi.isXiaomi) View.VISIBLE else View.GONE
+
+        val opacityLabel = findViewById<TextView>(R.id.opacity_label)
+        val opacitySeek = findViewById<SeekBar>(R.id.opacity_seek)
+        // Ползунок — прозрачность (вправо = прозрачнее), в настройках храним непрозрачность.
+        fun showOpacity(transparency: Int) {
+            opacityLabel.text = "Прозрачность фона: $transparency%" + if (transparency == 100) " (только текст с тенью)" else ""
+        }
+        opacitySeek.progress = 100 - Prefs.bgOpacity(this)
+        showOpacity(opacitySeek.progress)
+        opacitySeek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(bar: SeekBar, progress: Int, fromUser: Boolean) = showOpacity(progress)
+            override fun onStartTrackingTouch(bar: SeekBar) {}
+            override fun onStopTrackingTouch(bar: SeekBar) {
+                Prefs.setBgOpacity(this@SettingsActivity, 100 - bar.progress)
+                Widgets.updateAll(this@SettingsActivity)
+            }
+        })
 
         val pin = findViewById<Button>(R.id.pin_button)
         val manager = AppWidgetManager.getInstance(this)

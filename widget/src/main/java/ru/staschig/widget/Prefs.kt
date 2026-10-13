@@ -27,4 +27,11 @@ object Prefs {
     fun setWeather(ctx: Context, w: Weather) {
         sp(ctx).edit().putString("weather", w.toJson()).apply()
     }
+
+    /** Непрозрачность фона виджета, 0–100 %. */
+    fun bgOpacity(ctx: Context): Int = sp(ctx).getInt("bg_opacity", 70)
+
+    fun setBgOpacity(ctx: Context, percent: Int) {
+        sp(ctx).edit().putInt("bg_opacity", percent.coerceIn(0, 100)).apply()
+    }
 }
