@@ -79,12 +79,13 @@ object Widgets {
             ),
         )
 
-        val access = hasNotificationAccess(ctx)
-        v.setTextViewText(
-            R.id.messages_empty,
-            ctx.getString(if (access) R.string.messages_empty else R.string.messages_no_access),
-        )
-        v.setOnClickPendingIntent(R.id.messages_empty, activity(ctx, 4, Intent(ctx, SettingsActivity::class.java)))
+        // Нет сообщений — пусто, без надписи. Подсказка остаётся только когда не выдан доступ к уведомлениям.
+        if (hasNotificationAccess(ctx)) {
+            v.setTextViewText(R.id.messages_empty, "")
+        } else {
+            v.setTextViewText(R.id.messages_empty, ctx.getString(R.string.messages_no_access))
+            v.setOnClickPendingIntent(R.id.messages_empty, activity(ctx, 4, Intent(ctx, SettingsActivity::class.java)))
+        }
         return v
     }
 

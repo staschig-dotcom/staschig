@@ -5,7 +5,6 @@
     <string name="widget_description">Время, погода и последние уведомления приложений</string>
     <string name="listener_name">Инфо-виджет: сообщения на рабочем столе</string>
     <string name="weather_not_set">Погода: укажите город</string>
-    <string name="messages_empty">Новых сообщений нет</string>
     <string name="messages_no_access">Нажмите, чтобы разрешить показ сообщений</string>
     <string name="events_empty">Событий на ближайшие дни нет</string>
     <string name="events_no_access">Календарь: нажмите, чтобы разрешить доступ</string>
