@@ -22,6 +22,7 @@ import ru.staschig.guitar.tabedit.EdNote
 import ru.staschig.guitar.tabedit.EdScore
 import ru.staschig.guitar.tabedit.NoteEffect
 import ru.staschig.guitar.ui.screens.BackingScreen
+import ru.staschig.guitar.ui.screens.ChordsScreen
 import ru.staschig.guitar.ui.screens.CourseScreen
 import ru.staschig.guitar.ui.screens.LessonScreen
 import ru.staschig.guitar.ui.screens.OnboardingScreen
@@ -86,7 +87,7 @@ abstract class ScreensBase(orientation: ScreenOrientation) {
     @Test
     fun lessonExercise() = shot("lesson_exercise") {
         store.markTuned()
-        LessonScreen(store, "b4", {}, { _, _ -> }, {}, {}, { _, _, _ -> })
+        LessonScreen(store, "b1", {}, { _, _ -> }, {}, {}, { _, _, _ -> })
     }
 
     @Test
@@ -103,6 +104,9 @@ abstract class ScreensBase(orientation: ScreenOrientation) {
         )
         TabEditorScreen(store, doc.id, {}, {})
     }
+
+    @Test
+    fun chords() = shot("chords") { ChordsScreen(store) {} }
 
     @Test
     fun backing() = shot("backing") { BackingScreen(store) {} }

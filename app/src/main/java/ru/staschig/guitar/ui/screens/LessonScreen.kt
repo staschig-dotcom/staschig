@@ -353,12 +353,13 @@ private fun ExerciseInfo(
             ExampleSynth.renderChords(List(4) { Chords.byName("G")!! }, (tool as? StepTool.Metronome)?.bpmStart ?: 70)
         }
     }
-    ex.tab?.let { TabText(it) }
+    ex.tab?.let { TabText(it, caption = tabCaption(it)) }
 }
 
 /** Инструмент шага-упражнения: метроном, тренажёр смен или тюнер. */
 @Composable
 private fun ExerciseToolCard(store: AppStore, step: Step, tool: StepTool) {
+    if (tool == StepTool.TimerOnly) return // например, разминка без гитары — нужен только таймер
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             when (tool) {
@@ -380,7 +381,7 @@ private fun ExerciseToolCard(store: AppStore, step: Step, tool: StepTool) {
                     Text("Тюнер", style = MaterialTheme.typography.titleSmall)
                     TunerPanel(store, Modifier.fillMaxWidth())
                 }
-                StepTool.SongTabs -> Unit
+                StepTool.SongTabs, StepTool.TimerOnly -> Unit
             }
         }
     }
@@ -535,11 +536,20 @@ private fun SongStep(
                         }
                     }
                 }
+                if (song.chords.any { Chords.byName(it) != null }) {
+                    Text(FINGER_LEGEND, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                if (song.chords.isEmpty()) {
+                    Text(
+                        "В этой песне аккордов нет — играйте мелодию по табу: вкладка «🎼 Интерактивный таб» выше.",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
                 val known = song.chords.mapNotNull { Chords.byName(it) }
                 if (known.isNotEmpty()) ChordsExampleButton(known, song.bpm ?: 90)
                 Text("Ритм: ${song.strumming}", style = MaterialTheme.typography.titleSmall)
                 Text(song.description)
-                song.tab?.let { TabText(it) }
+                song.tab?.let { TabText(it, caption = tabCaption(it)) }
                 if (docs.isEmpty() && piece == null) {
                     Text(
                         "Таба этой песни в приложении пока нет. Нажмите «＋ Найти таб», на странице таба — ⬇: " +
@@ -578,7 +588,7 @@ private fun SongStep(
             dismissButton = {
                 TextButton(onClick = { TonePlayer.playSamples(GuitarSynth.render(c.midi)) }) { Text("🔊 Послушать") }
             },
-            text = { ChordDiagram(c, Modifier.fillMaxWidth(), width = 160.dp) },
+            text = { ChordDiagram(c, Modifier.fillMaxWidth(), width = 160.dp, legend = true) },
         )
     }
 }

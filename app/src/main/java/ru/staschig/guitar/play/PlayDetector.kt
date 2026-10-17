@@ -12,6 +12,11 @@ import ru.staschig.guitar.audio.PitchDetector
  * Перед YIN/хромой срезаются частоты выше ~1.5 кГц — там щелчок метронома 4 кГц.
  */
 class PlayDetector(private val sampleRate: Int = 44100) {
+    private companion object {
+        /** Порог тишины (после фильтра). Ниже, чем был, — чтобы слышать гитару и на расстоянии. */
+        const val QUIET = 0.0025f
+    }
+
     class Frame(
         /** Индекс сэмпла (от начала потока), к которому относится результат — центр окна YIN. */
         val sample: Long,
@@ -45,10 +50,10 @@ class PlayDetector(private val sampleRate: Int = 44100) {
         blocks++
 
         System.arraycopy(ring, chromaSize - yinSize, yinWindow, 0, yinSize)
-        val f = yin.detect(yinWindow, minRms = 0.004f)
+        val f = yin.detect(yinWindow, minRms = QUIET)
         val midi = f?.takeIf { it in 60f..1400f }?.let { Notes.midiOf(it) }
 
-        val loud = PitchDetector.rms(yinWindow) >= 0.004f
+        val loud = PitchDetector.rms(yinWindow) >= QUIET
         if (!loud) lastChroma = null
         else if (blocks % 2 == 0 || lastChroma == null) {
             System.arraycopy(ring, 0, chromaWindow, 0, chromaSize)

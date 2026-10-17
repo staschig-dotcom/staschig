@@ -50,6 +50,7 @@ sealed interface StepTool {
     data class ChordChanges(val pairs: List<Pair<String, String>>) : StepTool
     data object Tuner : StepTool
     data object SongTabs : StepTool
+    data object TimerOnly : StepTool
 }
 
 data class Step(
@@ -117,10 +118,10 @@ object Curriculum {
         Level.BEGINNER to listOf(
             Exercise(
                 "w_stretch", "Разогрев кистей без гитары", "Общая практика",
-                "1 мин: вращения кистей, сжимание/разжимание кулака. 1 мин: мягкая растяжка каждого пальца. " +
-                    "Затем 2 мин «паук» (см. таб) на 5-м ладу — там лады уже, пальцам легче. " +
-                    "Каждый палец — на свой лад, ставьте палец прямо за ладовой порожек.",
-                tab = spiderTab, bpmStart = 50, bpmTarget = 70,
+                "Гитару пока отложите. Покрутите кистями по 10 раз в каждую сторону. " +
+                    "Сожмите и разожмите кулаки 10 раз. " +
+                    "Мягко потяните каждый палец на себя, по 5 секунд. " +
+                    "Потрясите расслабленными кистями — руки должны стать тёплыми.",
             ),
             Exercise(
                 "w_spider", "Хроматика «паук» 1-2-3-4", "Стив Вай, «10-Hour Workout»",
@@ -182,9 +183,22 @@ object Curriculum {
         Level.BEGINNER to listOf(
             Exercise(
                 "t_posture", "Посадка, медиатор, первые звуки", "Justin Guitar, Grade 1",
-                "Гитара лежит на правой ноге, гриф слегка вверх. Медиатор держите между подушечкой большого " +
-                    "и боковой стороной указательного, кончик торчит на 2–3 мм. Большой палец левой руки — за грифом " +
-                    "напротив среднего пальца. Сыграйте каждую струну открыто, затем на 1, 2, 3 ладу.",
+                "Сядьте ровно, гитара лежит на правой ноге, гриф чуть вверх. " +
+                    "Медиатор держите между подушечкой большого пальца и боком указательного, кончик торчит на 2–3 мм. " +
+                    "Струны считаются снизу вверх по толщине: 1-я — самая тонкая (e), 6-я — самая толстая (E). " +
+                    "Пальцы левой руки пронумерованы: 1 — указательный, 2 — средний, 3 — безымянный, 4 — мизинец. " +
+                    "Большой палец левой руки — за грифом, напротив среднего. " +
+                    "Прижимайте струну кончиком пальца сразу за металлическим порожком лада, а не посередине между ладами. " +
+                    "Сыграйте каждую открытую струну, затем 1-ю струну на 1, 2 и 3 ладу пальцами 1, 2 и 3.",
+                tab = """
+                    e|-0---1---2---3---|   e — 1-я, тонкая струна
+                    B|-----------------|
+                    G|-----------------|
+                    D|-----------------|
+                    A|-----------------|
+                    E|-----------------|   E — 6-я, толстая струна
+                    Цифра — номер лада, 0 — открытая струна (ничего не прижимать)
+                """.trimIndent(),
                 bpmStart = 60, bpmTarget = 70,
             ),
             Exercise(
@@ -218,7 +232,7 @@ object Curriculum {
             Exercise(
                 "t_alt", "Переменный штрих на одной струне", "W. Leavitt, «A Modern Method for Guitar» (Berklee)",
                 "Играйте ноты по 4 раза: вниз-вверх-вниз-вверх. Движение — от запястья, а не от локтя. " +
-                    "Затем гамма до мажор в первой позиции (таб).",
+                    "Затем гамма до мажор в первой позиции — таб ниже.",
                 tab = """
                     e|-------------------------0-1-3-|
                     B|-----------------0-1-3---------|
@@ -480,22 +494,31 @@ object Curriculum {
     private val songs: Map<Level, List<Song>> = mapOf(
         Level.BEGINNER to listOf(
             Song(
-                "s_ode", "Ода к радости", "Л. ван Бетховен", listOf("C", "G"),
-                "Мелодия одиночными нотами, переменный штрих",
-                "Первая мелодия на нотах 1-й и 2-й струн. Играйте ровно четвертями под метроном.",
+                "s_ode", "Ода к радости", "Л. ван Бетховен", emptyList(),
+                "Мелодия одиночными нотами, медиатором вниз",
+                "Аккордов нет — только мелодия на 1-й и 2-й струнах. Лад 1 прижимайте указательным (1), лад 3 — безымянным (3), " +
+                    "0 — струна открыта. Сначала медленно, по одной ноте на щелчок метронома.",
                 tab = odeToJoyTab, bpm = 70,
+            ),
+            Song(
+                "s_wildthing", "Wild Thing", "The Troggs", listOf("A", "D", "E"),
+                "По 2 удара вниз на аккорд: ↓ ↓",
+                "Рифф A — D — E — D по кругу: ровно те три аккорда, что вы учили в этом уроке. " +
+                    "Сначала по 4 удара на аккорд, потом по 2, как в оригинале.",
+                bpm = 104,
+            ),
+            Song(
+                "s_amazing", "Amazing Grace", "народная", emptyList(),
+                "Мелодия одиночными нотами, переменный штрих",
+                "Мелодия на 2-й, 3-й и 4-й струнах — тренирует переменный штрих из этого урока. " +
+                    "Лад 2 — средний палец (2), лад 3 — безымянный (3).",
+                bpm = 80,
             ),
             Song(
                 "s_knocking", "Knockin' on Heaven's Door", "Bob Dylan", listOf("G", "D", "Am", "C"),
                 "По 2 удара на аккорд: ↓ ↓↑ ↑↓↑ (Old Faithful)",
                 "Последовательность: G D Am | G D C — повторяется всю песню. Идеальная первая песня.",
                 bpm = 68,
-            ),
-            Song(
-                "s_horse", "A Horse with No Name", "America", listOf("Em", "D6/9"),
-                "↓ ↓ ↓↑ ↑↓↑ — всё на 16-х, рука не останавливается",
-                "Всего 2 аккорда: Em (022000) и D6add9/F# (2x4220). Тренирует ритм, а не смены.",
-                bpm = 122,
             ),
             Song(
                 "s_stand", "Stand by Me", "Ben E. King", listOf("G", "Em", "C", "D"),
@@ -505,7 +528,7 @@ object Curriculum {
             ),
             Song(
                 "s_risingsun", "House of the Rising Sun", "народная", listOf("Am", "C", "D", "F", "E"),
-                "Арпеджио 6/8 (см. таб)",
+                "Арпеджио 6/8 — таб ниже",
                 "Песня-тренажёр перебора и смены аккордов, включая первый F.",
                 tab = risingSunTab, bpm = 70,
             ),
@@ -571,12 +594,6 @@ object Curriculum {
                 "Куплет: C Am C Am F G C G. Упражнение на размер 6/8 и ровный перебор.",
                 bpm = 60,
             ),
-            Song(
-                "s_romance", "Романс", "анонимный", listOf("Em", "B7", "Am"),
-                "Триоли a-m-i",
-                "Классика фингерстайла. Мелодию ведёт безымянный палец, звучит громче аккомпанемента.",
-                tab = romanceTab, bpm = 60,
-            ),
         ),
         Level.ADVANCED to listOf(
             Song(
@@ -633,31 +650,69 @@ object Curriculum {
 
     // ------------------------------------------------------------------ УРОКИ
 
+    /**
+     * План курса: (разминка, упражнение, песня) для каждого урока. Песни подобраны так, чтобы
+     * в них были только аккорды и приёмы, которые уже пройдены (это проверяет CurriculumTest).
+     */
+    private val plan: Map<Level, List<Triple<String, String, String>>> = mapOf(
+        Level.BEGINNER to listOf(
+            Triple("w_stretch", "t_posture", "s_ode"),
+            Triple("w_spider", "t_ade", "s_wildthing"),
+            Triple("w_open", "t_emcg", "s_zombie"),
+            Triple("w_spider", "t_strum", "s_knocking"),
+            Triple("w_open", "t_alt", "s_amazing"),
+            Triple("w_spider", "t_notes", "s_stand"),
+            Triple("w_open", "t_power", "s_teen"),
+            Triple("w_spider", "t_fmaj7", "s_letitbe"),
+        ),
+        Level.INTERMEDIATE to listOf(
+            Triple("w_spider_mid", "t_barre", "s_risingsun"),
+            Triple("w_perm", "t_penta", "s_alabama"),
+            Triple("w_trill", "t_travis", "s_dust"),
+            Triple("w_spider_mid", "t_giuliani", "s_nothing"),
+            Triple("w_perm", "t_major", "s_greensleeves"),
+            Triple("w_trill", "t_mute", "s_wonderwall"),
+            Triple("w_spider_mid", "t_legato", "s_wish"),
+            Triple("w_perm", "t_bend", "s_heyjoe"),
+        ),
+        Level.ADVANCED to listOf(
+            Triple("w_perm_adv", "t_3nps", "s_hotel_solo"),
+            Triple("w_sync", "t_sweep", "s_stairway"),
+            Triple("w_trill_adv", "t_modes", "s_hotel"),
+            Triple("w_perm_adv", "t_jazz", "s_blackbird"),
+            Triple("w_sync", "t_skip", "s_romance_full"),
+            Triple("w_trill_adv", "t_tapping", "s_greensleeves_adv"),
+            Triple("w_perm_adv", "t_blues", "s_backinblack"),
+            Triple("w_sync", "t_hybrid", "s_hallelujah"),
+        ),
+    )
+
+    private val allWarmups = warmups.values.flatten().associateBy { it.id }
+    private val allTechnique = technique.values.flatten().associateBy { it.id }
+    private val allSongs = songs.values.flatten().associateBy { it.id }
+
     val lessons: List<Lesson> = Level.entries.flatMap { level ->
-        val w = warmups.getValue(level)
-        val t = technique.getValue(level)
-        val s = songs.getValue(level)
-        t.indices.map { i ->
+        plan.getValue(level).mapIndexed { i, (w, t, s) ->
             Lesson(
                 id = "${level.prefix}${i + 1}",
                 level = level,
                 number = i + 1,
-                warmup = w[i % w.size],
-                technique = t[i],
-                song = s[i % s.size],
+                warmup = allWarmups.getValue(w),
+                technique = allTechnique.getValue(t),
+                song = allSongs.getValue(s),
             )
         }
     }
 
     /** Интерактивные табы (alphaTex в assets/alphatab/songs) для упражнений и песен уроков. */
     private val interactive: Map<String, String> = mapOf(
-        "w_stretch" to "ex_spider", "w_spider" to "ex_spider", "w_spider_mid" to "ex_spider",
+        "w_spider" to "ex_spider", "w_spider_mid" to "ex_spider",
         "w_perm" to "ex_permutation", "w_perm_adv" to "ex_permutation",
         "t_alt" to "ex_c_major", "t_penta" to "ex_penta", "t_travis" to "ex_travis",
         "t_giuliani" to "ex_giuliani", "t_major" to "ex_g_major_3nps", "t_legato" to "ex_legato",
         "t_3nps" to "ex_a_minor_3nps", "t_sweep" to "ex_sweep", "t_skip" to "ex_string_skip",
-        "s_ode" to "ode_to_joy", "s_greensleeves" to "greensleeves", "s_greensleeves_adv" to "greensleeves",
-        "s_risingsun" to "rising_sun", "s_romance" to "romance", "s_romance_full" to "romance",
+        "s_ode" to "ode_to_joy", "s_amazing" to "amazing_grace", "s_greensleeves" to "greensleeves", "s_greensleeves_adv" to "greensleeves",
+        "s_risingsun" to "rising_sun", "s_romance_full" to "romance",
     )
 
     fun interactiveTab(id: String): String? = interactive[id]
@@ -671,13 +726,17 @@ object Curriculum {
     )
 
     /** Посадка (сначала настроить гитару) и бенды (проверять высоту подтяжки) → тюнер. */
-    private val tunerSteps = setOf("t_posture", "t_bend")
+    private val tunerSteps = setOf("t_bend")
+
+    /** Шаги без инструмента — только таймер (например, разминка рук без гитары). */
+    private val timerOnly = setOf("w_stretch")
 
     fun toolFor(step: Step): StepTool {
         if (step.song != null) return StepTool.SongTabs
         val ex = step.exercise ?: return StepTool.Metronome(60, 60)
         chordDrills[ex.id]?.let { return StepTool.ChordChanges(it) }
         if (ex.id in tunerSteps) return StepTool.Tuner
+        if (ex.id in timerOnly) return StepTool.TimerOnly
         val start = ex.bpmStart ?: 60
         return StepTool.Metronome(start, ex.bpmTarget ?: start)
     }

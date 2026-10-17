@@ -31,23 +31,35 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 
-/** Таб моноширинным шрифтом с горизонтальной прокруткой. */
+/** Подсказка, как читать таб, — для тех, кто видит его впервые. */
+const val TAB_HINT = "Таб — запись по струнам: 6 линий = 6 струн (верхняя — тонкая 1-я, нижняя — толстая 6-я), " +
+    "цифра — номер лада, который надо прижать, 0 — открытая струна. Читается слева направо."
+
+/** Подпись к табу: только для настоящего таба с линиями струн (не для списка аппликатур). */
+fun tabCaption(tab: String): String? = if (tab.contains('|')) TAB_HINT else null
+
+/** Таб моноширинным шрифтом с горизонтальной прокруткой; [caption] — пояснение над ним. */
 @Composable
-fun TabText(text: String, modifier: Modifier = Modifier) {
-    Box(
-        modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
-            .horizontalScroll(rememberScrollState())
-            .padding(10.dp)
-    ) {
-        Text(
-            text,
-            fontFamily = FontFamily.Monospace,
-            fontSize = 13.sp,
-            lineHeight = 17.sp,
-            softWrap = false,
-        )
+fun TabText(text: String, modifier: Modifier = Modifier, caption: String? = null) {
+    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        caption?.let {
+            Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
+                .horizontalScroll(rememberScrollState())
+                .padding(10.dp)
+        ) {
+            Text(
+                text,
+                fontFamily = FontFamily.Monospace,
+                fontSize = 13.sp,
+                lineHeight = 17.sp,
+                softWrap = false,
+            )
+        }
     }
 }
 

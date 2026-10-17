@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -89,13 +90,14 @@ fun TunerPanel(store: AppStore, modifier: Modifier = Modifier) {
     val tuning = Tunings.byId(store.settings.tuningId)
     val a4 = store.settings.a4.toFloat()
     var freq by remember { mutableStateOf<Float?>(null) }
+    var level by remember { mutableStateOf(0f) }
     var auto by remember { mutableStateOf(true) }
     var manualString by remember { mutableIntStateOf(0) }
     var menuOpen by remember { mutableStateOf(false) }
 
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     DisposableEffect(granted, lifecycle) {
-        val engine = TunerEngine { freq = it }
+        val engine = TunerEngine { f, l -> freq = f; level = l }
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_RESUME -> if (granted) engine.start()
@@ -168,6 +170,22 @@ fun TunerPanel(store: AppStore, modifier: Modifier = Modifier) {
             },
             style = MaterialTheme.typography.bodyLarge,
         )
+        // Индикатор: слышит ли микрофон гитару (шкала −60…−10 дБ).
+        val db = 20f * kotlin.math.log10(level.coerceAtLeast(1e-6f))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Микрофон  ", style = MaterialTheme.typography.bodySmall)
+            androidx.compose.material3.LinearProgressIndicator(
+                progress = { ((db + 60f) / 50f).coerceIn(0f, 1f) },
+                modifier = Modifier.width(160.dp),
+            )
+        }
+        if (f == null && granted && db < -50f) {
+            Text(
+                "Очень тихо: дёрните струну сильнее или положите телефон ближе к резонаторному отверстию гитары.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         val needleColor = color
         val trackColor = MaterialTheme.colorScheme.surfaceVariant
         Canvas(Modifier.fillMaxWidth().height(140.dp)) {
