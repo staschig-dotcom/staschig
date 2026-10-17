@@ -250,6 +250,11 @@ fun LessonScreen(
                         when {
                             step == null -> TuneInfo()
                             tool == StepTool.SongTabs -> SongInfo(step.song!!)
+                            // Без инструмента пункты крупно справа, тут — только подсказка.
+                            tool == StepTool.TimerOnly -> Text(
+                                "Выполняйте пункты справа. Нажмите «Начать» — таймер подскажет, когда закончить.",
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
                             else -> ExerciseInfo(step.exercise!!, tool!!, onOpenPiece, onPlay)
                         }
                     }
@@ -263,6 +268,12 @@ fun LessonScreen(
                             TunerPanel(store, Modifier.fillMaxWidth())
                         }
                         tool == StepTool.SongTabs -> SongStep(store, lesson, step.song!!, onOpenUrl, onOpenDoc, onPlay)
+                        tool == StepTool.TimerOnly -> Column(
+                            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            ExerciseInfo(step.exercise!!, tool, onOpenPiece, onPlay)
+                        }
                         else -> Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
                             ExerciseToolCard(store, step, tool!!)
                         }

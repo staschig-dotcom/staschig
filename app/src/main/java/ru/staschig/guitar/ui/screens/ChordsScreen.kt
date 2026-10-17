@@ -168,8 +168,8 @@ fun ChordChangesPanel(
             }
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-            ChordDiagram(a)
-            ChordDiagram(b)
+            ChordDiagram(a, width = 140.dp)
+            ChordDiagram(b, width = 140.dp)
         }
         Text(FINGER_LEGEND, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
