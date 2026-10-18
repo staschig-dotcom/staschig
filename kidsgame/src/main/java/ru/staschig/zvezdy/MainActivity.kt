@@ -5,6 +5,7 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.os.SystemClock
+import android.speech.tts.TextToSpeech
 import android.webkit.JavascriptInterface
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
@@ -14,10 +15,15 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.webkit.WebViewAssetLoader
+import java.util.Locale
 
 class MainActivity : Activity() {
 
     private lateinit var web: WebView
+
+    // Голос: стандартный синтезатор речи Android (без интернета, если на телефоне есть русский голос).
+    private var tts: TextToSpeech? = null
+    @Volatile private var ttsState = "init"
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,7 +58,13 @@ class MainActivity : Activity() {
         } catch (e: Exception) {
             ""
         }
-        web.addJavascriptInterface(NativeClock(version) { text -> runOnUiThread { shareText(text) } }, "UhuNative")
+        tts = TextToSpeech(this) { status ->
+            ttsState = if (status == TextToSpeech.SUCCESS) {
+                val r = tts?.setLanguage(Locale("ru", "RU")) ?: TextToSpeech.LANG_NOT_SUPPORTED
+                if (r == TextToSpeech.LANG_MISSING_DATA || r == TextToSpeech.LANG_NOT_SUPPORTED) "nolang" else "ok"
+            } else "none"
+        }
+        web.addJavascriptInterface(Bridge(version), "UhuNative")
         setContentView(web)
         hideSystemBars()
 
@@ -95,6 +107,7 @@ class MainActivity : Activity() {
 
     override fun onPause() {
         super.onPause()
+        tts?.stop()
         web.evaluateJavascript("window.uhuPause && window.uhuPause()", null)
         web.onPause()
     }
@@ -111,18 +124,37 @@ class MainActivity : Activity() {
     }
 
     override fun onDestroy() {
+        tts?.shutdown()
         web.destroy()
         super.onDestroy()
     }
-}
 
-private class NativeClock(private val versionName: String, private val onShare: (String) -> Unit) {
-    @JavascriptInterface
-    fun uptime(): Long = SystemClock.elapsedRealtime()
+    /** Мост для игры: часы, версия, «Поделиться» и голос. */
+    private inner class Bridge(private val versionName: String) {
+        @JavascriptInterface
+        fun uptime(): Long = SystemClock.elapsedRealtime()
 
-    @JavascriptInterface
-    fun version(): String = versionName
+        @JavascriptInterface
+        fun version(): String = versionName
 
-    @JavascriptInterface
-    fun share(text: String) = onShare(text)
+        @JavascriptInterface
+        fun share(text: String) = runOnUiThread { shareText(text) }
+
+        @JavascriptInterface
+        fun ttsStatus(): String = ttsState
+
+        @JavascriptInterface
+        fun speak(text: String, rate: Double) {
+            val t = tts ?: return
+            if (ttsState != "ok") return
+            t.setSpeechRate(rate.toFloat())
+            t.setPitch(1.1f)
+            t.speak(text, TextToSpeech.QUEUE_FLUSH, null, "uhu")
+        }
+
+        @JavascriptInterface
+        fun stop() {
+            tts?.stop()
+        }
+    }
 }

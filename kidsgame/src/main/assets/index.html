@@ -430,6 +430,7 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
   </symbol>
   <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11 12 3l9 8v10h-6v-6H9v6H3z" fill="currentColor"/></symbol>
   <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 17.5V5l11-2v12.5" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linejoin="round"/><circle cx="6.5" cy="17.5" r="3" fill="currentColor"/><circle cx="17.5" cy="15.5" r="3" fill="currentColor"/></symbol>
+  <symbol id="i-speak" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 8a5 5 0 0 1 0 8M18.5 5.5a8.5 8.5 0 0 1 0 13" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></symbol>
   <symbol id="i-gear" viewBox="0 0 24 24"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Zm9 4.6v-2.2l-2.4-.6a7 7 0 0 0-.7-1.7l1.3-2.1-1.6-1.6-2.1 1.3a7 7 0 0 0-1.7-.7L13.1 3h-2.2l-.6 2.4a7 7 0 0 0-1.7.7L6.5 4.8 4.9 6.4l1.3 2.1a7 7 0 0 0-.7 1.7L3 10.9v2.2l2.4.6c.2.6.4 1.2.7 1.7l-1.3 2.1 1.6 1.6 2.1-1.3c.5.3 1.1.5 1.7.7l.6 2.5h2.2l.6-2.5c.6-.2 1.2-.4 1.7-.7l2.1 1.3 1.6-1.6-1.3-2.1c.3-.5.5-1.1.7-1.7z" fill="currentColor"/></symbol>
   <symbol id="star" viewBox="0 0 100 100"><path d="M50 4 L62 36 L96 38 L69 59 L79 93 L50 73 L21 93 L31 59 L4 38 L38 36 Z" fill="#ffd45c" stroke="#f0a91c" stroke-width="4" stroke-linejoin="round"/></symbol>
   <symbol id="owl-sleep" viewBox="0 0 100 112">
@@ -482,6 +483,7 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
       <div class="bar qbar">
         <button class="icon-btn" data-home aria-label="На карту"><svg><use href="#i-home"/></svg></button>
         <div class="grow dots" id="dots"></div>
+        <button class="icon-btn" id="sayBtn" aria-label="Повторить задание"><svg><use href="#i-speak"/></svg></button>
         <button class="icon-btn music-btn" aria-label="Музыка"><svg><use href="#i-music"/></svg></button>
       </div>
       <div class="prompt" id="prompt"></div><div class="q" id="q"></div>
@@ -606,6 +608,21 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
     </div>
     <div class="pgrid">
     <div class="pcard">
+      <div class="ptitle">Голос Уху</div>
+      <div class="prow"><div class="grow">Озвучивать задания<small id="voiceNote"></small></div><button class="toggle" id="tVoice"></button></div>
+      <div class="seg" id="rateSeg"></div>
+      <div class="prow"><div class="grow">Читать задачки вслух<small>Задачки-истории в Реке чисел. Выключите, если ребёнок должен читать их сам.</small></div><button class="toggle" id="tStories"></button></div>
+      <p class="note">Голос не читает слова и буквы, которые ребёнок учится читать в Лесу букв, — только задание и подсказки.</p>
+      <div><button class="btn2" id="voiceTest">Проверить голос</button></div>
+    </div>
+    <div class="pcard">
+      <div class="ptitle">Перенос прогресса</div>
+      <p class="note">Код прогресса переносит звёзды, уровни, ключи, друзей, наряды, свои уровни и настройки в другую установку игры — например, из домашней версии в версию из RuStore. Рисунки не переносятся.</p>
+      <div class="btnrow" style="justify-content:flex-start"><button class="btn2 main" id="expBtn">Отправить код прогресса</button><button class="btn2" id="impBtn">Вставить код</button></div>
+      <textarea id="progCode" rows="3" hidden spellcheck="false"></textarea>
+      <div class="btnrow" style="justify-content:flex-start" id="impRow" hidden><button class="btn2 main" id="impApply">Загрузить прогресс</button></div>
+    </div>
+    <div class="pcard">
       <div class="ptitle">Время игры</div>
       <div class="seg" id="limitSeg"></div>
       <p class="note" id="limitNote"></p>
@@ -622,13 +639,6 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
       <div class="seg" id="chMinSeg"></div>
       <p class="note" id="chNote"></p>
       <div class="btnrow" style="justify-content:flex-start"><button class="btn2" id="chOpenNow">Открыть сейчас</button></div>
-    </div>
-    <div class="pcard">
-      <div class="ptitle">Перенос прогресса</div>
-      <p class="note">Код прогресса переносит звёзды, уровни, ключи, друзей, наряды, свои уровни и настройки в другую установку игры — например, из домашней версии в версию из RuStore. Рисунки не переносятся.</p>
-      <div class="btnrow" style="justify-content:flex-start"><button class="btn2 main" id="expBtn">Отправить код прогресса</button><button class="btn2" id="impBtn">Вставить код</button></div>
-      <textarea id="progCode" rows="3" hidden spellcheck="false"></textarea>
-      <div class="btnrow" style="justify-content:flex-start" id="impRow" hidden><button class="btn2 main" id="impApply">Загрузить прогресс</button></div>
     </div>
     <div class="pcard" id="levelsCard"></div>
     <div class="pcard">
@@ -866,7 +876,8 @@ const STORE='uhu-v1',GAL='uhu-gallery-v1',TSTORE='uhu-time-v1',CUSTOM='uhu-custo
 const NL=LEVELS.length;
 const DEF={stars:0,levels:{read:1,math:1,logic:1},good:{read:0,math:0,logic:0},music:true,sound:true,
   limit:0,pin:'',skin:'classic',hero:'owl',chBest:Array(NL).fill(0),chDone:Array(NL).fill(false),
-  looks:{},keys:{read:false,math:false,logic:false},chMs:0,chGate:true,chMin:5};
+  looks:{},keys:{read:false,math:false,logic:false},chMs:0,chGate:true,chMin:5,
+  voice:true,voiceRate:1,voiceStories:true};
 const clone=o=>JSON.parse(JSON.stringify(o));
 function load(){
   try{const s=JSON.parse(localStorage.getItem(STORE)||'null');
@@ -1054,6 +1065,17 @@ document.addEventListener('visibilitychange',()=>{document.hidden?audioPause():a
 window.uhuPause=audioPause;window.uhuResume=audioResume;
 
 /* ---------- screens & feedback ---------- */
+/* ---------- voice (Android speech synthesizer through the app bridge) ---------- */
+let lastSay='';
+const EMOJI_RE=/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\uFE0F\u200D]/gu;
+function say(text){
+  if(!text)return;text=String(text).replace(EMOJI_RE,'').replace(/\s+/g,' ').trim();if(!text)return;
+  lastSay=text;if(!P.voice)return;
+  try{if(window.UhuNative&&window.UhuNative.speak){window.UhuNative.speak(text,P.voiceRate||1);return;}}catch(e){}
+  try{if('speechSynthesis' in window){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='ru-RU';u.rate=P.voiceRate||1;u.pitch=1.1;speechSynthesis.speak(u);}}catch(e){}
+}
+function hush(){try{window.UhuNative&&window.UhuNative.stop&&window.UhuNative.stop();}catch(e){}try{window.speechSynthesis&&speechSynthesis.cancel();}catch(e){}}
+function voiceStatus(){try{if(window.UhuNative&&window.UhuNative.ttsStatus)return String(window.UhuNative.ttsStatus());}catch(e){}return 'speechSynthesis' in window?'ok':'none';}
 let cur='start';
 function show(id){$$('.screen').forEach(s=>{s.hidden=s.id!==id;});cur=id;}
 function toast(t){const d=document.createElement('div');d.className='toast';d.textContent=t;$('#app').appendChild(d);setTimeout(()=>d.remove(),1800);}
@@ -1062,8 +1084,8 @@ const ICONS={'Какой буквы не хватает?':'🔡','Сколько
  'Сколько здесь?':'👆','Сколько всего?':'➕','Сколько осталось?':'➖','Реши пример':'✏️','Какое число спряталось?':'🔍',
  'Что дальше?':'🔁','Что лишнее?':'🚫','Чья тень?':'🌑','Запомни!':'👀','Кто спрятался?':'👀'};
 function setPrompt(text){const el=$('#prompt');el.classList.remove('hinted');el.innerHTML=(ICONS[text]?`<span class="ico">${ICONS[text]}</span>`:'')+text;}
-function setHint(text){const el=$('#prompt');el.classList.add('hinted');el.textContent=text;}
-function praise(text){const d=document.createElement('div');d.className='praise';d.textContent=text;$('#app').appendChild(d);setTimeout(()=>d.remove(),1150);}
+function setHint(text,voice){const el=$('#prompt');el.classList.add('hinted');el.textContent=text;say(voice||text);}
+function praise(text){say(text);const d=document.createElement('div');d.className='praise';d.textContent=text;$('#app').appendChild(d);setTimeout(()=>d.remove(),1150);}
 
 /* ---------- option helpers ---------- */
 const emo=e=>`<span class="emo">${e}</span>`;
@@ -1123,7 +1145,7 @@ function genRead0(level,R){
   return {text:'Прочитай загадку',
     show:`<div class="riddle">${r[0]}</div>`,
     opts:shuffle([{h:emo(r[1]),ok:true},...r[2].map(e=>({h:emo(e)}))]),
-    hint:'Прочитайте загадку вместе, по одному слову.'};
+    hint:'Прочитайте загадку вместе, по одному слову.',hintVoice:r[0]};
 }
 
 /* ---------- generators: math ---------- */
@@ -1133,19 +1155,19 @@ function genMath0(level,R){
   const lv=level;const e=pick(COUNT_ITEMS);
   if(lv===1){
     const n=uniqPick(R,()=>2+rnd(9),x=>'c'+x);
-    return {text:'Сколько здесь?',
+    return {text:'Сколько здесь?',voice:'Посчитай, сколько здесь картинок.',
       show:`<div class="grp" style="max-width:300px">${items(n,e)}</div>`,
       opts:numOpts(n,3,10),hint:'Считай пальчиком: дотронься до каждой картинки.'};
   }
   if(lv===2){
     let a,b;[a,b]=uniqPick(R,()=>{const a=1+rnd(5),b=1+rnd(Math.min(5,10-a));return [a,b];},x=>x.join('+'));
-    return {text:'Сколько всего?',
+    return {text:'Сколько всего?',voice:`${a} плюс ${b}. Сколько всего?`,
       show:`<div class="eq"><div class="grp">${items(a,e)}</div><span class="op">+</span><div class="grp">${items(b,e)}</div></div><div class="expr">${a} + ${b} = <span class="gap">?</span></div>`,
       opts:numOpts(a+b,3,10),hint:'Посчитай все картинки вместе.'};
   }
   if(lv===3){
     let a,b;[a,b]=uniqPick(R,()=>{const a=3+rnd(8);return [a,1+rnd(a-1)];},x=>x.join('-'));
-    return {text:'Сколько осталось?',
+    return {text:'Сколько осталось?',voice:`Было ${a}, зачеркнули ${b}. Сколько осталось?`,
       show:`<div class="grp" style="max-width:320px">${items(a,e,b)}</div><div class="expr">${a} − ${b} = <span class="gap">?</span></div>`,
       opts:numOpts(a-b,3,10),hint:'Посчитай только те, что не зачёркнуты.'};
   }
@@ -1154,23 +1176,23 @@ function genMath0(level,R){
     [a,b]=uniqPick(R,()=>plus?(()=>{const a=1+rnd(9);return [a,1+rnd(Math.max(1,10-a))];})():(()=>{const a=2+rnd(9);return [a,1+rnd(a-1)];})(),x=>(plus?'+':'-')+x.join());
     if(plus&&a+b>10)b=10-a;
     const ans=plus?a+b:a-b;
-    return {text:'Реши пример',
+    return {text:'Реши пример',voice:`${a} ${plus?'плюс':'минус'} ${b}. Сколько будет?`,
       show:`<div class="expr">${a} ${plus?'+':'−'} ${b} = <span class="gap">?</span></div>`,
       opts:numOpts(ans,4,10),cols:4,visual:()=>plus?dots(a+b):dots(a,b),hint:'Посмотри на кружочки и посчитай.'};
   }
   const kind=rnd(3);
   if(kind===0){
     const a=uniqPick(R,()=>5+rnd(6),x=>'s'+x),b=1+rnd(Math.min(10,20-a));
-    return {text:'Реши пример',show:`<div class="expr">${a} + ${b} = <span class="gap">?</span></div>`,
+    return {text:'Реши пример',voice:`${a} плюс ${b}. Сколько будет?`,show:`<div class="expr">${a} + ${b} = <span class="gap">?</span></div>`,
       opts:numOpts(a+b,4,20),cols:4,visual:()=>dots(a+b),hint:`Сначала дойди до десяти, потом прибавь остальное.`};
   }
   if(kind===1){
     const a=uniqPick(R,()=>11+rnd(10),x=>'m'+x),b=1+rnd(9);
-    return {text:'Реши пример',show:`<div class="expr">${a} − ${b} = <span class="gap">?</span></div>`,
+    return {text:'Реши пример',voice:`${a} минус ${b}. Сколько будет?`,show:`<div class="expr">${a} − ${b} = <span class="gap">?</span></div>`,
       opts:numOpts(a-b,4,20),cols:4,visual:()=>dots(a,b),hint:'Посмотри на кружочки и посчитай оставшиеся.'};
   }
   const c=uniqPick(R,()=>4+rnd(7),x=>'g'+x),b=1+rnd(c-1),a=c-b;
-  return {text:'Какое число спряталось?',
+  return {text:'Какое число спряталось?',voice:`Какое число спряталось? Что плюс ${b} будет ${c}?`,
     show:`<div class="expr"><span class="gap">?</span> + ${b} = ${c}</div>`,
     opts:numOpts(a,4,10),cols:4,visual:()=>dots(c,b),hint:`Из ${c} убери ${b}.`};
 }
@@ -1266,14 +1288,14 @@ function compareTask(R,mode){
   else if(mode==='nums'){L=rnd(21);Rv=eq?L:rnd(21);if(!eq&&Rv===L)Rv=(L+3)%21;lh=`<div class="expr">${L}</div>`;rh=`<div class="expr">${Rv}</div>`;}
   else{const a=1+rnd(9),b=1+rnd(9);L=a+b;Rv=eq?L:L+pick([-2,-1,1,2]);lh=`<div class="expr">${a}+${b}</div>`;rh=`<div class="expr">${Rv}</div>`;}
   const ans=L>Rv?'>':L<Rv?'<':'=';
-  return {text:'Больше, меньше или равно?',show:`<div class="cmp">${lh}<span class="cmpgap">?</span>${rh}</div>`,
+  return {text:'Больше, меньше или равно?',voice:mode==='pics'?'Где больше картинок? Выбери значок: больше, меньше или равно.':mode==='nums'?`Сравни числа ${L} и ${Rv}. Больше, меньше или равно?`:'Сравни пример и число. Больше, меньше или равно?',show:`<div class="cmp">${lh}<span class="cmpgap">?</span>${rh}</div>`,
     opts:['<','=','>'].map(x=>({h:`<span class="num">${x}</span>`,ok:x===ans})),
     visual:mode==='expr'?()=>dots(L):null,
     hint:'Значок открывается, как клювик, к тому, что больше. Если поровну — ставим «=».'};
 }
 function composeTask(R,max){
   const n=uniqPick(R,()=>3+rnd(max-2),x=>'h'+x+'_'+rnd(99)),a=1+rnd(n-1),left=Math.random()<.5;
-  return {text:'Засели домик',
+  return {text:'Засели домик',voice:`Засели домик. В домике живёт число ${n}. В одной комнате ${a}. Сколько во второй?`,
     show:`<div class="house"><div class="roof">${n}</div><div class="rooms"><span>${left?a:'<b class="q">?</b>'}</span><span>${left?'<b class="q">?</b>':a}</span></div></div>`,
     opts:numOpts(n-a,max>6?4:3,max),visual:()=>dots(n,n-a),
     hint:`В домике живёт число ${n}. В одной комнате ${a}. Сколько нужно во второй, чтобы вместе было ${n}?`};
@@ -1281,6 +1303,14 @@ function composeTask(R,max){
 const STORY_HEROES=[{n:'Уху',g:'Уху',d:'Уху',m:1},{n:'Лисёнок',g:'Лисёнка',d:'Лисёнку',m:1},{n:'Зайка',g:'Зайки',d:'Зайке',m:0},
   {n:'Ёжик',g:'Ёжика',d:'Ёжику',m:1},{n:'Лягушонок',g:'Лягушонка',d:'Лягушонку',m:1},{n:'Котёнок',g:'Котёнка',d:'Котёнку',m:1},{n:'Пингвинёнок',g:'Пингвинёнка',d:'Пингвинёнку',m:1}];
 const STORY_ITEMS=['🍎','🍄','🥕','🌰','⭐','🍓','🐟','🎈'];
+const STORY_WORDS={'🍎':['яблоко','яблока','яблок'],'🍄':['гриб','гриба','грибов'],'🥕':['морковка','морковки','морковок'],'🌰':['орешек','орешка','орешков'],
+  '⭐':['звёздочка','звёздочки','звёздочек'],'🍓':['ягодка','ягодки','ягодок'],'🐟':['рыбка','рыбки','рыбок'],'🎈':['шарик','шарика','шариков'],'🐦':['птичка','птички','птичек']};
+function plural(n,f){const m10=n%10,m100=n%100;return m10===1&&m100!==11?f[0]:m10>=2&&m10<=4&&(m100<10||m100>=20)?f[1]:f[2];}
+/* Turns "3 🍎" into "3 яблока" and a lone "🍎" into the plural genitive, for the voice. */
+function speakStory(text){
+  return text.replace(/(\d+)\s*(\S+?)(?=[\s.,?!]|$)/gu,(m,n,e)=>STORY_WORDS[e]?n+' '+plural(+n,STORY_WORDS[e]):m)
+             .replace(/(\p{Extended_Pictographic})/gu,e=>STORY_WORDS[e]?STORY_WORDS[e][2]:'');
+}
 function storyTask(R,max){
   const [A,B]=sample(STORY_HEROES,2),o=pick(STORY_ITEMS),v=(h,m,f)=>h.m?m:f,kind=rnd(4);let text,ans,vis;
   if(kind<2){const a=1+rnd(max-2),b=1+rnd(max-a);ans=a+b;vis=()=>dots(a+b);
@@ -1290,7 +1320,7 @@ function storyTask(R,max){
     text=`У ${A.g} было ${a} ${o}. ${v(A,'Он','Она')} ${v(A,'отдал','отдала')} ${b} ${o} ${B.d}. Сколько ${o} осталось у ${A.g}?`;}
   else{const a=4+rnd(max-3),b=2+rnd(a-2);ans=a-b;vis=()=>dots(a,b);
     text=`На полянке сидели ${a} 🐦. Потом ${b} 🐦 улетели. Сколько 🐦 осталось?`;}
-  return {text:'Реши задачку',show:`<div class="riddle story">${text}</div>`,opts:numOpts(ans,4,max),visual:vis,
+  return {text:'Реши задачку',voice:'Реши задачку. '+speakStory(text),story:true,show:`<div class="riddle story">${text}</div>`,opts:numOpts(ans,4,max),visual:vis,
     hint:'Прочитайте задачку вместе. Что-то прибавилось или убавилось?'};
 }
 const SUDOKU_SETS=[['🍎','🍌','🍇','🍐'],['🐱','🐶','🐰','🦊'],['⭐','🌙','☀️','☁️'],['🚗','🚀','⛵','🚂']];
@@ -1304,7 +1334,7 @@ function sudokuTask(R,extra){
   const free=[];for(let r=0;r<4;r++)for(let c=0;c<4;c++)if(r!==tr&&c!==tc&&box(r,c)!==box(tr,tc))free.push(r*4+c);
   const blanks=new Set(sample(free,Math.min(extra,free.length)));
   const cells=g.map((row,r)=>row.map((v,c)=>r===tr&&c===tc?'<div class="sc ask">?</div>':blanks.has(r*4+c)?'<div class="sc empty"></div>':`<div class="sc">${set[v]}</div>`).join('')).join('');
-  return {text:'Чего не хватает в клетке?',show:`<div class="sudoku">${cells}</div>`,
+  return {text:'Чего не хватает в клетке?',voice:'Судоку. В каждой строке и каждом столбике все картинки разные. Чего не хватает в клетке со знаком вопроса?',show:`<div class="sudoku">${cells}</div>`,
     opts:shuffle([0,1,2,3]).map(v=>({h:emo(set[v]),ok:v===g[tr][tc]})),
     hint:'В каждой строке, в каждом столбике и в каждом квадратике 2×2 все картинки разные.'};
 }
@@ -1313,7 +1343,7 @@ function sequenceTask(R,first){
   const sq=uniqPick(R,()=>pick(SEQS),x=>'q'+x.join(''));
   const cell=e=>`<div class="cell">${e}</div>`,arrow='<span class="arrow">→</span>';
   if(!first){const others=sample([...new Set(SEQS.filter(x=>x!==sq).flat())].filter(e=>!sq.includes(e)),2);
-    return {text:'Что будет потом?',show:`<div class="row seq">${sq.slice(0,2).map(cell).join(arrow)}${arrow}<div class="cell ask">?</div></div>`,
+    return {text:'Что будет потом?',voice:'Что будет потом?',show:`<div class="row seq">${sq.slice(0,2).map(cell).join(arrow)}${arrow}<div class="cell ask">?</div></div>`,
       opts:shuffle([{h:emo(sq[2]),ok:true},...others.map(e=>({h:emo(e)}))]),hint:'Подумай, что бывает сначала, а что потом.'};}
   return {text:'Что было сначала?',show:`<div class="row seq">${shuffle(sq).map(cell).join('')}</div>`,
     opts:shuffle(sq.map((e,i)=>({h:emo(e),ok:i===0}))),hint:'Расставь картинки по порядку: что было раньше всего?'};
@@ -1695,11 +1725,11 @@ function tapStage(st,e){
   ac();const t=performance.now()/1000,a=st.a,cv=$('#'+st.id),r=cv.getBoundingClientRect();
   const rel=(e.clientY-r.top)/r.height;
   if(a.e==='dizzy'&&t<a.until)return;
-  const say=txt=>{if(st.bubble){const b=$(st.bubble);b.textContent=txt;clearTimeout(bubbleTimer);bubbleTimer=setTimeout(()=>{if(cur==='map')b.textContent=chapter()[1];},3500);}};
+  const sayTired=txt=>{say(txt);if(st.bubble){const b=$(st.bubble);b.textContent=txt;clearTimeout(bubbleTimer);bubbleTimer=setTimeout(()=>{if(cur==='map')b.textContent=chapter()[1];},3500);}};
   if(st.scr!=='reward'){
-    if(t<TAPS.tiredUntil){say(pick(TIRED_TXT));return;}
+    if(t<TAPS.tiredUntil){sayTired(pick(TIRED_TXT));return;}
     TAPS.log=TAPS.log.filter(x=>t-x<120);TAPS.log.push(t);
-    if(TAPS.log.length>12){TAPS.log=[];TAPS.tiredUntil=t+60;a.base='sleepy';a.e='sleepy';a.anim='';a.until=0;a.lastZ=0;sfx.sad();say(pick(TIRED_TXT));return;}
+    if(TAPS.log.length>12){TAPS.log=[];TAPS.tiredUntil=t+60;a.base='sleepy';a.e='sleepy';a.anim='';a.until=0;a.lastZ=0;sfx.sad();sayTired(pick(TIRED_TXT));return;}
   }
   a.taps=a.taps.filter(x=>t-x<2.5);a.taps.push(t);
   let rx;
@@ -1709,7 +1739,8 @@ function tapStage(st,e){
   else if(rel>.62)rx=TAP_BELLY;
   else{let i;do{i=rnd(TAP_HEAD.length);}while(i===a.lastIdx);a.lastIdx=i;rx=TAP_HEAD[i];}
   react(a,rx.e,rx.anim,rx.fx,rx.dur,t);sfx[rx.snd]&&sfx[rx.snd]();
-  if(st.bubble){const b=$(st.bubble);b.textContent=pick(rx.txt);clearTimeout(bubbleTimer);bubbleTimer=setTimeout(()=>{if(cur==='map')b.textContent=chapter()[1];},2800);}
+  const line=pick(rx.txt);say(line);
+  if(st.bubble){const b=$(st.bubble);b.textContent=line;clearTimeout(bubbleTimer);bubbleTimer=setTimeout(()=>{if(cur==='map')b.textContent=chapter()[1];},2800);}
 }
 STAGES.forEach(st=>$('#'+st.id).addEventListener('pointerdown',e=>{e.stopPropagation();tapStage(st,e);}));
 let rewardMood='';
@@ -1958,16 +1989,17 @@ function arriveFork(){
     R.syl={t,pos:0,tiles};renderSylFork();return;
   }
   const t=R.task;setPrompt(t.text);$('#q').innerHTML=t.show;
+  say(t.story&&!P.voiceStories?t.text:(t.voice||t.text));
   if(t.reveal){
     let left=Math.ceil(t.reveal.ms/1000);setPrompt('Запомни!');$('#prompt').insertAdjacentText('beforeend',' '+left);
     const tick=()=>{left--;if(left>0){setPrompt('Запомни!');$('#prompt').insertAdjacentText('beforeend',' '+left);later(tick,1000);}};
     later(tick,1000);
-    later(()=>{$('#q').innerHTML=t.reveal.show;setPrompt(t.reveal.text);showPortals(t.opts);},t.reveal.ms);
+    later(()=>{$('#q').innerHTML=t.reveal.show;setPrompt(t.reveal.text);say(t.reveal.text);showPortals(t.opts);},t.reveal.ms);
   }else showPortals(t.opts);
 }
 function renderSylFork(){
   const s=R.syl,t=s.t;
-  setPrompt('Собери слово');
+  setPrompt('Собери слово');if(s.pos===0)say('Собери слово из слогов. Нажимай на слоги по порядку.');
   $('#q').innerHTML=`<div class="pic">${t.e}</div><div class="slots">${t.s.map((x,i)=>i<s.pos?`<span class="slot full">${x}</span>`:'<span class="slot"></span>').join('')}</div>`;
   showPortals(shuffle(s.tiles).map(x=>({h:wd(x),ok:x===t.s[s.pos],syl:x})));
 }
@@ -1997,13 +2029,13 @@ function flyDone(){
       /* attempts are over: the right portal lights up and Uhu goes through it without a point */
       R.revealed=true;$('#portals').classList.add('cool');
       const c=$('#portals [data-ok]');if(c)c.classList.add('hint');
-      setHint('Попытки кончились. Правильный ответ светится.');
+      setHint('Попытки кончились. Правильный ответ светится.','Правильный ответ светится. Запомни его!');
       later(()=>{const c2=$('#portals [data-ok]');if(c2&&R)choosePortal(c2,{ok:true,syl:R.syl?R.syl.t.s[R.syl.pos]:null},true);},1600);
       return;
     }
     toast(pick(TRY));
     if(R.task&&R.task.visual&&!R.syl&&!$('#q .hintdots'))$('#q').insertAdjacentHTML('beforeend',R.task.visual());
-    setHint((R.syl?'Назовите картинку вслух по слогам: какой слог следующий?':(R.task.hint||'Посмотри внимательно.')));
+    setHint((R.syl?'Назовите картинку вслух по слогам: какой слог следующий?':(R.task.hint||'Посмотри внимательно.')),R.syl?'Какой слог следующий? Скажи слово по слогам.':R.task.hintVoice);
     $('#prompt').insertAdjacentHTML('beforeend',triesLeftHtml());
     R.coolUntil=Date.now()+1500;const box=$('#portals');box.classList.add('cool');later(()=>box.classList.remove('cool'),1500);
     return;
@@ -2035,6 +2067,7 @@ function flyDone(){
     },260);
   },wordDone?700:350);
 }
+$('#sayBtn').addEventListener('click',()=>{ac();if(R&&R.task&&R.phase==='fork'){const t=R.task;say(R.syl?'Собери слово из слогов.':t.story&&!P.voiceStories?t.text:(t.voice||t.text));}else say(lastSay||'Тап — прыжок. Беги к порталу!');});
 $('#runStage').addEventListener('pointerdown',e=>{if(!R||R.phase!=='run'||e.target.closest('button'))return;ac();R.input.hold=true;R.input.buffer=.12;});
 ['pointerup','pointercancel','pointerleave'].forEach(t=>$('#runStage').addEventListener(t,()=>{if(R)R.input.hold=false;}));
 function finishRound(){
@@ -2049,7 +2082,7 @@ function finishRound(){
   $('#rewStar').classList.add('dim');$('#rewTitle').textContent='Почти получилось!';
   $('#rewText').textContent=`${ptsTxt} Для звезды нужно ${STAR_POINTS}. Отвечай с первой попытки — так очков больше.`;
   $('#rewAgain').hidden=false;$('#rewAgain').dataset.subj=s;
-  show('reward');sfx.no();setTrack('lullaby');setRewardMood('lose');
+  show('reward');sfx.no();setTrack('lullaby');setRewardMood('lose');say(`Почти получилось! ${String(pts).replace('.',',')} из 5. Для звезды нужно ${STAR_POINTS}. Попробуй ещё раз!`);
 }
 function isUnlocked(item){return item.ch!=null?P.chDone[item.ch]:P.stars>=item.need;}
 function unlockedSkins(){return SKINS.filter(isUnlocked).map(s=>s.id);}
@@ -2085,7 +2118,7 @@ function giveStar(extra,subj){
   if(extra)text=extra+' '+text;
   $('#rewStar').classList.remove('dim');$('#rewAgain').hidden=true;
   $('#rewTitle').textContent=title;$('#rewText').textContent=text;
-  show('reward');sfx.star();setTrack('lullaby');setRewardMood('win');
+  show('reward');sfx.star();setTrack('lullaby');setRewardMood('win');say(title+' '+(extra?extra+' ':'')+(keyTxt||''));
 }
 
 /* ---------- challenge (Geometry Dash-like, own levels) ---------- */
@@ -2288,7 +2321,7 @@ function openGate(){
   $('#gateKeys').innerHTML=KEY_SUBJ.map(k=>`<button class="place keycard${P.keys[k]?' got':''}" data-key="${k}" style="--g:${{read:'#4dffa8',math:'#29e3ff',logic:'#c78bff'}[k]}">
     <span class="glyph">${P.keys[k]?'🔑':'🔒'}</span><b>${SECTION_NAMES[k]}</b><small>${P.keys[k]?'ключ есть':'нужна звезда'}</small></button>`).join('');
   $('#gateText').textContent=`Испытание открывается ключами. Получи звезду в Лесу букв, на Реке чисел и в Пещере загадок — и Испытание откроется на ${P.chMin} минут.`;
-  show('gate');setTrack('lullaby');
+  show('gate');setTrack('lullaby');say($('#gateText').textContent);
 }
 $('#gateKeys').addEventListener('click',e=>{const b=e.target.closest('[data-key]');if(b){ac();startRound(b.dataset.key);}});
 function saveDraft(){
@@ -2413,7 +2446,7 @@ function lockNow(){
   TS.lockUntil=Date.now()+COOLDOWN;TS.lockUp=uptime()||0;saveTS();
   music.track=null;showLock();
 }
-function showLock(){renderLock();show('lock');}
+function showLock(){const was=cur==='lock';renderLock();show('lock');if(!was)say('Уху спит. Время игры закончилось. Отдохни и возвращайся позже!');}
 function renderLock(){
   const left=lockLeft();
   if(!left){goMap();return;}
@@ -2463,7 +2496,7 @@ setInterval(timeTick,1000);
 
 /* ---------- map ---------- */
 function goMap(){
-  clearTimers();R=null;CH=null;B=null;
+  hush();clearTimers();R=null;CH=null;B=null;
   if(lockLeft()>0){showLock();return;}
   if(P.limit>0&&TS.used>=P.limit*60000&&!(TS.last&&Date.now()-TS.last>COOLDOWN)){lockNow();return;}
   show('map');setTrack('lullaby');requestAnimationFrame(updateMap);
@@ -2485,7 +2518,7 @@ function updateMap(){
   const sky=Math.floor(P.stars/PER_SKY),n=P.stars%PER_SKY;
   $('#skyTitle').textContent='Небо № '+(sky+1);
   $('#skyCount').textContent=`★ ${n} из ${PER_SKY}`;
-  $('#bubble').textContent=chapter()[1];
+  const ch_=chapter();$('#bubble').textContent=ch_[1];if(P.saidChapter!==ch_[0]){P.saidChapter=ch_[0];save();setTimeout(()=>{if(cur==='map')say(ch_[1]);},400);}
   $$('[data-lvl]').forEach(el=>{const l=P.levels[el.dataset.lvl];el.innerHTML=Array.from({length:MAX_LEVEL},(_,i)=>`<i class="${i<l?'on':''}"></i>`).join('');});
   $('#wardNote').textContent=HEROES.find(h=>h.id===P.hero).name;
   $('#chalNote').textContent=!P.chGate?'5 режимов и строитель':P.chMs>0?'открыто ещё '+fmtMs(P.chMs):'ключи: '+KEY_SUBJ.filter(k=>P.keys[k]).length+' из 3';
@@ -2533,7 +2566,7 @@ function setupCanvas(){
   pg.setTransform(dpr,0,0,dpr,0,0);pg.fillStyle='#fff';pg.fillRect(0,0,w,h);pg.lineCap='round';pg.lineJoin='round';
 }
 function openDraw(){
-  drawTopic=pick(DRAW_TOPICS);$('#drawPrompt').textContent=drawTopic;
+  drawTopic=pick(DRAW_TOPICS);$('#drawPrompt').textContent=drawTopic;say(drawTopic);
   show('draw');ink=0;undoStack=[];
   requestAnimationFrame(()=>{setupCanvas();});
 }
@@ -2629,6 +2662,11 @@ function renderParents(){
   $('#chOpenNow').textContent=`Открыть сейчас на ${P.chMin} мин`;$('#chOpenNow').hidden=!P.chGate;
   let ver='';try{ver=window.UhuNative&&window.UhuNative.version?String(window.UhuNative.version()):'';}catch(e){}
   $('#verNote').textContent=ver?'Версия игры: '+ver:'';
+  $('#tVoice').textContent=P.voice?'Вкл':'Выкл';$('#tVoice').classList.toggle('on',P.voice);
+  $('#tStories').textContent=P.voiceStories?'Вкл':'Выкл';$('#tStories').classList.toggle('on',P.voiceStories);
+  $('#rateSeg').innerHTML=[[.8,'Медленно'],[1,'Обычно'],[1.2,'Быстрее']].map(([r,n])=>`<button data-rate="${r}" class="${(P.voiceRate||1)===r?'on':''}">${n}</button>`).join('');
+  const vs=voiceStatus();
+  $('#voiceNote').textContent=vs==='ok'?'Голос телефона работает.':vs==='nolang'?'На телефоне нет русского голоса. Установите его: Настройки → Специальные возможности → Синтез речи → «Синтезатор речи Google» → Установить голосовые данные → Русский.':vs==='init'?'Голос ещё загружается…':'На телефоне нет синтезатора речи. Установите «Синтезатор речи Google» из магазина приложений.';
   const v=$('#tMusic'),so=$('#tSound');
   v.textContent=P.music?'Вкл':'Выкл';v.classList.toggle('on',P.music);
   so.textContent=P.sound?'Вкл':'Выкл';so.classList.toggle('on',P.sound);
@@ -2673,6 +2711,10 @@ $('#impApply').addEventListener('click',()=>{
   try{localStorage.setItem(STORE,JSON.stringify(data.P));localStorage.setItem(CUSTOM,JSON.stringify(Array.isArray(data.customs)?data.customs:[]));}catch(e){toast('Не удалось сохранить');return;}
   toast('Прогресс загружен');setTimeout(()=>location.reload(),600);
 });
+$('#tVoice').addEventListener('click',()=>{P.voice=!P.voice;save();renderParents();if(P.voice)say('Голос включён.');else hush();});
+$('#tStories').addEventListener('click',()=>{P.voiceStories=!P.voiceStories;save();renderParents();});
+$('#rateSeg').addEventListener('click',e=>{const b=e.target.closest('[data-rate]');if(!b)return;P.voiceRate=+b.dataset.rate;save();renderParents();say('Вот так я буду говорить.');});
+$('#voiceTest').addEventListener('click',()=>{ac();const was=P.voice;P.voice=true;say('Привет! Я совёнок Уху. Давай собирать звёзды!');P.voice=was;renderParents();});
 $('#tMusic').addEventListener('click',()=>{setMusic(!P.music);save();renderParents();});
 $('#tSound').addEventListener('click',()=>{P.sound=!P.sound;save();renderParents();sfx.tick();});
 let resetArmed=0;
