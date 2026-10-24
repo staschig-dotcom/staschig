@@ -30,6 +30,25 @@ class PitchDetectorTest {
     }
 
     @Test
+    fun detectsVeryQuietString() {
+        val detector = PitchDetector(rate, size, threshold = 0.2f)
+        Tunings.byId("standard").midi.forEach { midi ->
+            val expected = Notes.frequency(midi)
+            val quiet = string(expected).map { it * 0.004f }.toFloatArray() // rms ≈ 0.001
+            val f = detector.detect(quiet, minRms = 0.0003f)
+            assertEquals("струна ${Notes.nameWithOctave(midi)}", 0f, Notes.cents(f!!, midi), 3f)
+        }
+    }
+
+    @Test
+    fun lowThresholdDoesNotInventPitchInNoise() {
+        val detector = PitchDetector(rate, size, threshold = 0.2f)
+        val rnd = java.util.Random(1)
+        val noise = FloatArray(size) { (rnd.nextGaussian() * 0.002).toFloat() }
+        assertNull(detector.detect(noise, minRms = 0.0003f))
+    }
+
+    @Test
     fun detectsLowDropC() {
         val detector = PitchDetector(rate, size)
         val c2 = Notes.frequency(36)

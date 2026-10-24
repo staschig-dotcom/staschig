@@ -94,10 +94,11 @@ fun TunerPanel(store: AppStore, modifier: Modifier = Modifier) {
     var auto by remember { mutableStateOf(true) }
     var manualString by remember { mutableIntStateOf(0) }
     var menuOpen by remember { mutableStateOf(false) }
+    var source by androidx.compose.runtime.saveable.rememberSaveable { mutableIntStateOf(0) }
 
     val lifecycle = LocalLifecycleOwner.current.lifecycle
-    DisposableEffect(granted, lifecycle) {
-        val engine = TunerEngine { f, l -> freq = f; level = l }
+    DisposableEffect(granted, lifecycle, source) {
+        val engine = TunerEngine(source) { f, l -> freq = f; level = l }
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_RESUME -> if (granted) engine.start()
@@ -175,13 +176,18 @@ fun TunerPanel(store: AppStore, modifier: Modifier = Modifier) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("Микрофон  ", style = MaterialTheme.typography.bodySmall)
             androidx.compose.material3.LinearProgressIndicator(
-                progress = { ((db + 60f) / 50f).coerceIn(0f, 1f) },
+                progress = { ((db + 80f) / 60f).coerceIn(0f, 1f) },
                 modifier = Modifier.width(160.dp),
             )
         }
-        if (f == null && granted && db < -50f) {
+        if (granted) {
+            OutlinedButton(onClick = { source = (source + 1) % TunerEngine.SOURCES.size }) {
+                Text("Вход: ${TunerEngine.SOURCE_NAMES[source]} (нажмите, если не слышит)")
+            }
+        }
+        if (f == null && granted && db < -60f) {
             Text(
-                "Очень тихо: дёрните струну сильнее или положите телефон ближе к резонаторному отверстию гитары.",
+                "Очень тихо: дёрните струну сильнее, положите телефон ближе к гитаре или смените вход кнопкой выше.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
