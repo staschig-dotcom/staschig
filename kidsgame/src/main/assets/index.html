@@ -342,6 +342,8 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
 .chcard{max-width:420px}
 #chsel .levels{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));align-content:start}
 #chsel #modeHelp{margin:0}
+.diffrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:800}
+.diffrow .seg button{padding:6px 12px;font-size:14px}
 .wscroll .skins,.skins{grid-template-columns:repeat(auto-fill,minmax(104px,1fr))}
 .skin canvas{width:66px;height:66px}
 .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;overflow-y:auto;min-height:0;align-content:start;padding-bottom:10px}
@@ -499,6 +501,7 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
       <button class="icon-btn music-btn" aria-label="Музыка"><svg><use href="#i-music"/></svg></button>
     </div>
     <div class="seg modes" id="modeTabs"></div>
+    <div class="diffrow"><span>Сложность:</span><div class="seg" id="diffSeg"></div></div>
     <p class="note" id="modeHelp" style="font-size:15px"></p>
     <div class="levels" id="levels"></div>
   </section>
@@ -836,7 +839,7 @@ const TH_VIOLET={bg1:'#2b1257',bg2:'#0c0420',line:'#c78bff',block:'rgba(199,139,
 const LEVELS=[
  {name:'Звёздная тропинка',mode:'cube',diff:1,need:0,speed:7,len:120,gap:[5,8],pool:['s1','s1','s2','b1','b1','step'],th:TH_BLUE},
  {name:'Неоновый лес',mode:'cube',diff:2,need:5,speed:8,len:170,gap:[4,7],pool:['s1','s2','b1','step','plat','platSpike','pad','s2'],th:TH_PINK},
- {name:'Вихрь Ветра',mode:'cube',diff:3,need:12,speed:9,len:220,gap:[3,6],pool:['s2','s3pad','step','plat','platSpike','orbGap','stairs','pad','s1'],th:TH_ORANGE},
+ {name:'Вихрь Ветра',mode:'cube',diff:3,need:12,speed:8.5,len:190,gap:[4,6],pool:['s2','s3pad','step','plat','platSpike','orbGap','stairs','pad','s1'],th:TH_ORANGE},
  {name:'Взлёт',mode:'ship',diff:1,need:6,speed:6.5,len:130,gap:[6,9],ceil:7,pool:['gLow','gHigh'],th:TH_PINK},
  {name:'Тоннель',mode:'ship',diff:2,need:10,speed:7.5,len:170,gap:[5,7],ceil:7,pool:['gLow','gHigh','gMid','floorSp'],th:TH_VIOLET},
  {name:'Потолок',mode:'ball',diff:1,need:8,speed:6.5,len:130,gap:[6,9],ceil:5,pool:['fSp','cSp'],th:TH_ORANGE},
@@ -876,7 +879,7 @@ const STORE='uhu-v1',GAL='uhu-gallery-v1',TSTORE='uhu-time-v1',CUSTOM='uhu-custo
 const NL=LEVELS.length;
 const DEF={stars:0,levels:{read:1,math:1,logic:1},good:{read:0,math:0,logic:0},music:true,sound:true,
   limit:0,pin:'',skin:'classic',hero:'owl',chBest:Array(NL).fill(0),chDone:Array(NL).fill(false),
-  looks:{},keys:{read:false,math:false,logic:false},chMs:0,chGate:true,chMin:5,
+  looks:{},keys:{read:false,math:false,logic:false},chMs:0,chGate:true,chMin:5,chDiff:1,
   voice:true,voiceRate:1,voiceStories:true};
 const clone=o=>JSON.parse(JSON.stringify(o));
 function load(){
@@ -1422,11 +1425,18 @@ const MCHUNKS={
   cube:{s1:CHUNKS.s1,b1:CHUNKS.b1,s2:CHUNKS.s2}
 };
 function seeded(seed){let s=seed*9301+49297;return()=>{s=(s*9301+49297)%233280;return s/233280;};}
-function buildLevel(n){
-  const L=LEVELS[n],r=seeded(n*7+11),objs=[],safe=[];
+/* Challenge difficulty: 0 easy, 1 normal, 2 hard. Easy is slower, with wider gaps, a shorter run and no tricky chunks. */
+const CH_DIFF=[{name:'Легко',speed:.85,gap:2,len:.75,skip:['s3pad','orbGap','platSpike','fcSp','spikes']},
+  {name:'Обычно',speed:1,gap:0,len:1,skip:[]},{name:'Сложно',speed:1.1,gap:-1,len:1,skip:[]}];
+function buildLevel(n,d){
+  const D=CH_DIFF[d==null?(P.chDiff==null?1:P.chDiff):d]||CH_DIFF[1];
+  const B=LEVELS[n],pool0=B.pool&&B.pool.filter(c=>!D.skip.includes(c));
+  /* the ball needs its speed to clear three spikes in a row, so it is never slowed down */
+  const L=Object.assign({},B,{speed:B.speed*(B.mode==='ball'?Math.max(1,D.speed):D.speed),len:B.len&&Math.round(B.len*D.len),pool:pool0&&pool0.length?pool0:B.pool,
+    gap:B.gap&&[Math.max(3,B.gap[0]+D.gap),Math.max(4,B.gap[1]+D.gap)]});
+  const r=seeded(n*7+11),objs=[],safe=[];
   let x=12,last='';
   if(L.mode==='cube'){
-    /* unchanged since version 1, so the first three levels stay the same */
     while(x<L.len){
       let c;do{c=L.pool[Math.floor(r()*L.pool.length)];}while(c===last&&L.pool.length>2&&(c!=='s1'));
       last=c;safe.push(x-2);x=CHUNKS[c](objs,x);
@@ -1436,8 +1446,8 @@ function buildLevel(n){
     const C=L.ceil,sections=L.mix||[L.mode];
     sections.forEach((m,si)=>{
       if(si>0){objs.push(pt_(x,m));x+=5;}
-      const pool=L.mix?Object.keys(MCHUNKS[m]):L.pool,gap=L.mix?[6,8]:L.gap;
-      const until=L.mix?x+30:L.len;
+      const pool=L.mix?Object.keys(MCHUNKS[m]).filter(c=>!D.skip.includes(c)):L.pool,gap=L.mix?[6+Math.max(0,D.gap),8+Math.max(0,D.gap)]:L.gap;
+      const until=L.mix?x+Math.round(30*D.len):L.len;
       while(x<until){
         const c=pool[Math.floor(r()*pool.length)];
         safe.push(x-2);x=MCHUNKS[m][c](objs,x,C,r);
@@ -2133,6 +2143,8 @@ function openChSel(tab){
   if(tab)chTab=tab;
   $('#modeTabs').innerHTML=TABS.map(([id,n])=>`<button data-tab="${id}" class="${chTab===id?'on':''}">${n}</button>`).join('');
   $('#modeHelp').textContent=MODE_HELP[chTab];
+  $('#diffSeg').innerHTML=CH_DIFF.map((d,i)=>`<button data-diff="${i}" class="${(P.chDiff==null?1:P.chDiff)===i?'on':''}">${d.name}</button>`).join('');
+  $('.diffrow').hidden=chTab==='mine';
   if(chTab==='mine')renderMine();
   else $('#levels').innerHTML=LEVELS.map((L,i)=>{
     if(L.mode!==chTab)return '';
@@ -2146,6 +2158,7 @@ function openChSel(tab){
   const tEl=$('#chTimer');tEl.hidden=!P.chGate;tEl.textContent='⏱ '+fmtMs(P.chMs);
 }
 $('#modeTabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b)openChSel(b.dataset.tab);});
+$('#diffSeg').addEventListener('click',e=>{const b=e.target.closest('[data-diff]');if(!b)return;ac();P.chDiff=+b.dataset.diff;save();openChSel();});
 $('#levels').addEventListener('click',e=>{
   const b=e.target.closest('[data-ch],[data-chp],[data-cplay],[data-cedit],[data-cdel],#newLevel');if(!b)return;ac();
   if(b.id==='newLevel'){openBuilder(null);return;}
@@ -2173,7 +2186,7 @@ function levelFromCustom(cl){
 }
 function startChallenge(n,practice){
   parts=[];trail=[];
-  CH={n,practice,lv:buildLevel(n),th:LEVELS[n].th,attempt:0,cp:null,cps:[],state:'play',input:{hold:false,buffer:0},lastTs:0,lastCall:false};
+  CH={n,practice,diff:P.chDiff==null?1:P.chDiff,lv:buildLevel(n),th:LEVELS[n].th,attempt:0,cp:null,cps:[],state:'play',input:{hold:false,buffer:0},lastTs:0,lastCall:false};
   $('#chOver').hidden=true;show('chal');chRestart(true);requestAnimationFrame(chLoop);
 }
 function startCustom(i,fromBuilder){
@@ -2192,7 +2205,7 @@ function chRestart(full){
   CH.state='play';CH.input.hold=false;CH.input.buffer=0;CH.attempt++;
   CH.camX=CH.c.x-2.2;
   if(!cp)setTrack(CH.n>=0?LEVEL_MUSIC[CH.n]:(lv.music||'challenge'),true);
-  $('#chAttempt').textContent=CH.practice?'Тренировка':'Попытка '+CH.attempt;
+  $('#chAttempt').textContent=(CH.practice?'Тренировка':'Попытка '+CH.attempt)+(CH.n>=0&&CH.diff!==1?' · '+CH_DIFF[CH.diff].name:'');
 }
 function chLoop(ts){
   if(cur!=='chal'||!CH)return;
@@ -2257,6 +2270,7 @@ $('#chToList').addEventListener('click',chExit);
 $('#chHome').addEventListener('click',chExit);
 
 /* Level check used by tests: search for an input sequence that finishes the level. */
+window.__uhuBuild=buildLevel;
 window.__uhuSolve=function(n,given){
   const lv=given||buildLevel(n),seen=new Set(),dyn=lv.objs.filter(o=>o.k==='orb'||o.k==='pad'||o.k==='portal');
   const W={objs:lv.objs,speedNow:lv.speed,lethal:true,ceil:lv.ceil};
