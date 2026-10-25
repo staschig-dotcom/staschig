@@ -1397,9 +1397,11 @@ const CHUNKS={
   plat:(o,x)=>{o.push(bl_(x,0,5,1),sp_(x+7));return x+8;},
   platSpike:(o,x)=>{o.push(bl_(x,0,7,1),sp_(x+3,1));return x+7;},
   pad:(o,x)=>{o.push(pd_(x),bl_(x+3,0,1,3));return x+4;},
-  s3pad:(o,x)=>{o.push(pd_(x),sp_(x+2),sp_(x+3),sp_(x+4));return x+5;},
+  /* the pad throws Uhu over the three spikes by itself at any speed from 7 up */
+  s3pad:(o,x)=>{o.push(pd_(x),sp_(x+1),sp_(x+2),sp_(x+3));return x+4;},
   orbGap:(o,x)=>{for(let i=0;i<6;i++)o.push(sp_(x+i));o.push(orb_(x+2.6,2.2));return x+6;},
-  stairs:(o,x)=>{o.push(bl_(x,0,2,1),bl_(x+2,0,2,2),bl_(x+4,0,3,3));return x+7;}
+  /* steps 3 wide: on 2-wide steps the tap window was under 30 ms at speed 8.5 */
+  stairs:(o,x)=>{o.push(bl_(x,0,3,1),bl_(x+3,0,3,2),bl_(x+6,0,3,3));return x+9;}
 };
 /* chunks for the other modes: (objs, x, ceiling, rng) -> next x */
 const MCHUNKS={
@@ -1426,13 +1428,13 @@ const MCHUNKS={
 };
 function seeded(seed){let s=seed*9301+49297;return()=>{s=(s*9301+49297)%233280;return s/233280;};}
 /* Challenge difficulty: 0 easy, 1 normal, 2 hard. Easy is slower, with wider gaps, a shorter run and no tricky chunks. */
-const CH_DIFF=[{name:'Легко',speed:.85,gap:2,len:.75,skip:['s3pad','orbGap','platSpike','fcSp','spikes']},
+/* The cube and the ball are not slowed down on Easy: a slower cube jumps shorter, which makes spikes harder, not easier. */
+const CH_DIFF=[{name:'Легко',speed:.85,gap:2,len:.75,skip:['s2','orbGap','platSpike','fcSp','spikes']},
   {name:'Обычно',speed:1,gap:0,len:1,skip:[]},{name:'Сложно',speed:1.1,gap:-1,len:1,skip:[]}];
 function buildLevel(n,d){
   const D=CH_DIFF[d==null?(P.chDiff==null?1:P.chDiff):d]||CH_DIFF[1];
   const B=LEVELS[n],pool0=B.pool&&B.pool.filter(c=>!D.skip.includes(c));
-  /* the ball needs its speed to clear three spikes in a row, so it is never slowed down */
-  const L=Object.assign({},B,{speed:B.speed*(B.mode==='ball'?Math.max(1,D.speed):D.speed),len:B.len&&Math.round(B.len*D.len),pool:pool0&&pool0.length?pool0:B.pool,
+  const L=Object.assign({},B,{speed:B.speed*(B.mode==='ball'||B.mode==='cube'?Math.max(1,D.speed):D.speed),len:B.len&&Math.round(B.len*D.len),pool:pool0&&pool0.length?pool0:B.pool,
     gap:B.gap&&[Math.max(3,B.gap[0]+D.gap),Math.max(4,B.gap[1]+D.gap)]});
   const r=seeded(n*7+11),objs=[],safe=[];
   let x=12,last='';
@@ -1456,7 +1458,7 @@ function buildLevel(n,d){
     });
   }
   objs.sort((a,b)=>a.x-b.x);
-  return {objs,safe,len:x+4,speed:L.speed,mode:L.mode==='mix'?'cube':L.mode,ceil:L.ceil==null?null:L.ceil};
+  return {objs,safe,len:x+4,speed:L.speed,mode:L.mode==='mix'?'cube':L.mode,ceil:L.ceil==null?null:L.ceil,softPad:true};
 }
 function newCube(x,mode){return {x:x||0,y:0,vy:0,rot:0,ground:true,dead:false,mode:mode||'cube',gd:1};}
 /* One fixed physics step. W={objs,speedNow,lethal,ceil,on*}; input={hold,buffer}. */
@@ -1490,7 +1492,7 @@ function stepCube(W,c,dt,input){
     }else if(o.k==='orb'){
       if(m==='cube'&&!o.used&&input.buffer>0&&Math.hypot(c.x+.5-o.x,c.y+.5-o.y)<1.05){o.used=true;c.vy=PHYS.v;input.buffer=0;ground=false;W.onOrb&&W.onOrb(o);}
     }else if(o.k==='pad'){
-      if(m==='cube'&&!o.used&&c.x+.9>o.x&&c.x+.1<o.x+1&&c.y<=o.y+.3){o.used=true;c.vy=PHYS.v*PHYS.pad;ground=false;W.onPad&&W.onPad(o);}
+      if(m==='cube'&&!o.used&&c.x+.9>o.x&&c.x+.1<o.x+1&&c.y<=o.y+(W.softPad?2.2:.3)){o.used=true;c.vy=PHYS.v*PHYS.pad;ground=false;W.onPad&&W.onPad(o);}
     }else if(o.k==='portal'){
       if(!o.used&&c.x+.5>=o.x){o.used=true;if(c.mode!==o.mode){c.mode=o.mode;c.gd=1;c.vy=0;c.rot=0;W.onPortal&&W.onPortal(o);}}
     }else if(o.k==='spark'){
@@ -2197,7 +2199,7 @@ function startCustom(i,fromBuilder){
 }
 function chRestart(full){
   const lv=CH.lv;
-  CH.W={objs:lv.objs.map(o=>Object.assign({},o)),speedNow:lv.speed,lethal:true,ceil:lv.ceil,
+  CH.W={objs:lv.objs.map(o=>Object.assign({},o)),speedNow:lv.speed,lethal:true,ceil:lv.ceil,softPad:CH.n>=0,
     onJump(){},onOrb:()=>sfx.orb(),onPad:()=>sfx.pad(),onPortal:()=>sfx.cp()};
   const cp=(CH.practice&&CH.cp&&!full)?CH.cp:null;
   CH.c=newCube(cp?cp.x:0,cp?cp.mode:lv.mode);
@@ -2270,10 +2272,10 @@ $('#chToList').addEventListener('click',chExit);
 $('#chHome').addEventListener('click',chExit);
 
 /* Level check used by tests: search for an input sequence that finishes the level. */
-window.__uhuBuild=buildLevel;
+window.__uhuBuild=buildLevel;window.__uhuEng={stepCube,newCube,CHUNKS};
 window.__uhuSolve=function(n,given){
   const lv=given||buildLevel(n),seen=new Set(),dyn=lv.objs.filter(o=>o.k==='orb'||o.k==='pad'||o.k==='portal');
-  const W={objs:lv.objs,speedNow:lv.speed,lethal:true,ceil:lv.ceil};
+  const W={objs:lv.objs,speedNow:lv.speed,lethal:true,ceil:lv.ceil,softPad:!given||!!given.softPad};
   dyn.forEach(o=>o.used=false);
   const snap=(c,hold)=>({c:Object.assign({},c),u:dyn.map(o=>!!o.used),hold});
   const load_=s=>{dyn.forEach((o,i)=>o.used=s.u[i]);return Object.assign({},s.c);};
