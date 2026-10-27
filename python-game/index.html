@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0e1f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Кодонавт</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+
+  <section id="menu" class="screen">
+    <div class="menu-inner">
+      <h1>КОДОНАВТ</h1>
+      <p class="tagline">Программируй дронов на Python и оживи звездолёт «Нуль»</p>
+      <div id="levels"></div>
+      <p class="fine">Python запускается прямо в приложении, интернет не нужен.</p>
+    </div>
+  </section>
+
+  <section id="game" class="screen hidden">
+    <div id="stage">
+      <canvas id="c"></canvas>
+      <button id="back" class="icon-btn" aria-label="К списку уровней">☰</button>
+      <div id="speech"></div>
+    </div>
+    <div id="panel">
+      <div id="task">
+        <div id="task-title"></div>
+        <div id="task-text"></div>
+        <div id="hint" class="hidden"></div>
+      </div>
+      <div id="chips"></div>
+      <textarea id="code" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" rows="6" placeholder="Пиши код здесь…"></textarea>
+      <div id="status"></div>
+      <div id="buttons">
+        <button id="run" class="btn primary">▶ Запуск</button>
+        <button id="reset" class="btn">⟲</button>
+        <button id="speed" class="btn">1×</button>
+        <button id="hintbtn" class="btn">💡</button>
+      </div>
+    </div>
+  </section>
+
+  <div id="result" class="modal hidden">
+    <div class="card">
+      <div id="stars"></div>
+      <h2 id="result-title"></h2>
+      <p id="result-text"></p>
+      <div class="row">
+        <button id="r-menu" class="btn">Уровни</button>
+        <button id="r-retry" class="btn">Ещё раз</button>
+        <button id="r-next" class="btn primary">Дальше ▶</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="loading" class="hidden">
+    <div class="spinner"></div>
+    <div id="loading-text">Загружаю Python…</div>
+  </div>
+</div>
+
+<script src="vendor/pyodide/pyodide.js"></script>
+<script type="module" src="js/game.js"></script>
+</body>
+</html>
