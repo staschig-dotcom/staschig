@@ -38,8 +38,13 @@ class MainActivity : Activity() {
                 override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
                     val resp = assets.shouldInterceptRequest(request.url) ?: return null
                     // Pyodide и модули JS требуют точных типов; стандартный загрузчик не знает .wasm.
-                    val mime = mimeFor(request.url.path ?: "") ?: return resp
-                    return WebResourceResponse(mime, resp.encoding, resp.statusCode, resp.reasonPhrase, resp.responseHeaders, resp.data)
+                    // Любой сбой здесь не должен ронять приложение: тогда отдаём ответ загрузчика как есть.
+                    return try {
+                        val mime = mimeFor(request.url.path ?: "") ?: return resp
+                        WebResourceResponse(mime, resp.encoding, resp.data)
+                    } catch (e: Exception) {
+                        resp
+                    }
                 }
 
                 // Наружу игра не ходит.

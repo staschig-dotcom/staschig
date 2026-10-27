@@ -11,8 +11,21 @@
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="stylesheet" href="style.css">
+<script>
+  // Если что-то сломалось при запуске — показываем ошибку на экране (чтобы можно было сфотографировать).
+  window.showFatal = function (msg) {
+    var d = document.getElementById('fatal');
+    if (!d) return;
+    d.hidden = false;
+    d.textContent += msg + '\n';
+  };
+  window.addEventListener('error', function (e) { window.showFatal((e.message || 'Ошибка') + (e.filename ? ' @ ' + e.filename.split('/').slice(-2).join('/') + ':' + e.lineno : '')); });
+  window.addEventListener('unhandledrejection', function (e) { window.showFatal('Ошибка: ' + (e.reason && e.reason.message || e.reason)); });
+  setTimeout(function () { if (!window.__booted) window.showFatal('Игра не запустилась за 8 секунд (js/game.js не загрузился).'); }, 8000);
+</script>
 </head>
 <body>
+<pre id="fatal" hidden></pre>
 <div id="app">
 
   <section id="menu" class="screen">
@@ -67,7 +80,7 @@
   </div>
 </div>
 
-<script src="vendor/pyodide/pyodide.js"></script>
-<script type="module" src="js/game.js"></script>
+<script src="vendor/pyodide/pyodide.js" onerror="showFatal('Не загрузился vendor/pyodide/pyodide.js')"></script>
+<script type="module" src="js/game.js" onerror="showFatal('Не загрузился js/game.js')"></script>
 </body>
 </html>

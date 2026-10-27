@@ -326,6 +326,7 @@ window.kodonavtBack = () => {
 world = new World($('c'));
 buildMenu();
 setRunning(false);
+window.__booted = true;
 
 async function bootPython() {
   try {
@@ -335,6 +336,7 @@ async function bootPython() {
     initPrelude(py);
   } catch (e) {
     console.error(e);
+    window.showFatal?.('Не удалось загрузить Python: ' + e.message);
     setStatus('Не удалось загрузить Python: ' + e.message, 'err');
     return;
   }
