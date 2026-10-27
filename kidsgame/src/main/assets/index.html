@@ -2915,7 +2915,7 @@ function moveSay(m){return `${CELLS[m.n]} ${DIRS[m.k][3]}.`;}
 function openDict(){
   const f=DICT[(P.dict||0)%DICT.length],moves=dictMoves(f);
   D={f,moves,k:0,rem:moves[0].n,cur:[0,0],path:[[0,0]],wrong:0,drag:null,done:false};
-  $('#dictEnd').hidden=true;$('#dictCmds').hidden=false;show('dict');setTrack('elise');
+  $('#dictEnd').hidden=true;$('#dictCmds').hidden=false;dictCmdsHtml();show('dict');setTrack('elise');
   requestAnimationFrame(()=>{dictLayout();dictRender();dictLoop();say('Графический диктант! Слушай Уху и веди линию по клеточкам. Начинаем с красной точки. '+moveSay(moves[0]));});
 }
 function dictLayout(){
