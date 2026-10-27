@@ -206,6 +206,13 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
 .portal .num{font-size:clamp(30px,9vw,40px);font-weight:900;font-variant-numeric:tabular-nums}
 .portal .wd{font-size:clamp(17px,5.2vw,25px);font-weight:900;letter-spacing:.04em}
 .portal svg{width:40px;height:40px}
+.portal svg.clk{width:min(12vh,64px);height:min(12vh,64px)}
+.portal .wd.tw{font-size:clamp(14px,4.2vh,21px);letter-spacing:0;white-space:nowrap}
+.tchips{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:6px}
+.tchips span{background:var(--card);border-radius:10px;padding:4px 9px;font-weight:900;font-size:clamp(13px,3.8vh,19px)}
+.tchips span.ask{color:var(--star);border:2px dashed var(--star)}
+.clockbox .clk{width:min(40vh,24vw);height:auto;display:block;margin:auto}
+.clockbox.sm .clk{width:min(26vh,16vw)}
 .portal.ok{--pc:#5fd39a;background:rgba(95,211,154,.4)}
 .portal.no{opacity:.3;filter:grayscale(1);animation:shake .4s}
 .portal.hint{animation:pulse 1s infinite}
@@ -310,7 +317,7 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
 .mapL .sky-wrap{min-height:90px}
 .mapL .owl-row .owl{width:56px}
 .mapL .bubble{font-size:14px;padding:8px 12px;line-height:1.3}
-#map .places{flex:1;grid-template-columns:repeat(3,1fr);grid-template-rows:1fr 1fr;align-content:stretch;gap:10px}
+#map .places{flex:1.25;grid-template-columns:repeat(4,1fr);grid-template-rows:1fr 1fr;align-content:stretch;gap:10px}
 #map .places .place{min-height:0;padding:10px}
 #map .places .place b{font-size:16px;line-height:1.3}
 #map .places .place small{font-size:12px}
@@ -474,6 +481,7 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
       <button class="place" data-go="read" style="--g:#4dffa8"><span class="glyph">Аа</span><b>Лес букв</b><span class="lvl" data-lvl="read"></span></button>
       <button class="place" data-go="math" style="--g:#29e3ff"><span class="glyph">2+3</span><b>Река чисел</b><span class="lvl" data-lvl="math"></span></button>
       <button class="place" data-go="logic" style="--g:#c78bff"><span class="glyph">?!</span><b>Пещера загадок</b><span class="lvl" data-lvl="logic"></span></button>
+      <button class="place" data-go="time" style="--g:#ffd45c"><span class="glyph">◷</span><b>Часовая башня</b><span class="lvl" data-lvl="time"></span></button>
       <button class="place" data-go="chal" style="--g:#ff4fd8"><span class="glyph">▲▲</span><b>Испытание</b><small id="chalNote">5 режимов и строитель</small></button>
       <button class="place" data-go="art" style="--g:#ffb36b"><span class="glyph">✎</span><b>Мастерская</b><small>рисуем и сочиняем</small></button>
       <button class="place" data-go="ward" style="--g:#ffd45c"><span class="glyph">◆</span><b>Гардероб</b><small id="wardNote">наряды Уху</small></button>
@@ -786,11 +794,12 @@ const PAINT=['#2a2140','#e8434f','#ff9a1f','#ffd43b','#3fbf6a','#3a8de0','#8a5ad
 const LEVEL_NAMES={
  read:['Первая буква слова','Читаем короткие слова','Слово к картинке','Слоги: собери и посчитай','Загадки и пропущенная гласная','Пропущенная буква, слоги','Длинные слова'],
  math:['Считаем до 10','Сложение, больше-меньше','Вычитание, домики чисел','Примеры до 10, сравнение','До 20 и пропуски','Задачки до 10','Задачки до 20'],
- logic:['Узоры и тени','Что лишнее, что потом','Узоры, память, что потом','Числовые ряды','Сложные ряды, что сначала','Судоку 4×4','Судоку посложнее']
+ logic:['Узоры и тени','Что лишнее, что потом','Узоры, память, что потом','Числовые ряды','Сложные ряды, что сначала','Судоку 4×4','Судоку посложнее'],
+ time:['Утро, день, вечер, ночь','Времена года по кругу','Дни недели','Вчера, сегодня, завтра','Месяцы','Часы: ровно','Часы: половина, через час']
 };
 const MAX_LEVEL=7;
-const SUBJ_NAMES={read:'Чтение',math:'Счёт',logic:'Логика'};
-const SECTION_NAMES={read:'Лес букв',math:'Река чисел',logic:'Пещера загадок'};
+const SUBJ_NAMES={read:'Чтение',math:'Счёт',logic:'Логика',time:'Время'};
+const SECTION_NAMES={read:'Лес букв',math:'Река чисел',logic:'Пещера загадок',time:'Часовая башня'};
 const PER_SKY=20;
 
 
@@ -829,10 +838,11 @@ const ACCS=[
  {id:'scarf',name:'Шарф',need:16},
  {id:'crown',name:'Корона',ch:2}
 ];
-/* Rocket looks. hard: index of the level that must be beaten on Hard. */
+/* Rocket looks. hard: index of the level that must be beaten on Hard; time: stars needed from the Clock tower. */
 const SHIPS=[
  {id:'neon',name:'Неоновая',need:0},
- {id:'axolotl',name:'Аксолотль',hard:4}
+ {id:'axolotl',name:'Аксолотль',hard:4},
+ {id:'ghost',name:'Призрак',time:5}
 ];
 const KEY_SUBJ=['read','math','logic'];
 const MODES={cube:{name:'Кубик',col:'#4dffa8',letter:'К'},ship:{name:'Ракета',col:'#ff4fd8',letter:'Р'},ball:{name:'Шарик',col:'#ffb02e',letter:'Ш'},ufo:{name:'НЛО',col:'#ffd45c',letter:'Н'},wave:{name:'Волна',col:'#29e3ff',letter:'В'}};
@@ -860,7 +870,8 @@ const LEVELS=[
 const RUN_THEMES={
  read:{bg1:'#0b3b2e',bg2:'#04160f',line:'#4dffa8',block:'rgba(77,255,168,.14)',floor:'#03120c'},
  math:{bg1:'#0b2a5b',bg2:'#040c22',line:'#29e3ff',block:'rgba(41,227,255,.14)',floor:'#030a1c'},
- logic:{bg1:'#2b1257',bg2:'#0c0420',line:'#c78bff',block:'rgba(199,139,255,.14)',floor:'#0a0318'}
+ logic:{bg1:'#2b1257',bg2:'#0c0420',line:'#c78bff',block:'rgba(199,139,255,.14)',floor:'#0a0318'},
+ time:{bg1:'#4a3a06',bg2:'#140f02',line:'#ffd45c',block:'rgba(255,212,92,.14)',floor:'#110c01'}
 };
 const PORTAL_COLORS=['#29e3ff','#ff4fd8','#ffd45c','#4dffa8'];
 const COOLDOWN=3*3600*1000, GRACE=3*60*1000;
@@ -884,10 +895,10 @@ const STAR_POINTS=4;/* points out of 5 needed for a star: 1 for a first-try answ
 /* Keys and field names are kept from earlier versions so an update keeps all progress. */
 const STORE='uhu-v1',GAL='uhu-gallery-v1',TSTORE='uhu-time-v1',CUSTOM='uhu-custom-v1';
 const NL=LEVELS.length;
-const DEF={stars:0,levels:{read:1,math:1,logic:1},good:{read:0,math:0,logic:0},music:true,sound:true,
+const DEF={stars:0,levels:{read:1,math:1,logic:1,time:1},good:{read:0,math:0,logic:0,time:0},music:true,sound:true,
   limit:0,pin:'',skin:'classic',hero:'owl',chBest:Array(NL).fill(0),chDone:Array(NL).fill(false),
   looks:{},keys:{read:false,math:false,logic:false},chMs:0,chGate:true,chMin:5,chDiff:1,ship:'neon',chHard:Array(NL).fill(false),
-  voice:true,voiceRate:1,voiceStories:true};
+  voice:true,voiceRate:1,voiceStories:true,tStars:0,tDay:''};
 const clone=o=>JSON.parse(JSON.stringify(o));
 function load(){
   try{const s=JSON.parse(localStorage.getItem(STORE)||'null');
@@ -1092,7 +1103,8 @@ function toast(t){const d=document.createElement('div');d.className='toast';d.te
 function banner(t,ms){const d=document.createElement('div');d.className='banner';d.textContent=t;$('#app').appendChild(d);setTimeout(()=>d.remove(),ms||3500);}
 const ICONS={'Какой буквы не хватает?':'🔡','Сколько слогов в слове?':'👏','Больше, меньше или равно?':'⚖️','Засели домик':'🏠','Реши задачку':'📘','Чего не хватает в клетке?':'🔲','Что будет потом?':'⏭️','Что было сначала?':'⏮️','Что начинается на эту букву?':'🔤','Прочитай слово':'📖','Найди слово к картинке':'🖼️','Собери слово':'🧩','Прочитай загадку':'❓',
  'Сколько здесь?':'👆','Сколько всего?':'➕','Сколько осталось?':'➖','Реши пример':'✏️','Какое число спряталось?':'🔍',
- 'Что дальше?':'🔁','Что лишнее?':'🚫','Чья тень?':'🌑','Запомни!':'👀','Кто спрятался?':'👀'};
+ 'Что дальше?':'🔁','Что лишнее?':'🚫','Чья тень?':'🌑','Запомни!':'👀','Кто спрятался?':'👀',
+ 'Когда это бывает?':'🕒','Что было перед?':'⏮️','Кто потерялся?':'🔍','Вчера, сегодня, завтра':'📅','Какой по счёту?':'🔢','Какое время года?':'🍂','Который час?':'🕒','Найди часы':'🕒','Сколько будет?':'⏩','Вопрос дня':'📅'};
 function setPrompt(text){const el=$('#prompt');el.classList.remove('hinted');el.innerHTML=(ICONS[text]?`<span class="ico">${ICONS[text]}</span>`:'')+text;}
 function setHint(text,voice){const el=$('#prompt');el.classList.add('hinted');el.textContent=text;say(voice||text);}
 function praise(text){say(text);const d=document.createElement('div');d.className='praise';d.textContent=text;$('#app').appendChild(d);setTimeout(()=>d.remove(),1150);}
@@ -1384,9 +1396,135 @@ function genLogic(level,R){
   if(lv>=7)return pick([()=>sudokuTask(R,5),()=>sudokuTask(R,4),()=>sequenceTask(R,true),()=>genLogic0(5,R)])();
   return genLogic0(lv,R);
 }
-const GEN={read:genRead,math:genMath,logic:genLogic};
+/* ---------- generators: time (days, months, seasons, clocks) ---------- */
+/* Word forms: name, after X (genitive), before X (instrumental). */
+const WDAYS=[['понедельник','понедельника','понедельником'],['вторник','вторника','вторником'],['среда','среды','средой'],['четверг','четверга','четвергом'],
+  ['пятница','пятницы','пятницей'],['суббота','субботы','субботой'],['воскресенье','воскресенья','воскресеньем']];
+const MONTHS=[['январь','января','январём'],['февраль','февраля','февралём'],['март','марта','мартом'],['апрель','апреля','апрелем'],['май','мая','маем'],['июнь','июня','июнем'],
+  ['июль','июля','июлем'],['август','августа','августом'],['сентябрь','сентября','сентябрём'],['октябрь','октября','октябрём'],['ноябрь','ноября','ноябрём'],['декабрь','декабря','декабрём']];
+/* Pictures never repeat the icon of the answer, so the child has to think, not match. */
+const SEASONS=[{n:'зима',g:'зимы',t:'зимой',i:'❄️',pics:['⛄','🛷','⛸️','🎄','🧤']},{n:'весна',g:'весны',t:'весной',i:'🌷',pics:['🐣','🌱','🌼','💧']},
+  {n:'лето',g:'лета',t:'летом',i:'☀️',pics:['🏖️','🍉','🌻','🍓','🏊']},{n:'осень',g:'осени',t:'осенью',i:'🍂',pics:['🍁','🍄','☂️','🌧️']}];
+const PARTS=[{n:'утро',g:'утра',t:'утром',i:'🌅',pics:['🐓','🪥','🥣','⏰']},{n:'день',g:'дня',t:'днём',i:'🌞',pics:['🍲','🛝','⚽']},
+  {n:'вечер',g:'вечера',t:'вечером',i:'🌇',pics:['🛁','📖','🧸']},{n:'ночь',g:'ночи',t:'ночью',i:'🌙',pics:['😴','🛏️','🦉','⭐']}];
+const HOUR_GEN=['','первого','второго','третьего','четвёртого','пятого','шестого','седьмого','восьмого','девятого','десятого','одиннадцатого','двенадцатого'];
+const cap=s=>s[0].toUpperCase()+s.slice(1);
+const cyc=(i,n)=>((i%n)+n)%n;
+const twd=(s,ico)=>`<span class="wd tw">${ico?ico+' ':''}${cap(s)}</span>`;
+/* Words in portals are read aloud: a six-year-old knows the days by ear before he can read them. */
+const sayOpts=os=>os.map(o=>o.say).join(', ').replace(/, ([^,]*)$/,' или $1')+'?';
+function wordOpts(list,ans,k,ico,skip){
+  const others=shuffle(list.map((_,i)=>i).filter(i=>i!==ans&&i!==skip)).slice(0,k-1);
+  return shuffle([ans,...others]).map(i=>({h:twd(list[i][0]||list[i].n,ico&&list[i].i),ok:i===ans,say:list[i][0]||list[i].n}));
+}
+function chips(arr,ask){return `<div class="tchips">${arr.map((x,i)=>i===ask?'<span class="ask">?</span>':`<span>${cap(x)}</span>`).join('')}</div>`;}
+const cycleHint=list=>()=>chips(list.map(x=>x[0]||((x.i||'')+' '+x.n).trim()),-1);
+function clockSvg(h,m){
+  const ha=((h%12)+m/60)*30*Math.PI/180,ma=m*6*Math.PI/180;
+  const hand=(a,l,w,c)=>`<line x1="50" y1="50" x2="${(50+Math.sin(a)*l).toFixed(1)}" y2="${(50-Math.cos(a)*l).toFixed(1)}" stroke="${c}" stroke-width="${w}" stroke-linecap="round"/>`;
+  let nums='';for(let k=1;k<=12;k++){const a=k*Math.PI/6;nums+=`<text x="${(50+Math.sin(a)*35).toFixed(1)}" y="${(50-Math.cos(a)*35+5).toFixed(1)}" text-anchor="middle" font-size="${k%3?11:15}" font-weight="900" fill="${k%3?'#8b93c9':'#1b1530'}">${k}</text>`;}
+  return `<svg class="clk" viewBox="0 0 100 100"><circle cx="50" cy="50" r="47" fill="#fff8e6" stroke="#ffd45c" stroke-width="5"/>${nums}${hand(ma,38,4,'#e8434f')}${hand(ha,24,7,'#1b1530')}<circle cx="50" cy="50" r="4.5" fill="#1b1530"/></svg>`;
+}
+const hm=(h,m)=>h+':'+String(m).padStart(2,'0');
+function picTask(R,list,what){
+  const p=uniqPick(R,()=>pick(list),x=>'p'+x.n),pic=pick(p.pics);
+  const opts=wordOpts(list,list.indexOf(p),4,true);
+  return {text:'Когда это бывает?',voice:`Когда это бывает? ${sayOpts(opts.map(o=>({say:list.find(x=>x.n===o.say).t})))}`,show:`<div class="pic">${pic}</div>`,opts,
+    hint:what==='season'?'Подумай: когда на улице снег, когда цветы, когда жарко, а когда падают листья?':'Подумай: когда мы встаём, когда гуляем, когда купаемся перед сном, а когда спим?'};
+}
+function cycleTask(R,list,kind){
+  const n=list.length,i=uniqPick(R,()=>rnd(n),x=>'c'+kind+x),before=rnd(3)===0,ans=cyc(before?i-1:i+1,n);
+  const word=list[i][0]?list[i]:[list[i].n,list[i].g,list[i].t],opts=wordOpts(list,ans,3,!!list[0].i,i);
+  const who={wd:'Какой день',mon:'Какой месяц'}[kind]||'Что';
+  const q=w=>before?`${who} бывает перед ${w(word[2])}?`:`${who} идёт после ${w(word[1])}?`;
+  const nm={part:'Части суток',season:'Времена года',wd:'Дни недели',mon:'Месяцы'}[kind];
+  return {text:before?'Что было перед?':'Что будет потом?',voice:q(x=>x)+' '+sayOpts(opts),show:`<div class="riddle">${q(x=>'<b>'+x+'</b>')}</div>`,opts,
+    visual:cycleHint(list),hint:`${nm} идут по кругу всегда в одном порядке. Посмотри на ряд.`};
+}
+function missTask(R,list,kind){
+  const n=list.length,s=uniqPick(R,()=>rnd(n),x=>'m'+kind+x),ask=1+rnd(2),row=[0,1,2,3].map(k=>list[cyc(s+k,n)][0]);
+  const opts=wordOpts(list,cyc(s+ask,n),3);
+  return {text:'Кто потерялся?',voice:(kind==='wd'?'Какой день недели потерялся? ':'Какой месяц потерялся? ')+sayOpts(opts),show:chips(row,ask),opts,
+    visual:cycleHint(list),hint:'Скажи ряд вслух с самого начала и найди пропуск.'};
+}
+function tomorrowTask(R,far){
+  const i=uniqPick(R,()=>rnd(7),x=>'t'+x),kind=rnd(far?3:2),d=kind===0?1:kind===1?-1:2,ans=cyc(i+d,7);
+  const w=['будет завтра','был вчера','будет послезавтра'][kind],opts=wordOpts(WDAYS,ans,3);
+  return {text:'Вчера, сегодня, завтра',voice:`Сегодня ${WDAYS[i][0]}. Какой день ${w}? ${sayOpts(opts)}`,
+    show:`<div class="riddle">Сегодня — <b>${WDAYS[i][0]}</b>.<br>Какой день ${w}?</div>`,opts,visual:cycleHint(WDAYS),
+    hint:kind===1?'Вчера — это день перед сегодняшним. Шагни по ряду назад.':kind===2?'Послезавтра — через два дня. Шагни по ряду вперёд два раза.':'Завтра — это следующий день. Шагни по ряду вперёд.'};
+}
+function ordinalTask(R){
+  const i=uniqPick(R,()=>rnd(7),x=>'o'+x);
+  return {text:'Какой по счёту?',voice:`${cap(WDAYS[i][0])} — какой по счёту день недели?`,show:`<div class="riddle"><b>${cap(WDAYS[i][0])}</b> — какой по счёту день недели?</div>`,
+    opts:[i+1,...shuffle([1,2,3,4,5,6,7].filter(x=>x!==i+1)).slice(0,2)].sort((a,b)=>a-b).map(x=>({h:num(x),ok:x===i+1})),visual:cycleHint(WDAYS),hint:'Неделя начинается с понедельника. Посчитай дни по пальчикам.'};
+}
+function monthSeasonTask(R){
+  const m=uniqPick(R,()=>rnd(12),x=>'ms'+x),s=SEASONS[Math.floor(((m+1)%12)/3)];
+  const opts=wordOpts(SEASONS,SEASONS.indexOf(s),4,true);
+  return {text:'Какое время года?',voice:`${cap(MONTHS[m][0])} — это какое время года? ${sayOpts(opts)}`,show:`<div class="riddle"><b>${cap(MONTHS[m][0])}</b> — это какое время года?</div>`,opts,
+    visual:()=>`<div class="tchips">${SEASONS.map((x,k)=>`<span>${x.i} ${[11,0,1,2,3,4,5,6,7,8,9,10].slice(k*3,k*3+3).map(j=>MONTHS[j][0].slice(0,3)).join(' ')}</span>`).join('')}</div>`,
+    hint:'Посмотри на подсказку: в каждом времени года три месяца.',hintVoice:'Зима — декабрь, январь, февраль. Весна — март, апрель, май. Лето — июнь, июль, август. Осень — сентябрь, октябрь, ноябрь.'};
+}
+function hourOpts(h,m,wrong){const s=new Map([[hm(h,m),true]]);wrong.forEach(([a,b])=>{const k=hm(cyc(a-1,12)+1,b);if(!s.has(k)&&s.size<3)s.set(k,false);});
+  let g=0;while(s.size<3&&g++<20){const k=hm(cyc(h+pick([-3,-2,2,3,4])-1,12)+1,m);if(!s.has(k))s.set(k,false);}
+  return shuffle([...s].map(([k,ok])=>({h:num(k),ok})));}
+function clockTask(R,half){
+  const h=uniqPick(R,()=>1+rnd(12),x=>'h'+x),m=half&&rnd(3)?30:0;
+  const opts=m?hourOpts(h,30,[[h+1,30],[h,0]]):hourOpts(h,0,[[h+1,0],[h-1,0]]);
+  return {text:'Который час?',voice:'Который час? Посмотри на стрелки.',show:`<div class="clockbox">${clockSvg(h,m)}</div>`,opts,
+    hint:m?`Длинная стрелка смотрит вниз, на 6, — это половина. Короткая прошла ${h} — значит, ${hm(h,30)}, половина ${HOUR_GEN[cyc(h,12)+1]}.`:'Длинная стрелка смотрит вверх, на 12, — значит, ровно. Короткая стрелка показывает, сколько часов.'};
+}
+function findClockTask(R,half){
+  const h=uniqPick(R,()=>1+rnd(12),x=>'f'+x),m=half&&rnd(2)?30:0;
+  const wr=m?[[h+1,30],[h,0]]:[[h+1,0],[cyc(h+5,12)+1,0]];
+  const opts=shuffle([[h,m,true],...wr.map(([a,b])=>[cyc(a-1,12)+1,b,false])]).map(([a,b,ok])=>({h:clockSvg(a,b),ok}));
+  return {text:'Найди часы',voice:m?`Найди часы, которые показывают половину ${HOUR_GEN[cyc(h,12)+1]}.`:`Найди часы, которые показывают ${h} ${plural(h,['час','часа','часов'])}.`,
+    show:`<div class="expr">${hm(h,m)}</div>`,opts,hint:m?'Половина — это когда длинная стрелка смотрит вниз, на 6.':'Ровно — это когда длинная стрелка смотрит вверх, на 12. Короткая показывает часы.'};
+}
+function laterTask(R){
+  const h=uniqPick(R,()=>1+rnd(12),x=>'l'+x),d=pick([1,2,3,-1]),ans=cyc(h+d-1,12)+1;
+  const w=d>0?`через ${d} ${plural(d,['час','часа','часов'])}`:'час назад';
+  return {text:'Сколько будет?',voice:`Сейчас ${h} ${plural(h,['час','часа','часов'])}. Который час будет ${w}?`.replace('будет час назад','был час назад'),
+    show:`<div class="clockbox sm">${clockSvg(h,0)}</div><div class="riddle">Сейчас ${h}:00. А ${w}?</div>`,
+    opts:hourOpts(ans,0,[[ans+1,0],[ans-1,0],[h,0]]),hint:d>0?`Передвинь короткую стрелку вперёд на ${d}.`:'Передвинь короткую стрелку назад на 1.'};
+}
+function factTask(R){
+  const f=uniqPick(R,()=>pick([['Сколько дней в неделе?',7,7],['Сколько месяцев в году?',12,12],['Сколько времён года?',4,4],['Сколько выходных в неделе?',2,4]]),x=>'F'+x[0]);
+  return {text:f[0],show:`<div class="riddle">${f[0]}</div>`,opts:numOpts(f[1],3,Math.max(f[2]+3,12)),hint:'Посчитай по пальчикам.'};
+}
+/* The first round of each day starts with a question about the real today. */
+function todayKey(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
+function todayTask(level){
+  const d=new Date(),wd=cyc(d.getDay()-1,7),mo=d.getMonth(),se=Math.floor(((mo+1)%12)/3),h=d.getHours();
+  const part=h>=7&&h<=10?0:h>=13&&h<=15?1:h>=18&&h<=21?2:-1;
+  const k=level<=2?(part>=0&&rnd(2)?'part':'season'):level<=4?'wd':pick(['wd','mon','tom']);
+  if(k==='season'||k==='part'){const L=k==='season'?SEASONS:PARTS,a=k==='season'?se:part,opts=wordOpts(L,a,4,true);
+    return {today:true,text:'Вопрос дня',voice:k==='season'?'Вопрос дня! Посмотри в окно. Какое сейчас время года?':'Вопрос дня! Какое сейчас время суток?',
+      show:`<div class="riddle">${k==='season'?'Какое сейчас время года?':'Какое сейчас время суток?'}</div>`,opts,hint:'Посмотри в окно! Что там сейчас?'};}
+  if(k==='mon'){const opts=wordOpts(MONTHS,mo,3);
+    return {today:true,text:'Вопрос дня',voice:'Вопрос дня! Какой сейчас месяц? '+sayOpts(opts),show:'<div class="riddle">Какой сейчас месяц?</div>',opts,hint:'Спроси у взрослых и запомни!'};}
+  const t=k==='tom',ans=t?cyc(wd+1,7):wd,opts=wordOpts(WDAYS,ans,3);
+  return {today:true,text:'Вопрос дня',voice:(t?'Вопрос дня! Какой день недели будет завтра? ':'Вопрос дня! Какой сегодня день недели? ')+sayOpts(opts),
+    show:`<div class="riddle">${t?'Какой день недели будет завтра?':'Какой сегодня день недели?'}</div>`,opts,visual:cycleHint(WDAYS),hint:'Не помнишь — спроси у взрослых и запомни!'};
+}
+function genTime0(lv,R){
+  if(lv===1)return pick([()=>picTask(R,PARTS,'part'),()=>picTask(R,SEASONS,'season')])();
+  if(lv===2)return pick([()=>picTask(R,PARTS,'part'),()=>picTask(R,SEASONS,'season'),()=>cycleTask(R,PARTS,'part'),()=>cycleTask(R,SEASONS,'season')])();
+  if(lv===3)return pick([()=>cycleTask(R,WDAYS,'wd'),()=>cycleTask(R,WDAYS,'wd'),()=>missTask(R,WDAYS,'wd'),()=>cycleTask(R,SEASONS,'season')])();
+  if(lv===4)return pick([()=>tomorrowTask(R,false),()=>tomorrowTask(R,false),()=>ordinalTask(R),()=>missTask(R,WDAYS,'wd'),()=>factTask(R)])();
+  if(lv===5)return pick([()=>cycleTask(R,MONTHS,'mon'),()=>missTask(R,MONTHS,'mon'),()=>monthSeasonTask(R),()=>monthSeasonTask(R),()=>tomorrowTask(R,true)])();
+  if(lv===6)return pick([()=>clockTask(R,false),()=>clockTask(R,false),()=>findClockTask(R,false),()=>monthSeasonTask(R),()=>cycleTask(R,MONTHS,'mon')])();
+  return pick([()=>clockTask(R,true),()=>clockTask(R,true),()=>findClockTask(R,true),()=>laterTask(R),()=>tomorrowTask(R,true)])();
+}
+function genTime(level,R){
+  if(R.i===0&&P.tDay!==todayKey()){P.tDay=todayKey();save();return todayTask(level);}
+  return genTime0(mixLevel(level),R);
+}
+const GEN={read:genRead,math:genMath,logic:genLogic,time:genTime};
 /* Used by tests: generate one task without playing. */
 window.__uhuGen=(subj,lv)=>GEN[subj](lv,{used:new Set(),level:lv});
+window.__uhuToday=lv=>todayTask(lv);
 
 /* ---------- runner engine (world units = tiles, y up from the floor) ---------- */
 const PHYS={g:83,v:18.7,pad:1.45,dt:1/120};
@@ -1831,12 +1969,28 @@ function drawAxolotl(g,s,time){
   g.strokeStyle='#8a1a4a';g.lineWidth=s*.035;g.beginPath();g.arc(s*.5,s*.17,s*.1,.35,Math.PI-.35);g.stroke();
   g.fillStyle='rgba(255,60,130,.5)';[.3,.7].forEach(x=>{g.beginPath();g.arc(x*s,s*.2,s*.05,0,7);g.fill();});
 }
+/* Ghost rocket: a see-through glowing hull that ends in a wavy ghost-sheet tail, with a ghost face on the nose. */
+function drawGhostShip(g,s,time){
+  const w=Math.sin(time*7)*s*.05;
+  g.shadowColor='#ffffff';g.shadowBlur=18;g.fillStyle='rgba(225,232,255,.62)';g.strokeStyle='#ffffff';g.lineWidth=Math.max(1.5,s*.04);g.lineJoin='round';
+  g.beginPath();g.moveTo(-s*.6,-s*.06);g.lineTo(s*.4,-s*.06);g.bezierCurveTo(s*.95,-s*.06,s*.95,s*.42,s*.45,s*.42);
+  g.lineTo(-s*.55,s*.42);
+  for(let k=0;k<3;k++){const y0=s*(.42-k*.16),y1=y0-s*.16;g.quadraticCurveTo(-s*(1.02+(k%2?.05:-.05))+w,(y0+y1)/2,-s*.6,y1);}
+  g.closePath();g.fill();g.stroke();g.shadowBlur=0;
+  g.strokeStyle='rgba(255,255,255,.45)';g.lineWidth=s*.035;g.lineCap='round';
+  [.15,.3].forEach((y,k)=>{g.beginPath();g.moveTo(-s*1.05,s*y);g.quadraticCurveTo(-s*1.25,s*(y-.06)+w*(k?1:-1),-s*1.45,s*y);g.stroke();});
+  g.fillStyle='#2b2f55';[.5,.66].forEach(x=>{g.beginPath();g.ellipse(x*s,s*.19,s*.045,s*.07,0,0,7);g.fill();});
+  g.beginPath();g.ellipse(s*.58,s*.33,s*.045,s*.035,0,0,7);g.fill();
+  g.fillStyle='rgba(160,180,255,.5)';[.43,.74].forEach(x=>{g.beginPath();g.arc(x*s,s*.28,s*.035,0,7);g.fill();});
+}
 function drawHero(g,c,cx,cy,s,time,th,shipId){
   const m=c.mode||'cube',col=MODES[m].col;
   if(m==='cube'){drawChar(g,cx,cy,s,c.rot,P.hero,time);return;}
   g.save();g.translate(cx,cy);
   if(m==='ship'&&(shipId||P.ship)==='axolotl'){
     g.rotate(c.rot);drawAxolotl(g,s,time);drawChar(g,-s*.12,-s*.16,s*.55,0,P.hero,time);
+  }else if(m==='ship'&&(shipId||P.ship)==='ghost'){
+    g.rotate(c.rot);drawGhostShip(g,s,time);drawChar(g,-s*.1,-s*.18,s*.55,0,P.hero,time);
   }else if(m==='ship'){
     g.rotate(c.rot);g.shadowColor=col;g.shadowBlur=12;g.fillStyle='#1a1d33';g.strokeStyle=col;g.lineWidth=3;
     g.beginPath();g.moveTo(-s*.75,s*.05);g.lineTo(s*.55,s*.05);g.quadraticCurveTo(s*.85,s*.22,s*.55,s*.42);g.lineTo(-s*.75,s*.42);g.closePath();g.fill();g.stroke();
@@ -2129,7 +2283,7 @@ function finishRound(){
   $('#rewAgain').hidden=false;$('#rewAgain').dataset.subj=s;
   show('reward');sfx.no();setTrack('lullaby');setRewardMood('lose');say(`Почти получилось! ${String(pts).replace('.',',')} из 5. Для звезды нужно ${STAR_POINTS}. Попробуй ещё раз!`);
 }
-function isUnlocked(item){return item.hard!=null?P.chHard[item.hard]:item.ch!=null?P.chDone[item.ch]:P.stars>=item.need;}
+function isUnlocked(item){return item.time!=null?P.tStars>=item.time:item.hard!=null?P.chHard[item.hard]:item.ch!=null?P.chDone[item.ch]:P.stars>=item.need;}
 function unlockedShips(){return SHIPS.filter(isUnlocked).map(s=>s.id);}
 function unlockedSkins(){return SKINS.filter(isUnlocked).map(s=>s.id);}
 function unlockedHeroes(){return HEROES.filter(isUnlocked).map(s=>s.id);}
@@ -2143,7 +2297,7 @@ function freshUnlocks(beforeS,beforeH,beforeA,beforeR){
 }
 /* A star from a learning section also gives that section's key; three different keys open the challenge for a while. */
 function takeKey(subj){
-  if(!subj||!P.chGate)return '';
+  if(!KEY_SUBJ.includes(subj)||!P.chGate)return '';
   const had=P.keys[subj];P.keys[subj]=true;
   if(KEY_SUBJ.every(k=>P.keys[k])){
     P.keys={read:false,math:false,logic:false};P.chMs=Math.min(P.chMs+P.chMin*60000,P.chMin*60000*3);
@@ -2153,15 +2307,17 @@ function takeKey(subj){
   return had?`Ключ «${SUBJ_NAMES[subj]}» у тебя уже есть. Для Испытания нужны ключи: ${miss}.`:`Ключ «${SUBJ_NAMES[subj]}» получен! Для Испытания ещё нужны: ${miss}.`;
 }
 function giveStar(extra,subj){
-  const bs=unlockedSkins(),bh=unlockedHeroes(),ba=unlockedAccs();
-  P.stars++;const keyTxt=takeKey(subj);save();
-  const fresh=freshUnlocks(bs,bh,ba);
+  const bs=unlockedSkins(),bh=unlockedHeroes(),ba=unlockedAccs(),br=unlockedShips();
+  P.stars++;if(subj==='time')P.tStars++;const keyTxt=takeKey(subj);save();
+  const fresh=freshUnlocks(bs,bh,ba,br);
+  const gh=SHIPS.find(x=>x.time!=null),ghTxt=subj==='time'&&P.tStars<gh.time?`Звёзд в Часовой башне: ${P.tStars} из ${gh.time} — до ракеты «${gh.name}».`:'';
   const inSky=P.stars%PER_SKY;
   let title='Звезда найдена!',text=`На небе уже ${inSky} из ${PER_SKY}.`;
   if(inSky===0){title='Небо сияет!';text='Ты зажигаешь целое небо звёзд! Уху летит дальше, в новое небо.';}
   if(fresh.length)text+=' Открыто: '+fresh.join(', ')+'. Загляни в Гардероб!';
   const ch=LEVELS.filter((L,i)=>L.need===P.stars&&i>0);if(ch.length)text+=' Открыт уровень Испытания: '+ch.map(L=>MODES[L.mode]?MODES[L.mode].name+' «'+L.name+'»':'«'+L.name+'»').join(', ')+'!';
   if(keyTxt)text+=' '+keyTxt;
+  if(ghTxt)text+=' '+ghTxt;
   if(extra)text=extra+' '+text;
   $('#rewStar').classList.remove('dim');$('#rewAgain').hidden=true;
   $('#rewTitle').textContent=title;$('#rewText').textContent=text;
@@ -2175,6 +2331,7 @@ const MODE_HELP={cube:'Тап — прыжок. Держи палец — пры
   ball:'Тап — шарик переворачивается на потолок и обратно.',ufo:'Каждый тап — маленький прыжок в воздухе.',wave:'Держи палец — волна идёт вверх, отпусти — вниз.',
   mix:'Цветные ворота меняют режим: К — кубик, Р — ракета, Ш — шарик, Н — НЛО, В — волна.',mine:'Здесь уровни, которые ты построил сам.'};
 function chUnlocked(i){return P.stars>=LEVELS[i].need;}
+function shipCond(r){return r.time!=null?`${r.time} ★ в Часовой башне (есть ${P.tStars})`:'Ракета «'+LEVELS[r.hard].name+'» на «Сложно»';}
 function rewardOf(i){const r=SHIPS.find(x=>x.hard===i),base=rewardOf0(i);
   return [base,r&&!P.chHard[i]?'на «Сложно» — ракета «'+r.name+'»':''].filter(Boolean).join(' · ');}
 function rewardOf0(i){const s=SKINS.find(x=>x.ch===i);if(s)return 'наряд «'+s.name+'»';const h=HEROES.find(x=>x.ch===i);return h?'друг — '+h.name:'';}
@@ -2360,7 +2517,7 @@ function openWardrobe(){
   $$('#skins .skin').forEach(b=>{const g=b.querySelector('canvas').getContext('2d');drawChar(g,64,76,62,0,hero,1.5,{skin:b.dataset.skin,acc:look.acc});});
   const ur=unlockedShips();
   $('#ships').innerHTML=SHIPS.map(r=>{const open=ur.includes(r.id),on=(P.ship||'neon')===r.id;
-    return `<button class="skin${open?'':' locked'}${on?' on':''}" data-ship="${r.id}"><canvas width="128" height="128"></canvas><b>${r.name}</b><small>${open?(on?'выбрана':'выбрать'):'Ракета «'+LEVELS[r.hard].name+'» на «Сложно»'}</small></button>`;}).join('');
+    return `<button class="skin${open?'':' locked'}${on?' on':''}" data-ship="${r.id}"><canvas width="128" height="128"></canvas><b>${r.name}</b><small>${open?(on?'выбрана':'выбрать'):shipCond(r)}</small></button>`;}).join('');
   $$('#ships .skin').forEach(b=>{const g=b.querySelector('canvas').getContext('2d');drawHero(g,{mode:'ship',rot:0},64,74,74,1.5,null,b.dataset.ship);});
   $$('#accs .skin').forEach(b=>{const g=b.querySelector('canvas').getContext('2d');drawChar(g,64,78,60,0,hero,1.5,{skin:look.skin,acc:b.dataset.acc});});
   show('wardrobe');
@@ -2370,7 +2527,7 @@ $('#wardrobe').addEventListener('click',e=>{
   if(h){if(!unlockedHeroes().includes(h.dataset.hero)){sfx.no();toast('Этот друг пока не пришёл');return;}P.hero=h.dataset.hero;}
   else if(s){if(!unlockedSkins().includes(s.dataset.skin)){sfx.no();toast('Этот цвет пока закрыт');return;}setLook(P.hero,'skin',s.dataset.skin);}
   else if(a){if(!unlockedAccs().includes(a.dataset.acc)){sfx.no();toast('Этот аксессуар пока закрыт');return;}setLook(P.hero,'acc',a.dataset.acc);}
-  else if(r){if(!unlockedShips().includes(r.dataset.ship)){sfx.no();toast('Пройди «Тоннель» на «Сложно»');return;}P.ship=r.dataset.ship;}
+  else if(r){if(!unlockedShips().includes(r.dataset.ship)){sfx.no();{const sh=SHIPS.find(x=>x.id===r.dataset.ship);toast(sh.time!=null?'Собери '+sh.time+' ★ в Часовой башне':'Пройди «'+LEVELS[sh.hard].name+'» на «Сложно»');}return;}P.ship=r.dataset.ship;}
   else return;
   save();sfx.ok();const sc=$('#wardrobe .wscroll').scrollTop;openWardrobe();$('#wardrobe .wscroll').scrollTop=sc;
 });
