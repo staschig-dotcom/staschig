@@ -549,6 +549,8 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
       <div class="skins" id="skins"></div>
       <div class="label" id="accLabel">Аксессуар</div>
       <div class="skins" id="accs"></div>
+      <div class="label">Ракета</div>
+      <div class="skins" id="ships"></div>
     </div>
   </section>
 
@@ -827,6 +829,11 @@ const ACCS=[
  {id:'scarf',name:'Шарф',need:16},
  {id:'crown',name:'Корона',ch:2}
 ];
+/* Rocket looks. hard: index of the level that must be beaten on Hard. */
+const SHIPS=[
+ {id:'neon',name:'Неоновая',need:0},
+ {id:'axolotl',name:'Аксолотль',hard:4}
+];
 const KEY_SUBJ=['read','math','logic'];
 const MODES={cube:{name:'Кубик',col:'#4dffa8',letter:'К'},ship:{name:'Ракета',col:'#ff4fd8',letter:'Р'},ball:{name:'Шарик',col:'#ffb02e',letter:'Ш'},ufo:{name:'НЛО',col:'#ffd45c',letter:'Н'},wave:{name:'Волна',col:'#29e3ff',letter:'В'}};
 const TH_BLUE={bg1:'#0a2a66',bg2:'#06102e',line:'#29e3ff',block:'rgba(41,227,255,.14)',floor:'#040a1e'};
@@ -879,13 +886,13 @@ const STORE='uhu-v1',GAL='uhu-gallery-v1',TSTORE='uhu-time-v1',CUSTOM='uhu-custo
 const NL=LEVELS.length;
 const DEF={stars:0,levels:{read:1,math:1,logic:1},good:{read:0,math:0,logic:0},music:true,sound:true,
   limit:0,pin:'',skin:'classic',hero:'owl',chBest:Array(NL).fill(0),chDone:Array(NL).fill(false),
-  looks:{},keys:{read:false,math:false,logic:false},chMs:0,chGate:true,chMin:5,chDiff:1,
+  looks:{},keys:{read:false,math:false,logic:false},chMs:0,chGate:true,chMin:5,chDiff:1,ship:'neon',chHard:Array(NL).fill(false),
   voice:true,voiceRate:1,voiceStories:true};
 const clone=o=>JSON.parse(JSON.stringify(o));
 function load(){
   try{const s=JSON.parse(localStorage.getItem(STORE)||'null');
     if(s&&typeof s==='object'){const p=Object.assign(clone(DEF),s);p.levels=Object.assign({},DEF.levels,s.levels);p.good=Object.assign({},DEF.good,s.good);
-      p.chBest=LEVELS.map((_,i)=>(s.chBest||[])[i]||0);p.chDone=LEVELS.map((_,i)=>!!(s.chDone||[])[i]);
+      p.chBest=LEVELS.map((_,i)=>(s.chBest||[])[i]||0);p.chDone=LEVELS.map((_,i)=>!!(s.chDone||[])[i]);p.chHard=LEVELS.map((_,i)=>!!(s.chHard||[])[i]);
       if(!HEROES.some(h=>h.id===p.hero))p.hero='owl';
       if(!p.looks||typeof p.looks!=='object')p.looks={};p.keys=Object.assign({},DEF.keys,s.keys);return p;}}catch(e){}
   return clone(DEF);
@@ -1800,11 +1807,37 @@ function drawAcc(g,cx,cy,s,rot,acc,heroId){
   g.restore();
 }
 /* The hero in a vehicle for the other modes. */
-function drawHero(g,c,cx,cy,s,time,th){
+/* Axolotl rocket: pink body with frilly gills, a tail fin and little paws; the hero rides on its back. */
+function drawAxolotl(g,s,time){
+  const wig=Math.sin(time*6)*.06;
+  g.lineJoin='round';g.lineCap='round';g.strokeStyle='#ffffff';g.lineWidth=Math.max(1.5,s*.035);
+  g.shadowColor='#ff7ac0';g.shadowBlur=14;
+  /* tail fin */
+  g.fillStyle='#ffb3d9';g.beginPath();g.moveTo(-s*.55,s*.12);g.quadraticCurveTo(-s*1.05,s*(-.12+wig),-s*1.02,s*(.3+wig));g.quadraticCurveTo(-s*.82,s*.42,-s*.55,s*.4);g.closePath();g.fill();g.stroke();
+  /* body and head */
+  g.fillStyle='#ff8fc6';g.beginPath();g.ellipse(-s*.08,s*.26,s*.6,s*.24,0,0,7);g.fill();g.stroke();
+  g.beginPath();g.ellipse(s*.48,s*.14,s*.34,s*.29,0,0,7);g.fill();g.stroke();g.shadowBlur=0;
+  g.fillStyle='#ffd6ea';g.beginPath();g.ellipse(-s*.08,s*.38,s*.46,s*.08,0,0,7);g.fill();
+  /* frilly gills: three on each side of the head */
+  [[-1,0],[1,1]].forEach(([side,j])=>[-.45,0,.45].forEach((k,i)=>{
+    const a=-1.57+side*(.9+k*.5)+Math.sin(time*5+i+j)*.1,x0=s*.48+side*s*.22,y0=s*.02,L=s*.34;
+    g.strokeStyle='#c2206a';g.lineWidth=s*.1;g.beginPath();g.moveTo(x0,y0);g.lineTo(x0+Math.cos(a)*L,y0+Math.sin(a)*L);g.stroke();
+    g.strokeStyle='#ff5fa8';g.lineWidth=s*.05;g.beginPath();g.moveTo(x0,y0);g.lineTo(x0+Math.cos(a)*L,y0+Math.sin(a)*L);g.stroke();}));
+  /* paws */
+  g.fillStyle='#ff8fc6';[[-.4,.48],[.15,.48]].forEach(([x,y])=>{g.beginPath();g.ellipse(x*s,y*s,s*.09,s*.06,0,0,7);g.fill();});
+  /* face */
+  g.fillStyle='#2b1a3a';[.38,.62].forEach(x=>{g.beginPath();g.arc(x*s,s*.1,s*.05,0,7);g.fill();});
+  g.fillStyle='#ffffff';[.39,.63].forEach(x=>{g.beginPath();g.arc(x*s,s*.085,s*.017,0,7);g.fill();});
+  g.strokeStyle='#8a1a4a';g.lineWidth=s*.035;g.beginPath();g.arc(s*.5,s*.17,s*.1,.35,Math.PI-.35);g.stroke();
+  g.fillStyle='rgba(255,60,130,.5)';[.3,.7].forEach(x=>{g.beginPath();g.arc(x*s,s*.2,s*.05,0,7);g.fill();});
+}
+function drawHero(g,c,cx,cy,s,time,th,shipId){
   const m=c.mode||'cube',col=MODES[m].col;
   if(m==='cube'){drawChar(g,cx,cy,s,c.rot,P.hero,time);return;}
   g.save();g.translate(cx,cy);
-  if(m==='ship'){
+  if(m==='ship'&&(shipId||P.ship)==='axolotl'){
+    g.rotate(c.rot);drawAxolotl(g,s,time);drawChar(g,-s*.12,-s*.16,s*.55,0,P.hero,time);
+  }else if(m==='ship'){
     g.rotate(c.rot);g.shadowColor=col;g.shadowBlur=12;g.fillStyle='#1a1d33';g.strokeStyle=col;g.lineWidth=3;
     g.beginPath();g.moveTo(-s*.75,s*.05);g.lineTo(s*.55,s*.05);g.quadraticCurveTo(s*.85,s*.22,s*.55,s*.42);g.lineTo(-s*.75,s*.42);g.closePath();g.fill();g.stroke();
     g.fillStyle=col;tri(g,-s*.75,s*.05,-s*.95,-s*.25,-s*.45,s*.05);
@@ -2096,15 +2129,17 @@ function finishRound(){
   $('#rewAgain').hidden=false;$('#rewAgain').dataset.subj=s;
   show('reward');sfx.no();setTrack('lullaby');setRewardMood('lose');say(`Почти получилось! ${String(pts).replace('.',',')} из 5. Для звезды нужно ${STAR_POINTS}. Попробуй ещё раз!`);
 }
-function isUnlocked(item){return item.ch!=null?P.chDone[item.ch]:P.stars>=item.need;}
+function isUnlocked(item){return item.hard!=null?P.chHard[item.hard]:item.ch!=null?P.chDone[item.ch]:P.stars>=item.need;}
+function unlockedShips(){return SHIPS.filter(isUnlocked).map(s=>s.id);}
 function unlockedSkins(){return SKINS.filter(isUnlocked).map(s=>s.id);}
 function unlockedHeroes(){return HEROES.filter(isUnlocked).map(s=>s.id);}
 function unlockedAccs(){return ACCS.filter(isUnlocked).map(s=>s.id);}
-function freshUnlocks(beforeS,beforeH,beforeA){
+function freshUnlocks(beforeS,beforeH,beforeA,beforeR){
   const s=SKINS.filter(x=>isUnlocked(x)&&!beforeS.includes(x.id)).map(x=>'цвет «'+x.name+'»');
   const h=HEROES.filter(x=>isUnlocked(x)&&!beforeH.includes(x.id)).map(x=>'новый друг — '+x.name);
   const a=beforeA?ACCS.filter(x=>x.id&&isUnlocked(x)&&!beforeA.includes(x.id)).map(x=>'аксессуар «'+x.name+'»'):[];
-  return [...h,...s,...a];
+  const r=beforeR?SHIPS.filter(x=>isUnlocked(x)&&!beforeR.includes(x.id)).map(x=>'ракета «'+x.name+'»'):[];
+  return [...h,...s,...a,...r];
 }
 /* A star from a learning section also gives that section's key; three different keys open the challenge for a while. */
 function takeKey(subj){
@@ -2140,20 +2175,23 @@ const MODE_HELP={cube:'Тап — прыжок. Держи палец — пры
   ball:'Тап — шарик переворачивается на потолок и обратно.',ufo:'Каждый тап — маленький прыжок в воздухе.',wave:'Держи палец — волна идёт вверх, отпусти — вниз.',
   mix:'Цветные ворота меняют режим: К — кубик, Р — ракета, Ш — шарик, Н — НЛО, В — волна.',mine:'Здесь уровни, которые ты построил сам.'};
 function chUnlocked(i){return P.stars>=LEVELS[i].need;}
-function rewardOf(i){const s=SKINS.find(x=>x.ch===i);if(s)return 'наряд «'+s.name+'»';const h=HEROES.find(x=>x.ch===i);return h?'друг — '+h.name:'';}
+function rewardOf(i){const r=SHIPS.find(x=>x.hard===i),base=rewardOf0(i);
+  return [base,r&&!P.chHard[i]?'на «Сложно» — ракета «'+r.name+'»':''].filter(Boolean).join(' · ');}
+function rewardOf0(i){const s=SKINS.find(x=>x.ch===i);if(s)return 'наряд «'+s.name+'»';const h=HEROES.find(x=>x.ch===i);return h?'друг — '+h.name:'';}
 function openChSel(tab){
   if(tab)chTab=tab;
   $('#modeTabs').innerHTML=TABS.map(([id,n])=>`<button data-tab="${id}" class="${chTab===id?'on':''}">${n}</button>`).join('');
   $('#modeHelp').textContent=MODE_HELP[chTab];
   $('#diffSeg').innerHTML=CH_DIFF.map((d,i)=>`<button data-diff="${i}" class="${(P.chDiff==null?1:P.chDiff)===i?'on':''}">${d.name}</button>`).join('');
   $('.diffrow').hidden=chTab==='mine';
+  if(chTab!=='mine'&&(P.chDiff==null?1:P.chDiff)===0)$('#modeHelp').textContent+=' На «Легко» можно потренироваться, а награды дают на «Обычно» и «Сложно».';
   if(chTab==='mine')renderMine();
   else $('#levels').innerHTML=LEVELS.map((L,i)=>{
     if(L.mode!==chTab)return '';
     const open=chUnlocked(i),done=P.chDone[i],best=P.chBest[i],rw=rewardOf(i);
     return `<div class="lvcard${open?'':' locked'}" style="--lc:${L.th.line}">
       <div class="lvhead"><b>${L.name}</b><span class="diff">${'★'.repeat(L.diff)}${'☆'.repeat(3-L.diff)}</span></div>
-      <div class="lvmeta">${open?(done?'Пройден! ':'')+'Лучший результат: '+best+'%':'Откроется за '+L.need+' ★ (сейчас '+P.stars+')'}${rw?' · награда — '+rw:''}</div>
+      <div class="lvmeta">${open?(done?(P.chHard[i]?'Пройден на «Сложно»! ':'Пройден! '):'')+'Лучший результат: '+best+'%':'Откроется за '+L.need+' ★ (сейчас '+P.stars+')'}${rw?' · награда — '+rw:''}</div>
       ${open?`<div class="btnrow" style="justify-content:flex-start"><button class="btn2 main" data-ch="${i}">Играть</button><button class="btn2" data-chp="${i}">Тренировка</button></div>`:''}
     </div>`;}).join('');
   show('chsel');setTrack('lullaby');
@@ -2243,7 +2281,7 @@ function chDie(V){
   const c=CH.c;CH.state='dead';CH.deadT=.8;sfx.crash();
   const cx=(c.x-V.camX)*V.T+V.T/2,cy=V.floorY-c.y*V.T-V.T/2;burst(cx,cy,'#ffffff',30,380);burst(cx,cy,CH.th.line,20,300);
   const pct=Math.floor(c.x/CH.lv.len*100);
-  if(!CH.practice&&CH.n>=0&&pct>P.chBest[CH.n]){P.chBest[CH.n]=pct;save();}
+  if(!CH.practice&&CH.n>=0&&CH.diff>0&&pct>P.chBest[CH.n]){P.chBest[CH.n]=pct;save();}
   if(CH.n<0&&!CH.fromBuilder&&customs[CH.custom]&&pct>(customs[CH.custom].best||0)){customs[CH.custom].best=pct;saveCustoms();}
 }
 function chWin(){
@@ -2254,10 +2292,12 @@ function chWin(){
     text=`Попыток: ${CH.attempt}.`;
     if(CH.fromBuilder){B.level.done=true;text+=' Уровень проходимый — можно сохранять!';}
     else if(customs[CH.custom]){customs[CH.custom].best=100;customs[CH.custom].done=true;saveCustoms();}
+  }else if(CH.diff===0){
+    text=`Попыток: ${CH.attempt}. Это была тренировка на «Легко». Пройди на «Обычно» — и получишь награду!`;title='Отлично!';
   }else{
-    const bs=unlockedSkins(),bh=unlockedHeroes(),ba=unlockedAccs();
-    P.chDone[CH.n]=true;P.chBest[CH.n]=100;save();
-    const fresh=freshUnlocks(bs,bh,ba);
+    const bs=unlockedSkins(),bh=unlockedHeroes(),ba=unlockedAccs(),br=unlockedShips();
+    P.chDone[CH.n]=true;P.chBest[CH.n]=100;if(CH.diff===2)P.chHard[CH.n]=true;save();
+    const fresh=freshUnlocks(bs,bh,ba,br);
     text=`Попыток: ${CH.attempt}.`+(fresh.length?' Открыто: '+fresh.join(', ')+'!':'');
   }
   $('#chOverTitle').textContent=title;$('#chOverText').textContent=text;$('#chOver').hidden=false;
@@ -2272,7 +2312,7 @@ $('#chToList').addEventListener('click',chExit);
 $('#chHome').addEventListener('click',chExit);
 
 /* Level check used by tests: search for an input sequence that finishes the level. */
-window.__uhuBuild=buildLevel;window.__uhuEng={stepCube,newCube,CHUNKS};
+window.__uhuBuild=buildLevel;window.__uhuChWin=()=>{if(CH&&CH.state==='play')chWin();};window.__uhuEng={stepCube,newCube,CHUNKS};
 window.__uhuSolve=function(n,given){
   const lv=given||buildLevel(n),seen=new Set(),dyn=lv.objs.filter(o=>o.k==='orb'||o.k==='pad'||o.k==='portal');
   const W={objs:lv.objs,speedNow:lv.speed,lethal:true,ceil:lv.ceil,softPad:!given||!!given.softPad};
@@ -2318,14 +2358,19 @@ function openWardrobe(){
     return `<button class="skin${open?'':' locked'}${on?' on':''}" data-acc="${a.id}"><canvas width="128" height="128"></canvas><b>${a.name}</b><small>${open?(on?'надет':'надеть'):condText(a)}</small></button>`;}).join('');
   $$('#heroes .skin').forEach(b=>{const g=b.querySelector('canvas').getContext('2d');drawChar(g,64,76,62,0,b.dataset.hero,1.5);});
   $$('#skins .skin').forEach(b=>{const g=b.querySelector('canvas').getContext('2d');drawChar(g,64,76,62,0,hero,1.5,{skin:b.dataset.skin,acc:look.acc});});
+  const ur=unlockedShips();
+  $('#ships').innerHTML=SHIPS.map(r=>{const open=ur.includes(r.id),on=(P.ship||'neon')===r.id;
+    return `<button class="skin${open?'':' locked'}${on?' on':''}" data-ship="${r.id}"><canvas width="128" height="128"></canvas><b>${r.name}</b><small>${open?(on?'выбрана':'выбрать'):'Ракета «'+LEVELS[r.hard].name+'» на «Сложно»'}</small></button>`;}).join('');
+  $$('#ships .skin').forEach(b=>{const g=b.querySelector('canvas').getContext('2d');drawHero(g,{mode:'ship',rot:0},64,74,74,1.5,null,b.dataset.ship);});
   $$('#accs .skin').forEach(b=>{const g=b.querySelector('canvas').getContext('2d');drawChar(g,64,78,60,0,hero,1.5,{skin:look.skin,acc:b.dataset.acc});});
   show('wardrobe');
 }
 $('#wardrobe').addEventListener('click',e=>{
-  const h=e.target.closest('[data-hero]'),s=e.target.closest('[data-skin]'),a=e.target.closest('[data-acc]');
+  const h=e.target.closest('[data-hero]'),s=e.target.closest('[data-skin]'),a=e.target.closest('[data-acc]'),r=e.target.closest('[data-ship]');
   if(h){if(!unlockedHeroes().includes(h.dataset.hero)){sfx.no();toast('Этот друг пока не пришёл');return;}P.hero=h.dataset.hero;}
   else if(s){if(!unlockedSkins().includes(s.dataset.skin)){sfx.no();toast('Этот цвет пока закрыт');return;}setLook(P.hero,'skin',s.dataset.skin);}
   else if(a){if(!unlockedAccs().includes(a.dataset.acc)){sfx.no();toast('Этот аксессуар пока закрыт');return;}setLook(P.hero,'acc',a.dataset.acc);}
+  else if(r){if(!unlockedShips().includes(r.dataset.ship)){sfx.no();toast('Пройди «Тоннель» на «Сложно»');return;}P.ship=r.dataset.ship;}
   else return;
   save();sfx.ok();const sc=$('#wardrobe .wscroll').scrollTop;openWardrobe();$('#wardrobe .wscroll').scrollTop=sc;
 });
