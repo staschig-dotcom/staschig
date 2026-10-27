@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Снимок для раскраски: системная камера кладёт его сюда, игра читает и превращает в контур. -->
+<paths>
+    <cache-path name="photos" path="photos/" />
+</paths>

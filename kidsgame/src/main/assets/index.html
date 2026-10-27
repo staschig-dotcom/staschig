@@ -131,7 +131,18 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
 .label{font-size:14px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .empty{color:var(--muted);font-size:15px}
 .canvas-wrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
-#paint{background:#fff;border-radius:16px;touch-action:none;max-width:100%;max-height:100%}
+#paint{background:#fff;border-radius:16px;touch-action:none;max-width:100%;max-height:100%;display:block}
+.paperbox{position:relative;line-height:0}
+#lines{position:absolute;left:0;top:0;pointer-events:none;border-radius:16px}
+#dictCv{background:#fff;border-radius:16px;touch-action:none;display:block}
+.dcmds{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;align-content:center;flex:1;min-height:0;overflow-y:auto}
+.dcmds span{background:var(--card);border-radius:10px;padding:5px 9px;font-weight:900;font-size:19px;min-width:46px;text-align:center;font-variant-numeric:tabular-nums}
+.dcmds span.done{opacity:.35}
+.dcmds span.now{background:var(--star);color:var(--paper-ink);transform:scale(1.12)}
+.cpages{flex:1;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px;align-content:start;padding-bottom:10px}
+.cpages button{background:var(--card);border-radius:var(--r);aspect-ratio:1;font-size:46px;display:grid;place-items:center;box-shadow:0 5px 0 #18215a}
+.cpages button.photo{font-size:15px;font-weight:900;gap:2px;align-content:center;color:var(--star)}
+.cpages button.photo span{font-size:40px}
 .tools{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
 .sw{width:40px;height:40px;border-radius:50%;border:3px solid transparent;flex:none}
 .sw.on{border-color:var(--ink);transform:scale(1.12)}
@@ -361,7 +372,10 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
 .pinpad button{width:58px;height:58px;font-size:24px}
 #studio .gallery{grid-template-columns:repeat(3,1fr)}
 #studio .owl-row .owl{width:64px}
-.studio-cards .place{min-height:100px}
+.studio-cards{grid-template-columns:repeat(3,1fr);gap:10px}
+.studio-cards .place{min-height:96px;padding:10px}
+.studio-cards .place b{font-size:16px}
+.studio-cards .place small{font-size:12px}
 #draw .split{gap:12px}
 #draw .canvas-wrap{flex:1}
 #draw .panel{justify-content:center}
@@ -690,6 +704,8 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
         </div>
         <div class="studio-cards">
           <button class="place" id="goDraw" style="--g:#ffb36b"><span class="glyph">✎</span><b>Рисунок</b><small>Уху даст тему</small></button>
+          <button class="place" id="goDict" style="--g:#29e3ff"><span class="glyph">▦</span><b>Диктант</b><small>по клеточкам</small></button>
+          <button class="place" id="goColor" style="--g:#ff4fd8"><span class="glyph">◐</span><b>Раскраска</b><small>и твоё фото</small></button>
         </div>
       </div>
       <div class="col scroll">
@@ -699,13 +715,37 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
     </div>
   </section>
 
+  <section class="screen" id="dict" hidden>
+    <div class="bar">
+      <button class="icon-btn" id="dictBack" aria-label="Назад"><svg><use href="#i-home"/></svg></button>
+      <div class="grow prompt" id="dictPrompt" style="text-align:left;color:var(--ink)"></div>
+      <button class="icon-btn" id="dictSay" aria-label="Повторить"><svg><use href="#i-speak"/></svg></button>
+    </div>
+    <div class="split">
+      <div class="canvas-wrap" id="dictWrap"><canvas id="dictCv"></canvas></div>
+      <div class="col panel">
+        <div class="dcmds" id="dictCmds"></div>
+        <div class="btnrow" id="dictEnd" hidden><button class="btn2" id="dictColor">Раскрасить</button><button class="btn2 main" id="dictNext">Готово</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen" id="cpick" hidden>
+    <div class="bar">
+      <button class="icon-btn" id="cpickBack" aria-label="Назад"><svg><use href="#i-home"/></svg></button>
+      <h2 class="grow" style="font-size:22px">Раскраска</h2>
+    </div>
+    <div class="cpages" id="cpages"></div>
+    <input type="file" id="photoIn" accept="image/*" hidden>
+  </section>
+
   <section class="screen" id="draw" hidden>
     <div class="bar">
       <button class="icon-btn" id="drawBack" aria-label="Назад"><svg><use href="#i-home"/></svg></button>
       <div class="grow prompt" id="drawPrompt" style="text-align:left;color:var(--ink)"></div>
     </div>
     <div class="split">
-    <div class="canvas-wrap" id="canvasWrap"><canvas id="paint"></canvas></div>
+    <div class="canvas-wrap" id="canvasWrap"><div class="paperbox"><canvas id="paint"></canvas><canvas id="lines"></canvas></div></div>
     <div class="col panel">
     <div class="tools" id="colors"></div>
     <div class="stamps" id="stamps"></div>
@@ -713,6 +753,8 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:700}
       <button class="tool" data-size="6"><span class="dot" style="width:6px;height:6px"></span></button>
       <button class="tool on" data-size="14"><span class="dot" style="width:12px;height:12px"></span></button>
       <button class="tool" data-size="30"><span class="dot" style="width:20px;height:20px"></span></button>
+      <button class="tool" id="fill">Заливка</button>
+      <button class="tool" id="detail" hidden>Линий: средне</button>
       <button class="tool" id="eraser">Ластик</button>
       <button class="tool" id="undo">Назад</button>
       <button class="tool" id="clear">Чисто</button>
@@ -898,7 +940,7 @@ const NL=LEVELS.length;
 const DEF={stars:0,levels:{read:1,math:1,logic:1,time:1},good:{read:0,math:0,logic:0,time:0},music:true,sound:true,
   limit:0,pin:'',skin:'classic',hero:'owl',chBest:Array(NL).fill(0),chDone:Array(NL).fill(false),
   looks:{},keys:{read:false,math:false,logic:false},chMs:0,chGate:true,chMin:5,chDiff:1,ship:'neon',chHard:Array(NL).fill(false),
-  voice:true,voiceRate:1,voiceStories:true,tStars:0,tDay:''};
+  voice:true,voiceRate:1,voiceStories:true,tStars:0,tDay:'',dict:0};
 const clone=o=>JSON.parse(JSON.stringify(o));
 function load(){
   try{const s=JSON.parse(localStorage.getItem(STORE)||'null');
@@ -2773,8 +2815,8 @@ function openStudio(){
   gl.innerHTML=gallery.length?gallery.slice().reverse().map(src=>`<img src="${src}" alt="Рисунок">`).join(''):'<div class="empty" style="grid-column:1/-1">Пока пусто. Нарисуй что-нибудь, и рисунок появится здесь.</div>';
   show('studio');setTrack('elise');
 }
-let pen={color:PAINT[0],size:14,erase:false,stamp:null},ink=0,undoStack=[],drawTopic='';
-const paint=$('#paint'),pg=paint.getContext('2d');
+let pen={color:PAINT[0],size:14,erase:false,stamp:null,fill:false},ink=0,undoStack=[],drawTopic='',colorBase=null;
+const paint=$('#paint'),pg=paint.getContext('2d'),linesCv=$('#lines'),lg=linesCv.getContext('2d');
 function setupCanvas(){
   const wrap=$('#canvasWrap').getBoundingClientRect();
   let w=wrap.width,h=w*3/4;if(h>wrap.height){h=wrap.height;w=h*4/3;}
@@ -2782,19 +2824,42 @@ function setupCanvas(){
   const dpr=Math.min(window.devicePixelRatio||1,2);
   paint.style.width=w+'px';paint.style.height=h+'px';paint.width=w*dpr;paint.height=h*dpr;
   pg.setTransform(dpr,0,0,dpr,0,0);pg.fillStyle='#fff';pg.fillRect(0,0,w,h);pg.lineCap='round';pg.lineJoin='round';
+  /* coloring pages: the outline lives on its own layer above the paint, so brushes and the eraser never spoil it */
+  linesCv.style.width=w+'px';linesCv.style.height=h+'px';linesCv.width=w*dpr;linesCv.height=h*dpr;
+  lg.setTransform(dpr,0,0,dpr,0,0);lg.clearRect(0,0,w,h);if(colorBase)colorBase(lg,w,h);
 }
-function openDraw(){
-  drawTopic=pick(DRAW_TOPICS);$('#drawPrompt').textContent=drawTopic;say(drawTopic);
+function openDraw(base,title){
+  colorBase=typeof base==='function'?base:null;$('#detail').hidden=true;
+  drawTopic=colorBase?title:pick(DRAW_TOPICS);$('#drawPrompt').textContent=drawTopic;say(drawTopic);
   show('draw');ink=0;undoStack=[];
+  if(colorBase&&!pen.fill)$('#fill').click();
   requestAnimationFrame(()=>{setupCanvas();});
 }
 $('#colors').innerHTML=PAINT.map((c,i)=>`<button class="sw${i?'':' on'}" style="background:${c}" data-c="${c}" aria-label="Цвет"></button>`).join('');
 $('#stamps').innerHTML=STAMPS.map(s=>`<button data-st="${s}" aria-label="Наклейка">${s}</button>`).join('');
-function clearToolState(){$$('#stamps button').forEach(b=>b.classList.remove('on'));$('#eraser').classList.remove('on');}
-$('#colors').addEventListener('click',e=>{const b=e.target.closest('[data-c]');if(!b)return;$$('#colors .sw').forEach(x=>x.classList.toggle('on',x===b));pen.color=b.dataset.c;pen.erase=false;pen.stamp=null;clearToolState();});
+function clearToolState(){$$('#stamps button').forEach(b=>b.classList.remove('on'));$('#eraser').classList.remove('on');$('#fill').classList.remove('on');pen.fill=false;}
+$('#colors').addEventListener('click',e=>{const b=e.target.closest('[data-c]');if(!b)return;$$('#colors .sw').forEach(x=>x.classList.toggle('on',x===b));pen.color=b.dataset.c;
+  /* a new colour keeps the bucket on: children pick a colour and fill, pick another and fill */
+  const fill=pen.fill;clearToolState();pen.erase=false;pen.stamp=null;if(fill){pen.fill=true;$('#fill').classList.add('on');}});
 $('#stamps').addEventListener('click',e=>{const b=e.target.closest('[data-st]');if(!b)return;const on=!b.classList.contains('on');clearToolState();b.classList.toggle('on',on);pen.stamp=on?b.dataset.st:null;pen.erase=false;});
 $$('[data-size]').forEach(b=>b.addEventListener('click',()=>{$$('[data-size]').forEach(x=>x.classList.toggle('on',x===b));pen.size=+b.dataset.size;}));
 $('#eraser').addEventListener('click',()=>{const on=!pen.erase;clearToolState();pen.erase=on;pen.stamp=null;$('#eraser').classList.toggle('on',on);});
+$('#fill').addEventListener('click',()=>{const on=!pen.fill;clearToolState();pen.fill=on;pen.erase=false;pen.stamp=null;$('#fill').classList.toggle('on',on);});
+/* Bucket fill: spreads over pixels of the same colour and stops at the outline layer. */
+function floodFill(cx,cy,hex){
+  const W=paint.width,H=paint.height,dpr=W/parseFloat(paint.style.width),x0=Math.floor(cx*dpr),y0=Math.floor(cy*dpr);
+  if(x0<0||y0<0||x0>=W||y0>=H)return false;
+  const img=pg.getImageData(0,0,W,H),d=img.data,wall=colorBase?lg.getImageData(0,0,W,H).data:null;
+  const s=(y0*W+x0)*4;if(wall&&wall[s+3]>90)return false;
+  const tr=d[s],tg=d[s+1],tb=d[s+2],nr=parseInt(hex.slice(1,3),16),ng=parseInt(hex.slice(3,5),16),nb=parseInt(hex.slice(5,7),16);
+  if(Math.abs(tr-nr)+Math.abs(tg-ng)+Math.abs(tb-nb)<12)return false;
+  const seen=new Uint8Array(W*H),ok=i=>!seen[i]&&!(wall&&wall[i*4+3]>90)&&Math.abs(d[i*4]-tr)+Math.abs(d[i*4+1]-tg)+Math.abs(d[i*4+2]-tb)<90;
+  const st=[y0*W+x0];seen[y0*W+x0]=1;let n=0;
+  while(st.length){const i=st.pop(),x=i%W;d[i*4]=nr;d[i*4+1]=ng;d[i*4+2]=nb;d[i*4+3]=255;n++;
+    if(x>0&&ok(i-1)){seen[i-1]=1;st.push(i-1);}if(x<W-1&&ok(i+1)){seen[i+1]=1;st.push(i+1);}
+    if(i>=W&&ok(i-W)){seen[i-W]=1;st.push(i-W);}if(i<W*H-W&&ok(i+W)){seen[i+W]=1;st.push(i+W);}}
+  pg.putImageData(img,0,0);return n>0;
+}
 function pushUndo(){try{undoStack.push(pg.getImageData(0,0,paint.width,paint.height));if(undoStack.length>15)undoStack.shift();}catch(e){}}
 $('#undo').addEventListener('click',()=>{const d=undoStack.pop();if(d){pg.putImageData(d,0,0);}});
 $('#clear').addEventListener('click',()=>{pushUndo();const w=parseFloat(paint.style.width),h=parseFloat(paint.style.height);pg.fillStyle='#fff';pg.fillRect(0,0,w,h);ink=0;});
@@ -2802,6 +2867,7 @@ let drawing=false,last=null;
 function ptr(e){const r=paint.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top};}
 paint.addEventListener('pointerdown',e=>{
   e.preventDefault();ac();pushUndo();const p=ptr(e);
+  if(pen.fill){if(floodFill(p.x,p.y,pen.color)){ink+=12;sfx.tick();}else undoStack.pop();return;}
   if(pen.stamp){const s=pen.size*3+24;pg.font=`${s}px system-ui, "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;pg.textAlign='center';pg.textBaseline='middle';pg.fillText(pen.stamp,p.x,p.y);ink+=15;sfx.tick();return;}
   drawing=true;last=p;try{paint.setPointerCapture(e.pointerId);}catch(_){}
   pg.strokeStyle=pen.erase?'#fff':pen.color;pg.lineWidth=pen.erase?pen.size*2:pen.size;
@@ -2817,17 +2883,157 @@ function saveDrawing(){
   try{
     const w=parseFloat(paint.style.width),h=parseFloat(paint.style.height),sc=Math.min(1,480/w);
     const t=document.createElement('canvas');t.width=Math.round(w*sc);t.height=Math.round(h*sc);
-    t.getContext('2d').drawImage(paint,0,0,t.width,t.height);
+    t.getContext('2d').drawImage(paint,0,0,t.width,t.height);if(colorBase)t.getContext('2d').drawImage(linesCv,0,0,t.width,t.height);
     gallery.push(t.toDataURL('image/jpeg',.72));if(gallery.length>8)gallery.shift();saveGallery();ink=0;
   }catch(e){}
 }
 $('#drawDone').addEventListener('click',()=>{
-  if(ink<25){toast('Нарисуй ещё немножко');return;}
+  if(ink<25){toast(colorBase?'Раскрась ещё немножко':'Нарисуй ещё немножко');return;}
   saveDrawing();
-  giveStar('Твой рисунок теперь в Мастерской.');
+  giveStar(colorBase?'Твоя раскраска теперь в Мастерской.':'Твой рисунок теперь в Мастерской.');
 });
 $('#drawBack').addEventListener('click',openStudio);
 
+
+/* ---------- graphic dictation: Uhu dictates, the child draws along the grid ---------- */
+/* Moves: direction + number of cells. Every figure is closed, so its inside can be coloured later. Easy ones first. */
+const DICT=[
+ {n:'квадрат',m:'r3 u3 l3 d3'},{n:'лесенка',v:'ась',m:'u1 r1 u1 r1 u1 r1 d3 l3'},{n:'крестик',m:'r1 u1 r1 u1 l1 u1 l1 d1 l1 d1 r1 d1'},
+ {n:'грузовик',m:'u3 r3 d1 r2 d2 l5'},{n:'замок',m:'u3 r1 d1 r1 u1 r1 d1 r1 u1 r1 d3 l5'},{n:'домик',m:'r4 u3 ul2 dl2 d3'},
+ {n:'сердечко',v:'ось',m:'ul2 u1 ur1 dr1 ur1 dr1 d1 dl2'},{n:'котик',m:'r4 u5 dl1 l2 ul1 d5'},{n:'ёлка',v:'ась',m:'r2 u1 r2 ul2 r1 ul2 dl2 r1 dl2 r2 d1'},
+ {n:'кораблик',m:'r4 ur1 l3 u4 dr2 dl2 l3 dr1'},{n:'рыбка',v:'ась',m:'u2 dr1 ur2 r1 dr2 dl2 l1 ul2 dl1'},{n:'ракета',v:'ась',m:'ur1 u3 ur1 dr1 d3 dr1 l4'}];
+const DIRS={r:[1,0,'→','вправо'],l:[-1,0,'←','влево'],u:[0,1,'↑','вверх'],d:[0,-1,'↓','вниз'],
+  ur:[1,1,'↗','наискосок вверх и вправо'],ul:[-1,1,'↖','наискосок вверх и влево'],dr:[1,-1,'↘','наискосок вниз и вправо'],dl:[-1,-1,'↙','наискосок вниз и влево']};
+const CELLS=['','Одна клетка','Две клетки','Три клетки','Четыре клетки','Пять клеток'];
+const dictCv=$('#dictCv'),dg=dictCv.getContext('2d');
+let D=null;
+function dictMoves(f){return f.m.split(' ').map(t=>{const k=t.replace(/\d/g,''),n=+t.replace(/\D/g,'');return {k,n,dx:DIRS[k][0],dy:DIRS[k][1]};});}
+function dictPoints(moves){const pts=[[0,0]];moves.forEach(m=>{const [x,y]=pts[pts.length-1];pts.push([x+m.dx*m.n,y+m.dy*m.n]);});return pts;}
+function moveSay(m){return `${CELLS[m.n]} ${DIRS[m.k][3]}.`;}
+function openDict(){
+  const f=DICT[(P.dict||0)%DICT.length],moves=dictMoves(f);
+  D={f,moves,k:0,rem:moves[0].n,cur:[0,0],path:[[0,0]],wrong:0,drag:null,done:false};
+  $('#dictEnd').hidden=true;$('#dictCmds').hidden=false;show('dict');setTrack('elise');
+  requestAnimationFrame(()=>{dictLayout();dictRender();dictLoop();say('Графический диктант! Слушай Уху и веди линию по клеточкам. Начинаем с красной точки. '+moveSay(moves[0]));});
+}
+function dictLayout(){
+  const r=$('#dictWrap').getBoundingClientRect(),w=Math.max(200,Math.floor(r.width)),h=Math.max(150,Math.floor(r.height)),dpr=Math.min(window.devicePixelRatio||1,2);
+  dictCv.style.width=w+'px';dictCv.style.height=h+'px';dictCv.width=w*dpr;dictCv.height=h*dpr;dg.setTransform(dpr,0,0,dpr,0,0);
+  const pts=dictPoints(D.moves),xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]),minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);
+  const cell=Math.min(w/(maxX-minX+4),h/(maxY-minY+3),44),cols=Math.floor(w/cell),rows=Math.floor(h/cell);
+  D.L={w,h,cell,ox:(w-cols*cell)/2,oy:(h-rows*cell)/2,rows,cols,gx:Math.floor((cols-(maxX-minX))/2)-minX,gy:Math.floor((rows-(maxY-minY))/2)-minY};
+}
+function dictXY(p){const L=D.L;return [L.ox+(p[0]+L.gx)*L.cell,L.oy+(L.rows-(p[1]+L.gy))*L.cell];}
+function dictNode(x,y){const L=D.L,i=(x-L.ox)/L.cell-L.gx,j=L.rows-(y-L.oy)/L.cell-L.gy,ri=Math.round(i),rj=Math.round(j);
+  return Math.hypot(i-ri,j-rj)<.45?[ri,rj]:null;}
+function dictRender(time){
+  if(!D||!D.L)return;const L=D.L,g=dg;
+  g.fillStyle='#fff';g.fillRect(0,0,L.w,L.h);
+  g.strokeStyle='#cfe3ff';g.lineWidth=1;g.beginPath();
+  for(let i=0;i<=L.cols;i++){g.moveTo(L.ox+i*L.cell,L.oy);g.lineTo(L.ox+i*L.cell,L.oy+L.rows*L.cell);}
+  for(let j=0;j<=L.rows;j++){g.moveTo(L.ox,L.oy+j*L.cell);g.lineTo(L.ox+L.cols*L.cell,L.oy+j*L.cell);}g.stroke();
+  const path=D.path.map(dictXY);
+  if(D.done){g.fillStyle='rgba(255,212,92,.45)';g.beginPath();path.forEach(([x,y],i)=>i?g.lineTo(x,y):g.moveTo(x,y));g.closePath();g.fill();}
+  g.strokeStyle='#2a2140';g.lineWidth=Math.max(3,L.cell*.13);g.lineCap='round';g.lineJoin='round';
+  g.beginPath();path.forEach(([x,y],i)=>i?g.lineTo(x,y):g.moveTo(x,y));g.stroke();
+  const [sx,sy]=dictXY([0,0]);g.fillStyle='#e8434f';g.beginPath();g.arc(sx,sy,L.cell*.17,0,7);g.fill();
+  if(D.done)return;
+  const pulse=.5+.5*Math.sin((time||0)/180),[cx,cy]=dictXY(D.cur);
+  if(D.drag){g.strokeStyle='rgba(58,141,224,.8)';g.setLineDash([6,6]);g.lineWidth=Math.max(2,L.cell*.08);g.beginPath();g.moveTo(cx,cy);g.lineTo(D.drag.x,D.drag.y);g.stroke();g.setLineDash([]);}
+  if(D.wrong>=2){const m=D.moves[D.k],[tx,ty]=dictXY([D.cur[0]+m.dx*D.rem,D.cur[1]+m.dy*D.rem]);
+    g.fillStyle=`rgba(63,191,106,${.35+.4*pulse})`;g.beginPath();g.arc(tx,ty,L.cell*(.25+.1*pulse),0,7);g.fill();}
+  g.fillStyle='#3a8de0';g.beginPath();g.arc(cx,cy,L.cell*(.13+.05*pulse),0,7);g.fill();
+}
+function dictLoop(){if(cur!=='dict'||!D)return;dictRender(performance.now());requestAnimationFrame(dictLoop);}
+function dictCmdsHtml(){
+  $('#dictPrompt').textContent=D.done?`Готово! Это ${D.f.n}!`:moveSay(D.moves[D.k]);
+  $('#dictCmds').innerHTML=D.moves.map((m,i)=>`<span class="${i<D.k||D.done?'done':i===D.k?'now':''}">${i===D.k&&!D.done?D.rem:m.n}${DIRS[m.k][2]}</span>`).join('');
+}
+function dictTap(x,y){
+  const nd=dictNode(x,y);if(!nd||(nd[0]===D.cur[0]&&nd[1]===D.cur[1]))return;
+  const m=D.moves[D.k],a=nd[0]-D.cur[0],b=nd[1]-D.cur[1],t=m.dx?a/m.dx:b/m.dy;
+  /* the child may draw a long line at once or go cell by cell */
+  if(Number.isInteger(t)&&t>=1&&t<=D.rem&&a===m.dx*t&&b===m.dy*t){
+    D.cur=nd;D.path.push(nd);D.rem-=t;D.wrong=0;sfx.tick();
+    if(D.rem===0){D.k++;
+      if(D.k>=D.moves.length){D.done=true;dictCmdsHtml();dictRender();sfx.ok();praise('Молодец!');say(`Готово! Это ${D.f.n}!`);
+        P.dict=(P.dict||0)+1;save();$('#dictEnd').hidden=false;return;}
+      D.rem=D.moves[D.k].n;say(moveSay(D.moves[D.k]));}
+    dictCmdsHtml();return;
+  }
+  D.wrong++;sfx.no();
+  toast(D.wrong>=2?'Нужная точка светится зелёным':'Посчитай клеточки ещё раз');
+  say((D.wrong>=2?'Смотри, где светится. ':'Не туда. ')+`${CELLS[D.rem]} ${DIRS[m.k][3]}.`);
+}
+dictCv.addEventListener('pointerdown',e=>{if(!D||D.done)return;e.preventDefault();ac();const r=dictCv.getBoundingClientRect();D.drag={x:e.clientX-r.left,y:e.clientY-r.top};try{dictCv.setPointerCapture(e.pointerId);}catch(_){}});
+dictCv.addEventListener('pointermove',e=>{if(!D||!D.drag)return;const r=dictCv.getBoundingClientRect();D.drag={x:e.clientX-r.left,y:e.clientY-r.top};});
+dictCv.addEventListener('pointerup',e=>{if(!D||!D.drag)return;const p=D.drag;D.drag=null;dictTap(p.x,p.y);});
+dictCv.addEventListener('pointercancel',()=>{if(D)D.drag=null;});
+$('#dictSay').addEventListener('click',()=>{if(D)say(D.done?`Это ${D.f.n}!`:moveSay(D.moves[D.k]));});
+$('#dictBack').addEventListener('click',openStudio);
+$('#goDict').addEventListener('click',openDict);
+function figureBase(f){return (g,w,h)=>{
+  const pts=dictPoints(dictMoves(f)),xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]),minX=Math.min(...xs),minY=Math.min(...ys);
+  const sx=Math.max(...xs)-minX,sy=Math.max(...ys)-minY,c=Math.min(w*.8/sx,h*.8/sy),ox=(w-sx*c)/2,oy=(h+sy*c)/2;
+  g.strokeStyle='#2a2140';g.lineWidth=Math.max(4,c*.06);g.lineJoin='round';g.lineCap='round';
+  g.beginPath();pts.forEach(([x,y],i)=>{const X=ox+(x-minX)*c,Y=oy-(y-minY)*c;i?g.lineTo(X,Y):g.moveTo(X,Y);});g.closePath();g.stroke();};}
+$('#dictColor').addEventListener('click',()=>{if(D)openDraw(figureBase(D.f),'Раскрась: '+D.f.n);});
+$('#dictNext').addEventListener('click',()=>{
+  if(!D)return;
+  try{const t=document.createElement('canvas'),sc=Math.min(1,480/D.L.w);t.width=Math.round(D.L.w*sc);t.height=Math.round(D.L.h*sc);
+    t.getContext('2d').drawImage(dictCv,0,0,t.width,t.height);gallery.push(t.toDataURL('image/jpeg',.72));if(gallery.length>8)gallery.shift();saveGallery();}catch(e){}
+  giveStar(`Диктант готов: получил${D.f.v||'ся'} ${D.f.n}!`);
+});
+
+/* ---------- coloring: ready pictures and the child's own photo turned into an outline ---------- */
+const COLOR_PAGES=['🦉','🐱','🐶','🦊','🐢','🦋','🐟','🐘','🦄','🚀','🚗','⛵','🏠','🌸','🍄','🍓'];
+/* Outline of any picture: blur, Sobel edges, keep the strongest ones. soft=true for photos (more blur, fewer edges). */
+function lineArt(src,W,H,soft){
+  const c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
+  g.fillStyle='#fff';g.fillRect(0,0,W,H);
+  const sw=src.width,sh=src.height,k=Math.min(W/sw,H/sh)*(soft?1:.9),dw=sw*k,dh=sh*k;g.drawImage(src,(W-dw)/2,(H-dh)/2,dw,dh);
+  const d=g.getImageData(0,0,W,H).data,n=W*H,mag=new Float32Array(n),r=soft?2:1,b=new Float32Array(n);
+  /* edges are looked for in every colour channel: an orange cat on a grey-blue wall has almost the same brightness */
+  for(let ch=0;ch<3;ch++){
+    const a=new Float32Array(n);for(let i=0;i<n;i++)a[i]=d[i*4+ch];
+    for(let pass=0;pass<2;pass++){
+      for(let y=0;y<H;y++)for(let x=0;x<W;x++){let s=0,m=0;for(let q=-r;q<=r;q++){const xx=x+q;if(xx>=0&&xx<W){s+=a[y*W+xx];m++;}}b[y*W+x]=s/m;}
+      for(let y=0;y<H;y++)for(let x=0;x<W;x++){let s=0,m=0;for(let q=-r;q<=r;q++){const yy=y+q;if(yy>=0&&yy<H){s+=b[yy*W+x];m++;}}a[y*W+x]=s/m;}
+    }
+    for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){const i=y*W+x;
+      const gx=a[i-W+1]+2*a[i+1]+a[i+W+1]-a[i-W-1]-2*a[i-1]-a[i+W-1],gy=a[i+W-1]+2*a[i+W]+a[i+W+1]-a[i-W-1]-2*a[i-W]-a[i-W+1],v=Math.hypot(gx,gy);if(v>mag[i])mag[i]=v;}
+  }
+  let th=soft?0:60;
+  if(soft){const sorted=Float32Array.from(mag).sort();th=Math.max(40,sorted[Math.floor(n*PHOTO_DETAIL[photoDetail][1])]);}
+  const e=new Uint8Array(n);for(let i=0;i<n;i++)e[i]=mag[i]>th?1:0;
+  const out=g.createImageData(W,H),o=out.data;
+  for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){const i=y*W+x;if(!e[i])continue;
+    const nb=e[i-1]+e[i+1]+e[i-W]+e[i+W]+e[i-W-1]+e[i-W+1]+e[i+W-1]+e[i+W+1];if(nb<2)continue;
+    o[i*4]=42;o[i*4+1]=33;o[i*4+2]=64;o[i*4+3]=255;}
+  g.clearRect(0,0,W,H);g.putImageData(out,0,0);return c;
+}
+/* Photos differ a lot, so the child (or a parent) can ask for fewer or more lines. */
+const PHOTO_DETAIL=[['меньше',.95],['средне',.92],['больше',.88]];let photoDetail=1;
+$('#detail').addEventListener('click',()=>{photoDetail=(photoDetail+1)%3;$('#detail').textContent='Линий: '+PHOTO_DETAIL[photoDetail][0];
+  const w=parseFloat(linesCv.style.width),h=parseFloat(linesCv.style.height);lg.clearRect(0,0,w,h);if(colorBase)colorBase(lg,w,h);});
+function artBase(src,soft){return (g,w,h)=>{const s=Math.min(1,560/Math.max(w,h)),m=lineArt(src,Math.round(w*s),Math.round(h*s),soft);g.imageSmoothingEnabled=true;g.drawImage(m,0,0,w,h);};}
+function emojiCanvas(e){const c=document.createElement('canvas');c.width=c.height=400;const g=c.getContext('2d');
+  g.font='330px system-ui, "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(e,200,215);return c;}
+function openColorPick(){
+  $('#cpages').innerHTML=`<button class="photo" id="cpPhoto"><span>📷</span>Своё фото</button>`+COLOR_PAGES.map(e=>`<button data-cp="${e}">${e}</button>`).join('');
+  show('cpick');say('Выбери картинку или сфотографируй что-нибудь — Уху сделает из фото раскраску!');
+}
+$('#cpages').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;ac();
+  if(b.id==='cpPhoto'){$('#photoIn').click();return;}
+  openDraw(artBase(emojiCanvas(b.dataset.cp),false),'Раскрась картинку');});
+/* The photo is only read into memory and turned into lines; it is never saved or sent anywhere. */
+$('#photoIn').addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];e.target.value='';if(!f)return;
+  const url=URL.createObjectURL(f),img=new Image();
+  img.onload=()=>{URL.revokeObjectURL(url);openDraw(artBase(img,true),'Раскрась своё фото');$('#detail').hidden=false;$('#detail').textContent='Линий: '+PHOTO_DETAIL[photoDetail][0];};
+  img.onerror=()=>{URL.revokeObjectURL(url);toast('Не получилось открыть фото');};img.src=url;});
+$('#cpickBack').addEventListener('click',openStudio);
+$('#goColor').addEventListener('click',openColorPick);
+window.__uhuDict=()=>D;
 
 /* ---------- PIN ---------- */
 const PINS={buf:'',mode:'check',first:'',ok:null,cancel:null,fails:0,blockUntil:0};
@@ -2959,7 +3165,7 @@ $$('[data-go]').forEach(b=>b.addEventListener('click',()=>{ac();const s=b.datase
 $('#rewBtn').addEventListener('click',()=>{if(pendingLock){lockNow();return;}goMap();});
 $('#rewAgain').addEventListener('click',e=>{if(pendingLock){lockNow();return;}startRound(e.currentTarget.dataset.subj);});
 $$('.music-btn').forEach(b=>b.addEventListener('click',()=>{setMusic(!P.music);save();}));
-$('#goDraw').addEventListener('click',openDraw);
+$('#goDraw').addEventListener('click',()=>openDraw());
 window.addEventListener('resize',()=>{if(cur==='map')drawSky();});
 document.addEventListener('keydown',e=>{if(e.code!=='Space')return;const inp=cur==='chal'&&CH?CH.input:cur==='run'&&R&&R.phase==='run'?R.input:null;if(inp){inp.hold=true;inp.buffer=.12;}});
 document.addEventListener('keyup',e=>{if(e.code!=='Space')return;if(CH)CH.input.hold=false;if(R)R.input.hold=false;});
@@ -2967,6 +3173,7 @@ document.addEventListener('keyup',e=>{if(e.code!=='Space')return;if(CH)CH.input.
 window.uhuBack=()=>{
   if(cur==='start'||cur==='map'||cur==='lock')return false;
   if(cur==='draw'){openStudio();return true;}
+  if(cur==='dict'||cur==='cpick'){openStudio();return true;}
   if(cur==='chal'){chExit();return true;}
   if(cur==='build'){B=null;openChSel('mine');return true;}
   if(cur==='gate'){goMap();return true;}

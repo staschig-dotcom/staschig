@@ -3,18 +3,24 @@ package ru.staschig.zvezdy
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
 import android.os.SystemClock
 import android.speech.tts.TextToSpeech
 import android.webkit.JavascriptInterface
+import android.webkit.ValueCallback
+import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.core.content.FileProvider
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.webkit.WebViewAssetLoader
+import java.io.File
 import java.util.Locale
 
 class MainActivity : Activity() {
@@ -24,6 +30,10 @@ class MainActivity : Activity() {
     // Голос: стандартный синтезатор речи Android (без интернета, если на телефоне есть русский голос).
     private var tts: TextToSpeech? = null
     @Volatile private var ttsState = "init"
+
+    // Раскраска по фото: игра просит картинку, а снимок делает системная камера или берётся из галереи.
+    private var fileCallback: ValueCallback<Array<Uri>>? = null
+    private val photoFile by lazy { File(File(cacheDir, "photos").apply { mkdirs() }, "photo.jpg") }
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -49,6 +59,13 @@ class MainActivity : Activity() {
                 // Наружу игра не ходит: любые внешние ссылки блокируются.
                 override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean =
                     request.url.host != "appassets.androidplatform.net"
+            }
+        }
+        web.webChromeClient = object : WebChromeClient() {
+            override fun onShowFileChooser(view: WebView, callback: ValueCallback<Array<Uri>>, params: FileChooserParams): Boolean {
+                fileCallback?.onReceiveValue(null)
+                fileCallback = callback
+                return openPhotoChooser()
             }
         }
         // Монотонные часы для ограничения времени игры: перевод часов на телефоне их не меняет.
@@ -80,6 +97,50 @@ class MainActivity : Activity() {
             putExtra(Intent.EXTRA_TEXT, text)
         }
         startActivity(Intent.createChooser(send, "Сохранить код прогресса"))
+    }
+
+    private fun openPhotoChooser(): Boolean {
+        photoFile.delete()
+        val gallery = Intent(Intent.ACTION_GET_CONTENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "image/*"
+        }
+        val camera = try {
+            val uri = FileProvider.getUriForFile(this, "$packageName.files", photoFile)
+            Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
+                putExtra(MediaStore.EXTRA_OUTPUT, uri)
+                addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+        } catch (e: Exception) {
+            null
+        }
+        val chooser = Intent.createChooser(gallery, "Фото для раскраски").apply {
+            if (camera != null) putExtra(Intent.EXTRA_INITIAL_INTENTS, arrayOf(camera))
+        }
+        return try {
+            @Suppress("DEPRECATION")
+            startActivityForResult(chooser, PICK_PHOTO)
+            true
+        } catch (e: Exception) {
+            fileCallback = null
+            false
+        }
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        @Suppress("DEPRECATION")
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode != PICK_PHOTO) return
+        val callback = fileCallback ?: return
+        fileCallback = null
+        val uri = when {
+            resultCode != RESULT_OK -> null
+            data?.data != null -> data.data
+            photoFile.length() > 0 -> FileProvider.getUriForFile(this, "$packageName.files", photoFile)
+            else -> null
+        }
+        callback.onReceiveValue(uri?.let { arrayOf(it) })
     }
 
     private fun hideSystemBars() {
@@ -124,9 +185,15 @@ class MainActivity : Activity() {
     }
 
     override fun onDestroy() {
+        // Снимок нужен только на время раскраски: на устройстве он не остаётся.
+        photoFile.delete()
         tts?.shutdown()
         web.destroy()
         super.onDestroy()
+    }
+
+    private companion object {
+        const val PICK_PHOTO = 41
     }
 
     /** Мост для игры: часы, версия, «Поделиться» и голос. */
