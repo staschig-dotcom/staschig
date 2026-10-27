@@ -313,6 +313,15 @@ $('r-retry').onclick = () => {
 };
 $('r-next').onclick = () => openLevel(current + 1);
 
+// Кнопка «Назад» в Android-приложении: из уровня — в меню, из меню — выход.
+window.kodonavtBack = () => {
+  if (!$('game').classList.contains('hidden')) {
+    showMenu();
+    return true;
+  }
+  return false;
+};
+
 // ---------- запуск приложения ----------
 world = new World($('c'));
 buildMenu();
@@ -333,6 +342,8 @@ async function bootPython() {
 }
 bootPython();
 
-if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+// В APK все файлы уже внутри приложения, service worker нужен только в браузере.
+const inApp = typeof window.KodonavtNative !== 'undefined';
+if (!inApp && 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }

@@ -1,0 +1,68 @@
+name: Build Kodonavt APK
+
+# «Кодонавт» (обучающая игра по Python). Запускается при изменении игры или общих файлов сборки.
+on:
+  push:
+    branches: ["**"]
+    paths:
+      - "python-game/**"
+      - "kodonavt/**"
+      - "build.gradle.kts"
+      - "settings.gradle.kts"
+      - "gradle.properties"
+      - "gradle/**"
+      - "gradlew"
+      - "keystore/**"
+      - ".github/workflows/build-kodonavt-apk.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Эталонные решения всех уровней через настоящий Python (Pyodide).
+      - name: Game tests
+        run: node python-game/test/solve.mjs
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Debug APK
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon :kodonavt:assembleDebug
+          cp kodonavt/build/outputs/apk/debug/kodonavt-debug.apk Kodonavt.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Kodonavt-apk
+          path: Kodonavt.apk
+          if-no-files-found: error
+
+      # Постоянная ссылка для телефона:
+      # https://github.com/<owner>/<repo>/releases/download/kodonavt-apk-latest/Kodonavt.apk
+      - name: Publish release
+        if: github.ref_name == 'ccr-bb49e084-vcjpgo' || github.ref_name == github.event.repository.default_branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VER=$(sed -n 's/.*versionName = "\(.*\)".*/\1/p' kodonavt/build.gradle.kts)
+          gh release delete kodonavt-apk-latest --yes --cleanup-tag || true
+          gh release create kodonavt-apk-latest Kodonavt.apk \
+            --target "$GITHUB_SHA" \
+            --title "Кодонавт $VER — последняя сборка" \
+            --notes "Обучающая игра по Python, версия $VER. Сборка из коммита ${GITHUB_SHA::7}. Скачайте Kodonavt.apk и установите на Android." \
+            --latest=false

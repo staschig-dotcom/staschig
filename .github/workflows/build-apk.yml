@@ -1,8 +1,19 @@
 name: Build APK
 
+# ГитарПрактика. Запускается только при изменении файлов гитарного приложения
+# или общих файлов сборки. Другие игры собираются своими workflow.
 on:
   push:
     branches: ["**"]
+    paths:
+      - "app/**"
+      - "build.gradle.kts"
+      - "settings.gradle.kts"
+      - "gradle.properties"
+      - "gradle/**"
+      - "gradlew"
+      - "keystore/**"
+      - ".github/workflows/build-apk.yml"
   workflow_dispatch:
 
 permissions:
@@ -24,7 +35,7 @@ jobs:
       - name: Unit tests + debug APK
         run: |
           chmod +x gradlew
-          ./gradlew --no-daemon testDebugUnitTest assembleDebug
+          ./gradlew --no-daemon :app:testDebugUnitTest :app:assembleDebug
           cp app/build/outputs/apk/debug/app-debug.apk GuitarPractice.apk
 
       - uses: actions/upload-artifact@v4
@@ -61,7 +72,7 @@ jobs:
       - name: Render screens
         run: |
           chmod +x gradlew
-          ./gradlew --no-daemon recordPaparazziDebug --tests '*Screenshot*'
+          ./gradlew --no-daemon :app:recordPaparazziDebug --tests '*Screenshot*'
       - name: Publish screenshots
         env:
           GH_TOKEN: ${{ github.token }}

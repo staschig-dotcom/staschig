@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Дрон: круглое тело с визором и двигателем. Холст 108dp, видимая зона ~66dp в центре. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#7A4DFF" android:pathData="M30,52 L18,60 L30,63 Z" />
+    <path android:fillColor="#7A4DFF" android:pathData="M78,52 L90,60 L78,63 Z" />
+    <path android:fillColor="#38E1FF" android:pathData="M46,76 L54,90 L62,76 Z" />
+    <path android:fillColor="#DFE8FF"
+        android:pathData="M54,32 C68,32 78,42 78,55 C78,68 68,78 54,78 C40,78 30,68 30,55 C30,42 40,32 54,32 Z" />
+    <path android:fillColor="#0A1030"
+        android:pathData="M38,48 L70,48 C73,48 74,50 74,53 L74,58 C74,61 73,63 70,63 L38,63 C35,63 34,61 34,58 L34,53 C34,50 35,48 38,48 Z" />
+    <path android:fillColor="#38E1FF" android:pathData="M42,55.5 a3.5,3.5 0 1,0 7,0 a3.5,3.5 0 1,0 -7,0 Z" />
+    <path android:fillColor="#38E1FF" android:pathData="M59,55.5 a3.5,3.5 0 1,0 7,0 a3.5,3.5 0 1,0 -7,0 Z" />
+</vector>

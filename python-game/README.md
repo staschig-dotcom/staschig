@@ -48,3 +48,14 @@
 - Задачи формата «вход → выход» с автопроверкой — мостик к настоящим олимпиадам.
 - Режим «найди баг»: дан сломанный код.
 - Больше миров и сюжета (сейчас 9 уровней = один отсек корабля).
+
+## Android-приложение (APK)
+
+Модуль `kodonavt/` оборачивает эту папку в WebView: файлы игры подключаются как assets прямо из
+`python-game/`, копий нет. Сборка идёт в GitHub Actions (workflow **Build Kodonavt APK**), APK по постоянной ссылке:
+
+    https://github.com/staschig-dotcom/staschig/releases/download/kodonavt-apk-latest/Kodonavt.apk
+
+Пакет `ru.staschig.kodonavt`, подпись общая с остальными приложениями (`keystore/debug.keystore`, не менять).
+Если игра в приложении не стартует, подключи телефон по USB, открой на компьютере `chrome://inspect` и посмотри консоль:
+отладка WebView включена в debug-сборке.
