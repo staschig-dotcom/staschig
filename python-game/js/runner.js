@@ -109,8 +109,10 @@ export function runProgram(py, sim, code) {
 }
 
 // Понятное объяснение ошибки Python для ребёнка.
-export function explainError(err) {
+export function explainError(err, lines = []) {
   const where = err.line ? ` (строка ${err.line})` : '';
+  const text = err.line ? lines[err.line - 1]?.trim() : '';
+  const at = err.line ? ` (строка ${err.line}${text ? ': ' + text : ''})` : '';
   const m = err.msg || '';
   switch (err.type) {
     case 'DroneError':
@@ -121,9 +123,12 @@ export function explainError(err) {
     case 'TabError':
       return `Неправильные отступы${where}. Всё внутри for/while/if сдвигается на 4 пробела.`;
     case 'SyntaxError':
-      if (/expected ':'/.test(m)) return `Забыто двоеточие в конце строки${where}.`;
-      if (/never closed|was never closed|unmatched/.test(m)) return `Не хватает или лишняя скобка${where}.`;
-      return `Ошибка в записи кода${where}. Проверь скобки, двоеточия и отступы.`;
+      if (/expected ':'/.test(m)) return `Забыто двоеточие в конце строки${at}.`;
+      if (/never closed|was never closed|unmatched/.test(m)) return `Не хватает или лишняя скобка${at}.`;
+      if (text && /^[A-Za-z_]\w*\(.*\)\s*:$/.test(text)) {
+        return `Двоеточие ставят после while, if, for или def, а тут просто команда${at}. Может, в начале не хватает «while not» или «if»?`;
+      }
+      return `Ошибка в записи кода${at}. Проверь скобки, двоеточия и отступы.`;
     case 'NameError': {
       const name = /name '(.+?)'/.exec(m)?.[1];
       return `Дрон не знает слова «${name ?? '?'}»${where}. Проверь, нет ли опечатки.`;

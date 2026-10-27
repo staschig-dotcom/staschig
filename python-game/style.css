@@ -151,3 +151,7 @@ h1 {
   white-space: pre-wrap; user-select: text;
 }
 #fatal[hidden] { display: none; }
+
+/* в узком ландшафте панель прокручивается, а не сжимает строки друг на друга */
+#task, #chips, #status, #buttons { flex-shrink: 0; }
+#hint .chip { margin-top: 6px; font-family: system-ui, sans-serif; }

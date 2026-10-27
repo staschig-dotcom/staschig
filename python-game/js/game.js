@@ -254,7 +254,7 @@ async function run() {
   if (printed.length) say(`<b>Дрон говорит:</b> ${printed.map(escapeHtml).join('<br>')}`);
 
   if (!res.ok) {
-    setStatus(explainError(res), 'err');
+    setStatus(explainError(res, srcLines), 'err');
     return setRunning(false);
   }
   const ev = sim.evaluate();
@@ -299,7 +299,17 @@ $('speed').onclick = () => {
 $('hintbtn').onclick = () => {
   const lv = LEVELS[current];
   const h = $('hint');
-  h.textContent = lv.hints[Math.min(hintIdx, lv.hints.length - 1)];
+  const idx = Math.min(hintIdx, lv.hints.length - 1);
+  h.textContent = lv.hints[idx];
+  if (idx === lv.hints.length - 1 && /\n|\(/.test(lv.hints[idx])) {
+    // последняя подсказка — готовый код: даём вставить его, чтобы не мучиться с набором
+    const b = document.createElement('button');
+    b.className = 'chip';
+    b.textContent = '⤵ Заменить мой код этим';
+    b.onclick = () => setCode(lv.hints[idx], lv.hints[idx].length);
+    h.appendChild(document.createElement('br'));
+    h.appendChild(b);
+  }
   h.classList.remove('hidden');
   hintIdx++;
 };

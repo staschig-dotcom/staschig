@@ -61,6 +61,8 @@ r = play(L[0], 'while True:\n    turn_left()');
 check('бесконечный цикл с командами прерывается', !r.res.ok, explainError(r.res));
 r = play(L[0], 'for i in range(3)\n    move()');
 check('нет двоеточия', !r.res.ok && /двоеточие/.test(explainError(r.res)), explainError(r.res));
+r = play(L[4], 'while not wall_ahead():\n    move(1)\nwall_ahead():\n    turn_right()\n    move(3)');
+check('команда с двоеточием без while: понятное объяснение', !r.res.ok && /while/.test(explainError(r.res, ['while not wall_ahead():', '    move(1)', 'wall_ahead():'])) && /строка 3: wall_ahead\(\):/.test(explainError(r.res, ['while not wall_ahead():', '    move(1)', 'wall_ahead():'])), explainError(r.res, ['', '', 'wall_ahead():']));
 r = play(L[0], 'mov(3)');
 check('опечатка в имени', r.res.type === 'NameError' && /mov/.test(explainError(r.res)), explainError(r.res));
 r = play(L[0], 'for i in range(3):\nmove()');
