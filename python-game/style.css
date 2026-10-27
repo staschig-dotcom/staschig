@@ -155,3 +155,23 @@ h1 {
 /* в узком ландшафте панель прокручивается, а не сжимает строки друг на друга */
 #task, #chips, #status, #buttons { flex-shrink: 0; }
 #hint .chip { margin-top: 6px; font-family: system-ui, sans-serif; }
+
+/* ---------- энергия дрона ---------- */
+#energy {
+  position: absolute; right: 8px; bottom: 8px; padding: 6px 12px; border-radius: 12px;
+  background: rgba(18, 24, 51, .88); border: 1px solid var(--gold); color: var(--gold);
+  font: 700 18px ui-monospace, Menlo, Consolas, monospace;
+}
+#energy.low { color: var(--red); border-color: var(--red); }
+
+/* панель прокручивается, а кнопки запуска всегда видны внизу */
+#panel { overflow-y: auto; }
+#buttons {
+  position: sticky; bottom: 0; z-index: 2; background: var(--panel);
+  padding: 6px 0 max(2px, env(safe-area-inset-bottom)); margin-top: auto;
+}
+#hint { max-height: 28vh; overflow-y: auto; }
+#code { flex: 1 0 auto; min-height: 110px; }
+
+.icon-btn.story { top: calc(max(8px, env(safe-area-inset-top)) + 48px); }
+#speech { transition: opacity .3s; }

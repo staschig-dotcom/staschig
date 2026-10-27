@@ -62,8 +62,33 @@ def on_crystal():
 def crystals():
     return _call('crystals')
 
+def wall_left():
+    return _call('wall_left')
+
+def wall_right():
+    return _call('wall_right')
+
+def distance():
+    return _call('distance')
+
+def get_x():
+    return _call('get_x')
+
+def get_y():
+    return _call('get_y')
+
+def goal_x():
+    return _call('goal_x')
+
+def goal_y():
+    return _call('goal_y')
+
+def energy():
+    return _call('energy')
+
 _API = ['move', 'jump', 'turn_left', 'turn_right', 'take', 'wall_ahead',
-        'laser_ahead', 'at_goal', 'on_crystal', 'crystals']
+        'laser_ahead', 'at_goal', 'on_crystal', 'crystals', 'wall_left', 'wall_right',
+        'distance', 'get_x', 'get_y', 'goal_x', 'goal_y', 'energy']
 
 def _last_user_line(tb):
     line = None
@@ -131,7 +156,7 @@ export function explainError(err, lines = []) {
       return `Ошибка в записи кода${at}. Проверь скобки, двоеточия и отступы.`;
     case 'NameError': {
       const name = /name '(.+?)'/.exec(m)?.[1];
-      return `Дрон не знает слова «${name ?? '?'}»${where}. Проверь, нет ли опечатки.`;
+      return `Дрон не знает слова «${name ?? '?'}»${where}. Проверь, нет ли опечатки и создана ли переменная.`;
     }
     case 'TypeError':
       return `Команде дали не то, что она ждёт${where}. Например, move(3), а не move(три).`;

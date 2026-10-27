@@ -21,6 +21,15 @@ const SOLUTIONS = {
   6: 'while not at_goal():\n    if wall_ahead():\n        turn_right()\n    else:\n        move()',
   7: 'while not at_goal():\n    move()\n    if on_crystal():\n        take()',
   8: 'while not at_goal():\n    if laser_ahead():\n        jump()\n    else:\n        move()',
+  10: 'n = distance()\nmove(n // 2)\ntake()\nmove(n // 2)',
+  11: 'while not at_goal():\n    if not wall_right():\n        turn_right()\n        move()\n    elif not wall_ahead():\n        move()\n    else:\n        turn_left()',
+  12: 'def charge():\n    turn_right()\n    move()\n    take()\n    turn_right()\n    turn_right()\n    move()\n    turn_right()\n\nfor i in range(3):\n    move(3)\n    charge()\nmove(2)',
+  13: 'for i in range(1, 6):\n    move(i)\n    turn_right()',
+  14: 'def row():\n    for i in range(4):\n        move()\n        take()\n\nfor r in range(2):\n    row()\n    turn_right()\n    move()\n    turn_right()\n    row()\n    turn_left()\n    move()\n    turn_left()\nrow()',
+  15: 'while not at_goal():\n    if not wall_right():\n        turn_right()\n        move()\n    elif not wall_ahead():\n        move()\n    else:\n        turn_left()\n    if on_crystal():\n        take()',
+  16: 'turn_left()\nturn_left()\nwhile get_x() > goal_x():\n    move()\nturn_right()\nwhile get_y() > goal_y():\n    move()',
+  17: 'while not at_goal():\n    if laser_ahead():\n        jump()\n    else:\n        move()\n    if on_crystal():\n        take()',
+  18: 'while not wall_ahead():\n    move()\nturn_right()\nwhile not wall_ahead():\n    move()',
   9: 'def step():\n    move()\n    turn_right()\n    move()\n    take()\n    turn_left()\n\nfor i in range(5):\n    step()\nmove()',
 };
 
@@ -44,10 +53,23 @@ for (const lv of LEVELS) {
   const hint = play(lv, lv.hints[1]);
   check('  последняя подсказка решает уровень', hint.res.ok && hint.ev.won);
   void sim;
+  if (lv.starter) {
+    const st = play(lv, lv.starter);
+    check('  исходный код с багами НЕ решает уровень', !(st.res.ok && st.ev.won));
+  }
 }
 
 const L = LEVELS;
-let r = play(L[0], 'move(2)');
+// энергия
+let r = play(L[11], 'move(11)');
+check('энергия: без подзарядки не дойти', !r.res.ok && /энерги/.test(r.res.msg), explainError(r.res));
+r = play(L[16], 'while not at_goal():\n    if laser_ahead():\n        jump()\n    else:\n        move()');
+check('энергия: без кристаллов в уровне 17 не дойти', !r.res.ok && /энерги/.test(r.res.msg), explainError(r.res));
+r = play(L[9], 'move(1)\nprint(distance(), get_x(), get_y(), goal_x(), goal_y(), energy())');
+check('датчики distance/координаты работают', r.res.ok);
+// у лабиринтов нет второго «лёгкого» решения левой рукой, но обычная ходьба по стене должна проходить
+
+r = play(L[0], 'move(2)');
 check('недоход до цели не засчитывается', r.res.ok && !r.ev.won);
 r = play(L[0], 'move(9)');
 check('стена: ошибка дрона', !r.res.ok && r.res.type === 'DroneError', explainError(r.res));

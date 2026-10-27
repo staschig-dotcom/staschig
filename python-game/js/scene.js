@@ -5,7 +5,7 @@ import { parseLevel } from './sim.js';
 const ease = (p) => (p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2);
 
 const tileGeo = new THREE.BoxGeometry(0.94, 0.2, 0.94);
-const wallGeo = new THREE.BoxGeometry(0.94, 0.8, 0.94);
+const wallGeo = new THREE.BoxGeometry(0.94, 0.4, 0.94);
 const tileEdges = new THREE.EdgesGeometry(tileGeo);
 const wallEdges = new THREE.EdgesGeometry(wallGeo);
 const crystalGeo = new THREE.OctahedronGeometry(0.2, 0);
@@ -183,6 +183,8 @@ export class World {
     const { w, h, cells } = this.map;
     this.cx = (w - 1) / 2;
     this.cz = (h - 1) / 2;
+    // С лабиринтами камера смотрит почти сверху, чтобы стены не закрывали клетки за собой.
+    this.pitch = cells.some((r) => r.includes('#')) ? 1.25 : 0.95;
 
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; x++) {
@@ -191,7 +193,7 @@ export class World {
         const p = this.tile(x, y);
         if (c === '#') {
           const wall = new THREE.Mesh(wallGeo, mat.wall);
-          wall.position.set(p.x, 0.4, p.z);
+          wall.position.set(p.x, 0.2, p.z);
           wall.add(new THREE.LineSegments(wallEdges, mat.wallEdge));
           this.group.add(wall);
           continue;

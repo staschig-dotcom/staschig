@@ -2,7 +2,9 @@
 
 const DX = [0, 1, 0, -1]; // 0 = север, 1 = восток, 2 = юг, 3 = запад
 const DY = [-1, 0, 1, 0];
-const MAX_ACTIONS = 400;
+const MAX_ACTIONS = 1500;
+const MOVE_COST = 1;
+const JUMP_COST = 2;
 
 export function parseLevel(map) {
   const h = map.length;
@@ -45,6 +47,15 @@ export class Sim {
     this.total = this.map.crystals.length;
     this.actions = [];
     this.failed = false;
+    // Энергия: если у уровня задан energy, каждый шаг стоит энергии, а кристаллы её восполняют.
+    this.maxEnergy = level.energy ?? null;
+    this.energy = this.maxEnergy ?? Infinity;
+    this.crystalEnergy = level.crystalEnergy ?? 0;
+  }
+
+  log(action) {
+    action.energy = this.maxEnergy === null ? null : this.energy;
+    this.actions.push(action);
   }
 
   cell(x, y) {
@@ -61,8 +72,14 @@ export class Sim {
     return [this.x + DX[this.dir] * n, this.y + DY[this.dir] * n];
   }
 
+  // Клетка сбоку от дрона: turn = 1 — справа, 3 — слева.
+  side(turn) {
+    const d = (this.dir + turn) % 4;
+    return [this.x + DX[d], this.y + DY[d]];
+  }
+
   fail(action, err) {
-    this.actions.push(action);
+    this.log(action);
     this.failed = true;
     return { err };
   }
@@ -80,19 +97,32 @@ export class Sim {
       case 'turn_right': {
         const d = name === 'turn_left' ? -1 : 1;
         this.dir = (this.dir + d + 4) % 4;
-        this.actions.push({ t: 'turn', d, line });
+        this.log({ t: 'turn', d, line });
         return { v: null };
       }
       case 'take': {
         const key = `${this.x},${this.y}`;
         if (this.left.delete(key)) {
-          this.actions.push({ t: 'take', x: this.x, y: this.y, line });
+          if (this.maxEnergy !== null) this.energy = Math.min(this.maxEnergy, this.energy + this.crystalEnergy);
+          this.log({ t: 'take', x: this.x, y: this.y, line });
         } else {
-          this.actions.push({ t: 'miss', line });
+          this.log({ t: 'miss', line });
         }
         return { v: null };
       }
       case 'wall_ahead': return { v: !this.walkable(...this.ahead()) };
+      case 'wall_left': return { v: !this.walkable(...this.side(3)) };
+      case 'wall_right': return { v: !this.walkable(...this.side(1)) };
+      case 'distance': {
+        let n = 0;
+        while (this.walkable(...this.ahead(n + 1))) n++;
+        return { v: n };
+      }
+      case 'get_x': return { v: this.x };
+      case 'get_y': return { v: this.y };
+      case 'goal_x': return { v: this.map.goal.x };
+      case 'goal_y': return { v: this.map.goal.y };
+      case 'energy': return { v: this.maxEnergy === null ? 999 : this.energy };
       case 'laser_ahead': return { v: this.cell(...this.ahead()) === 'L' };
       case 'at_goal': return { v: this.cell(this.x, this.y) === 'G' };
       case 'on_crystal': return { v: this.left.has(`${this.x},${this.y}`) };
@@ -107,9 +137,11 @@ export class Sim {
     if (!this.walkable(nx, ny)) {
       return this.fail({ t: 'bump', line }, 'Дрон врезался в стену!');
     }
+    if (this.energy < MOVE_COST) return this.noEnergy(line);
+    this.energy -= MOVE_COST;
     this.x = nx;
     this.y = ny;
-    this.actions.push({ t: 'move', from, to: { x: nx, y: ny }, line });
+    this.log({ t: 'move', from, to: { x: nx, y: ny }, line });
     if (this.cell(nx, ny) === 'L') {
       return this.fail({ t: 'zap', line }, 'Дрона поразил лазер!');
     }
@@ -123,13 +155,19 @@ export class Sim {
     if (!this.walkable(mx, my) || !this.walkable(nx, ny)) {
       return this.fail({ t: 'bump', line }, 'Прыжок не получился: впереди нет места для приземления!');
     }
+    if (this.energy < JUMP_COST) return this.noEnergy(line);
+    this.energy -= JUMP_COST;
     this.x = nx;
     this.y = ny;
-    this.actions.push({ t: 'jump', from, to: { x: nx, y: ny }, line });
+    this.log({ t: 'jump', from, to: { x: nx, y: ny }, line });
     if (this.cell(nx, ny) === 'L') {
       return this.fail({ t: 'zap', line }, 'Дрон приземлился на лазер!');
     }
     return { v: null };
+  }
+
+  noEnergy(line) {
+    return this.fail({ t: 'bump', line }, 'Не хватило энергии! Подбирай кристаллы по дороге: они заряжают дрона.');
   }
 
   // Итог после выполнения программы (если Python не выбросил ошибку).

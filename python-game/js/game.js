@@ -40,12 +40,41 @@ const CHIPS = [
   { lvl: 8, label: 'laser_ahead()', text: 'laser_ahead()', kind: 'raw' },
   { lvl: 9, label: 'def step():', text: 'def step():', kind: 'open' },
   { lvl: 9, label: 'step()', text: 'step()', kind: 'stmt' },
+  { lvl: 10, label: 'n = distance()', text: 'n = distance()', kind: 'stmt' },
+  { lvl: 10, label: 'n', text: 'n', kind: 'raw' },
+  { lvl: 10, label: 'n // 2', text: 'n // 2', kind: 'raw' },
+  { lvl: 10, label: 'distance()', text: 'distance()', kind: 'raw' },
+  { lvl: 11, label: 'if not wall_right():', text: 'if not wall_right():', kind: 'open' },
+  { lvl: 11, label: 'elif not wall_ahead():', text: 'elif not wall_ahead():', kind: 'else' },
+  { lvl: 11, label: 'wall_right()', text: 'wall_right()', kind: 'raw' },
+  { lvl: 11, label: 'wall_left()', text: 'wall_left()', kind: 'raw' },
+  { lvl: 12, label: 'def charge():', text: 'def charge():', kind: 'open' },
+  { lvl: 12, label: 'charge()', text: 'charge()', kind: 'stmt' },
+  { lvl: 12, label: 'energy()', text: 'energy()', kind: 'raw' },
+  { lvl: 13, label: 'for i in range(1, 6):', text: 'for i in range(1, 6):', kind: 'open', caret: 2 },
+  { lvl: 13, label: 'move(i)', text: 'move(i)', kind: 'stmt' },
+  { lvl: 13, label: 'i', text: 'i', kind: 'raw' },
+  { lvl: 14, label: 'def row():', text: 'def row():', kind: 'open' },
+  { lvl: 14, label: 'row()', text: 'row()', kind: 'stmt' },
+  { lvl: 14, label: 'for r in range():', text: 'for r in range():', kind: 'open', caret: 2 },
+  { lvl: 16, label: 'while', text: 'while ', kind: 'raw' },
+  { lvl: 16, label: 'get_x()', text: 'get_x()', kind: 'raw' },
+  { lvl: 16, label: 'get_y()', text: 'get_y()', kind: 'raw' },
+  { lvl: 16, label: 'goal_x()', text: 'goal_x()', kind: 'raw' },
+  { lvl: 16, label: 'goal_y()', text: 'goal_y()', kind: 'raw' },
+  { lvl: 16, label: '<', text: ' < ', kind: 'raw' },
+  { lvl: 16, label: '>', text: ' > ', kind: 'raw' },
+  { lvl: 16, label: '==', text: ' == ', kind: 'raw' },
+  { lvl: 16, label: '!=', text: ' != ', kind: 'raw' },
 ];
+// Самые нужные кнопки всегда слева, остальные — от новых к старым.
+const CORE = new Set(['move()', 'turn_left()', 'turn_right()', 'take()']);
 const CTL = [
   { label: '↵', act: 'enter', title: 'Новая строка' },
   { label: '⇥', act: 'indent', title: 'Отступ вправо' },
   { label: '⇤', act: 'outdent', title: 'Отступ влево' },
   { label: ':', act: 'raw', text: ':' },
+  { label: '=', act: 'raw', text: ' = ' },
   { label: '1', act: 'raw', text: '1' },
   { label: '2', act: 'raw', text: '2' },
   { label: '3', act: 'raw', text: '3' },
@@ -60,7 +89,7 @@ let current = 0;
 let hintIdx = 0;
 let running = false;
 let speedIdx = 0;
-const SPEEDS = [1, 2, 4];
+const SPEEDS = [1, 2, 4, 8];
 const printed = [];
 
 const code = $('code');
@@ -71,8 +100,11 @@ function setStatus(text, cls = '') {
   status.className = cls;
 }
 
-function say(html) {
+let speechTimer = null;
+function say(html, autoHideMs = 0) {
   $('speech').innerHTML = html;
+  clearTimeout(speechTimer);
+  if (html && autoHideMs) speechTimer = setTimeout(() => say(''), autoHideMs);
 }
 
 // ---------- меню ----------
@@ -113,8 +145,11 @@ function buildChips(level) {
     b.onclick = fn;
     box.appendChild(b);
   };
-  for (const c of CHIPS.filter((c) => c.lvl <= level.id)) mk(c.label, '', () => applyChip(c));
+  const avail = CHIPS.filter((c) => c.lvl <= level.id);
+  const rest = avail.filter((c) => !CORE.has(c.label)).sort((a, b) => b.lvl - a.lvl);
+  for (const c of avail.filter((c) => CORE.has(c.label))) mk(c.label, '', () => applyChip(c));
   for (const c of CTL) mk(c.label, c.title, () => applyCtl(c), 'ctl');
+  for (const c of rest) mk(c.label, '', () => applyChip(c));
 }
 
 function openLevel(i) {
@@ -127,12 +162,21 @@ function openLevel(i) {
   $('task-title').textContent = `${lv.id}. ${lv.title}`;
   $('task-text').textContent = lv.task;
   $('hint').classList.add('hidden');
-  code.value = save.code[lv.id] ?? '';
+  code.value = save.code[lv.id] ?? lv.starter ?? '';
   buildChips(lv);
   setStatus('');
-  say(`<b>ИСКРА:</b> ${lv.story}`);
+  say(`<b>ИСКРА:</b> ${lv.story}`, 9000);
   world.load(lv.map);
+  setEnergy(lv.energy ?? null);
   setRunning(false);
+}
+
+function setEnergy(v, max = LEVELS[current].energy) {
+  const el = $('energy');
+  if (v === null || v === undefined || max === undefined) return el.classList.add('hidden');
+  el.classList.remove('hidden');
+  el.textContent = `⚡ ${v}/${max}`;
+  el.classList.toggle('low', v <= 1);
 }
 
 function setRunning(v) {
@@ -241,6 +285,7 @@ async function run() {
   say('');
   setRunning(true);
   world.reset();
+  setEnergy(lv.energy ?? null);
   printed.length = 0;
 
   const sim = new Sim(lv);
@@ -248,6 +293,7 @@ async function run() {
   const srcLines = src.split('\n');
   const completed = await world.play(sim.actions, (a) => {
     if (a.line) setStatus(`Строка ${a.line}:  ${srcLines[a.line - 1]?.trim() ?? ''}`);
+    if (a.energy != null) setEnergy(a.energy);
   });
   if (!completed) return setRunning(false); // нажали «сброс» или ушли в меню
 
@@ -288,6 +334,7 @@ function win(lv, lines) {
 $('run').onclick = run;
 $('reset').onclick = () => {
   world.reset();
+  setEnergy(LEVELS[current].energy ?? null);
   setRunning(false);
   setStatus('');
 };
@@ -315,10 +362,12 @@ $('hintbtn').onclick = () => {
 };
 $('back').onclick = showMenu;
 $('speech').onclick = () => say('');
+$('storybtn').onclick = () => say(`<b>ИСКРА:</b> ${LEVELS[current].story}`, 12000);
 $('r-menu').onclick = showMenu;
 $('r-retry').onclick = () => {
   $('result').classList.add('hidden');
   world.reset();
+  setEnergy(LEVELS[current].energy ?? null);
   setStatus('');
 };
 $('r-next').onclick = () => openLevel(current + 1);
