@@ -120,6 +120,7 @@ let py = null;
 let world = null;
 let current = 0;
 let hintIdx = 0;
+let fails = 0; // неудачные запуски подряд на этом уровне — после двух предлагаем «Разбор»
 let running = false;
 let speedIdx = 0;
 const SPEEDS = [1, 2, 4, 8];
@@ -201,6 +202,7 @@ function buildChips(level) {
 function openLevel(i) {
   current = i;
   hintIdx = 0;
+  fails = 0;
   const lv = LEVELS[i];
   $('menu').classList.add('hidden');
   $('result').classList.add('hidden');
@@ -208,6 +210,8 @@ function openLevel(i) {
   $('task-title').textContent = `${lv.id}. ${lv.title}`;
   $('task-text').textContent = lv.task;
   $('hint').classList.add('hidden');
+  $('guidebtn').classList.toggle('hidden', !lv.guide);
+  $('guidebtn').classList.remove('pulse');
   code.value = save.code[lv.id] ?? lv.starter ?? '';
   buildChips(lv);
   setStatus('');
@@ -360,7 +364,10 @@ async function run() {
   }
 
   if (!verdict.ok) {
-    setStatus(verdict.message, 'err');
+    fails++;
+    const offer = fails >= 2 && lv.guide;
+    setStatus(verdict.message + (offer ? '  Не получается? Загляни в «📖 Разбор».' : ''), 'err');
+    $('guidebtn').classList.toggle('pulse', !!offer);
     return setRunning(false);
   }
   setStatus(
@@ -417,6 +424,40 @@ $('hintbtn').onclick = () => {
   h.classList.remove('hidden');
   hintIdx++;
 };
+// «Разбор»: пошаговый пример с растущим кодом, каждый шаг можно вставить в редактор.
+function showGuide(i) {
+  const g = LEVELS[current].guide;
+  const n = Math.max(0, Math.min(i, g.length - 1));
+  const step = g[n];
+  const h = $('hint');
+  h.textContent = '';
+  const el = (tag, cls, text) => {
+    const e = document.createElement(tag);
+    e.className = cls;
+    e.textContent = text;
+    h.appendChild(e);
+    return e;
+  };
+  el('div', 'gtitle', `Разбор · шаг ${n + 1} из ${g.length}`);
+  el('div', 'gtext', step.text);
+  el('pre', 'gcode', step.code);
+  const row = document.createElement('div');
+  row.className = 'grow';
+  const btn = (label, fn) => {
+    const b = document.createElement('button');
+    b.className = 'chip';
+    b.textContent = label;
+    b.onclick = fn;
+    row.appendChild(b);
+  };
+  if (n > 0) btn('◀ Назад', () => showGuide(n - 1));
+  btn('⤵ Вставить код', () => setCode(step.code, step.code.length));
+  if (n < g.length - 1) btn('Дальше ▶', () => showGuide(n + 1));
+  h.appendChild(row);
+  h.classList.remove('hidden');
+  $('guidebtn').classList.remove('pulse');
+}
+$('guidebtn').onclick = () => showGuide(0);
 $('back').onclick = showMenu;
 $('speech').onclick = () => say('');
 $('storybtn').onclick = () => say(`<b>ИСКРА:</b> ${LEVELS[current].story}`, 12000);

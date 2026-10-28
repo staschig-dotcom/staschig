@@ -176,3 +176,12 @@ h1 {
 
 .icon-btn.story { top: calc(max(8px, env(safe-area-inset-top)) + 48px); }
 #speech { transition: opacity .3s; }
+
+/* Разбор по шагам */
+.gtitle { color: var(--gold); font: 700 12px system-ui, sans-serif; letter-spacing: 1px; text-transform: uppercase; }
+.gtext { font: 14px/1.4 system-ui, sans-serif; white-space: normal; margin: 4px 0 6px; }
+.gcode { margin: 0 0 6px; padding: 6px 8px; background: var(--bg, #0a0e1f); border-radius: 6px; font: 13px ui-monospace, Menlo, Consolas, monospace; white-space: pre; overflow-x: auto; }
+.grow { display: flex; gap: 6px; flex-wrap: wrap; }
+.grow .chip { font-family: system-ui, sans-serif; }
+#guidebtn.pulse { animation: pulse 1.2s ease-in-out infinite; box-shadow: 0 0 0 2px var(--gold); }
+@keyframes pulse { 50% { transform: scale(1.08); } }

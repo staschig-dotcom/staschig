@@ -66,6 +66,9 @@ for (const lv of LEVELS) {
   check(`  решение укладывается в par (${lines} ≤ ${lv.par})`, lines <= lv.par);
   const last = lv.hints[lv.hints.length - 1];
   check('  последняя подсказка решает уровень', solves(lv, last));
+  if (lv.guide) {
+    check(`  разбор: последний шаг решает уровень (шагов: ${lv.guide.length})`, solves(lv, lv.guide[lv.guide.length - 1].code));
+  }
   if (lv.starter) check('  исходный код (starter) НЕ решает уровень', !solves(lv, lv.starter));
   if (lv.tests?.length) check(`  скрытых проверок: ${lv.tests.length} (≥ 3)`, lv.tests.length >= 3);
 }
