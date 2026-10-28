@@ -43,6 +43,7 @@ h1 {
 .lvl .n { font-size: 26px; font-weight: 700; color: var(--cyan); }
 .lvl .t { font-size: 12px; color: var(--dim); line-height: 1.2; }
 .lvl .s { font-size: 14px; letter-spacing: 2px; color: var(--gold); min-height: 18px; }
+.act { grid-column: 1 / -1; margin-top: 6px; font-size: 13px; letter-spacing: 1px; color: var(--gold); text-transform: uppercase; }
 .lvl.locked { opacity: .35; pointer-events: none; }
 .lvl:active { transform: scale(.97); }
 .fine { color: var(--dim); font-size: 12px; margin-top: 24px; }

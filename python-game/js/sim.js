@@ -182,3 +182,72 @@ export class Sim {
     return { won: true, reason: '' };
   }
 }
+
+// ---------- задачи с данными (списки, числа, интерактив) ----------
+// Дрон не двигается: программа получает данные командой scan(), может задавать вопросы ask(n)
+// и отправляет ответ report(x). Скрытые проверки — те же задачи на других данных.
+
+const NO_DRONE = 'В этой задаче дрон не движется — работай с данными: scan(), ask(), report().';
+const MAX_DATA_ACTIONS = 300;
+
+const sameJson = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+export const show = (v) => (v === null || v === undefined ? 'ничего' : JSON.stringify(v));
+
+export class DataSim {
+  constructor(c, level) {
+    this.c = c;
+    this.maxAsks = level.asks ?? null;
+    this.asks = 0;
+    this.actions = [];
+    this.failed = false;
+    this.answered = false;
+    this.answer = null;
+    this.expected = level.answer(c);
+  }
+
+  call(name, arg, line) {
+    if (this.failed) return { err: 'Программа уже остановлена' };
+    if (this.actions.length >= MAX_DATA_ACTIONS) {
+      this.failed = true;
+      return { err: 'Слишком много действий — программа зациклилась?' };
+    }
+    switch (name) {
+      case 'scan':
+        if (this.c.scan === undefined) return { err: 'В этой задаче нечего сканировать.' };
+        this.actions.push({ t: 'scan', line });
+        return { v: this.c.scan };
+      case 'ask': {
+        if (this.c.secret === undefined) return { err: 'В этой задаче вопросов задавать не нужно.' };
+        if (!Number.isInteger(arg)) return { err: 'ask() принимает целое число: ask(50).' };
+        if (this.asks >= this.maxAsks) {
+          this.failed = true;
+          this.actions.push({ t: 'bump', line });
+          return { err: `Слишком много вопросов! Разрешено не больше ${this.maxAsks}. Перебором не выйдет — делай пополам.` };
+        }
+        this.asks++;
+        const a = Math.sign(this.c.secret - arg); // -1: загаданное меньше, 1: больше
+        this.actions.push({ t: 'ask', n: arg, a, line });
+        return { v: a };
+      }
+      case 'report':
+        this.answered = true;
+        this.answer = arg ?? null;
+        this.actions.push({ t: 'say', text: `Ответ: ${show(arg)}`, line });
+        return { v: null };
+      default:
+        return { err: NO_DRONE };
+    }
+  }
+
+  evaluate() {
+    if (this.failed) return { won: false, reason: 'Программа остановилась.' };
+    if (!this.answered) return { won: false, reason: 'Ответ не отправлен: в конце нужно вызвать report(...).' };
+    if (!sameJson(this.answer, this.expected)) {
+      return { won: false, reason: `Твой ответ: ${show(this.answer)}, а правильный: ${show(this.expected)}.` };
+    }
+    return { won: true, reason: '' };
+  }
+}
+
+// Заглушка для задач-функций: дрон там не нужен.
+export const NO_SIM = { call: () => ({ err: 'В этой задаче дрон не нужен — пиши только функцию.' }) };

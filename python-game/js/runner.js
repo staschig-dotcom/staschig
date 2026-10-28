@@ -25,8 +25,8 @@ def _trace(frame, event, arg):
         return _trace
     return None
 
-def _call(name):
-    r = json.loads(_sim_call(name, 0, _cur[0]))
+def _call(name, arg=None):
+    r = json.loads(_sim_call(name, json.dumps(arg), _cur[0]))
     if r.get('err'):
         raise DroneError(r['err'])
     return r.get('v')
@@ -86,9 +86,21 @@ def goal_y():
 def energy():
     return _call('energy')
 
+def scan():
+    return _call('scan')
+
+def ask(n):
+    return _call('ask', n)
+
+def report(x):
+    _call('report', x)
+
 _API = ['move', 'jump', 'turn_left', 'turn_right', 'take', 'wall_ahead',
         'laser_ahead', 'at_goal', 'on_crystal', 'crystals', 'wall_left', 'wall_right',
-        'distance', 'get_x', 'get_y', 'goal_x', 'goal_y', 'energy']
+        'distance', 'get_x', 'get_y', 'goal_x', 'goal_y', 'energy', 'scan', 'ask', 'report']
+
+class _NoFunction(Exception):
+    pass
 
 def _last_user_line(tb):
     line = None
@@ -98,7 +110,7 @@ def _last_user_line(tb):
         tb = tb.tb_next
     return line
 
-def _run(code):
+def _run(code, call=None):
     _cur[0] = 0
     _n[0] = 0
     ns = {k: globals()[k] for k in _API}
@@ -109,8 +121,16 @@ def _run(code):
         sys.settrace(_trace)
         try:
             exec(src, ns)
+            if call is not None:
+                name, args = json.loads(call)
+                f = ns.get(name)
+                if not callable(f):
+                    raise _NoFunction(name)
+                out['ret'] = f(*args)
         finally:
             sys.settrace(None)
+    except _NoFunction as e:
+        out = {'ok': False, 'type': 'NoFunction', 'msg': str(e), 'line': None}
     except SyntaxError as e:
         out = {'ok': False, 'type': type(e).__name__, 'msg': str(e.msg), 'line': e.lineno}
     except TooManySteps:
@@ -120,17 +140,19 @@ def _run(code):
     except BaseException as e:
         out = {'ok': False, 'type': type(e).__name__, 'msg': str(e),
                'line': _last_user_line(e.__traceback__)}
-    return json.dumps(out)
+    return json.dumps(out, default=str)
 `;
 
 export function initPrelude(py) {
   py.runPython(PRELUDE);
 }
 
-export function runProgram(py, sim, code) {
-  py.globals.set('_sim_call', (name, arg, line) => JSON.stringify(sim.call(name, arg, line)));
+// call = [имя_функции, [аргументы]] — для задач, где нужно написать функцию.
+export function runProgram(py, sim, code, call = null) {
+  py.globals.set('_sim_call', (name, arg, line) => JSON.stringify(sim.call(name, JSON.parse(arg), line)));
   py.globals.set('_user_code', code);
-  return JSON.parse(py.runPython('_run(_user_code)'));
+  py.globals.set('_user_call', call ? JSON.stringify(call) : null);
+  return JSON.parse(py.runPython('_run(_user_code, _user_call)'));
 }
 
 // Понятное объяснение ошибки Python для ребёнка.
@@ -142,6 +164,8 @@ export function explainError(err, lines = []) {
   switch (err.type) {
     case 'DroneError':
       return `${m}${where}`;
+    case 'NoFunction':
+      return `Не нашла функцию ${m}. Объяви её так: def ${m}(…): — и внутри верни результат командой return.`;
     case 'TooManySteps':
       return `Программа зациклилась${where}. Проверь условие в while.`;
     case 'IndentationError':

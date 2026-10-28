@@ -13,8 +13,8 @@ android {
         applicationId = "ru.staschig.kodonavt"
         minSdk = 26
         targetSdk = 34
-        versionCode = 4
-        versionName = "0.4"
+        versionCode = 5
+        versionName = "0.5"
     }
 
     // Тот же постоянный ключ, что у остальных приложений: обновления ставятся поверх.

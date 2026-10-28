@@ -2,6 +2,7 @@ import { LEVELS } from './levels.js';
 import { Sim } from './sim.js';
 import { initPrelude, runProgram, explainError } from './runner.js';
 import { World } from './scene.js';
+import { judge, initialView, modeOf } from './judge.js';
 
 const $ = (id) => document.getElementById(id);
 const SAVE_KEY = 'kodonavt.v1';
@@ -66,6 +67,30 @@ const CHIPS = [
   { lvl: 16, label: '>', text: ' > ', kind: 'raw' },
   { lvl: 16, label: '==', text: ' == ', kind: 'raw' },
   { lvl: 16, label: '!=', text: ' != ', kind: 'raw' },
+  // Акт 3: больше «кирпичиков» (слова и знаки), а не готовых строк решения.
+  { lvl: 19, label: 'if wall_left():', text: 'if wall_left():', kind: 'open' },
+  { lvl: 21, label: 'for x in scan():', text: 'for x in scan():', kind: 'open' },
+  { lvl: 21, label: 'report()', text: 'report()', kind: 'stmt', caret: 1 },
+  { lvl: 21, label: 'scan()', text: 'scan()', kind: 'raw' },
+  { lvl: 21, label: 'x', text: 'x', kind: 'raw' },
+  { lvl: 22, label: 'for x in t:', text: 'for x in t:', kind: 'open' },
+  { lvl: 22, label: 'if x > best:', text: 'if x > best:', kind: 'open' },
+  { lvl: 23, label: 'if x % 2 == 0:', text: 'if x % 2 == 0:', kind: 'open' },
+  { lvl: 24, label: 'def bigger(a, b):', text: 'def bigger(a, b):', kind: 'open' },
+  { lvl: 24, label: 'return', text: 'return ', kind: 'stmt' },
+  { lvl: 24, label: 'if a > b:', text: 'if a > b:', kind: 'open' },
+  { lvl: 25, label: 'def digit_sum(n):', text: 'def digit_sum(n):', kind: 'open' },
+  { lvl: 25, label: 'while n > 0:', text: 'while n > 0:', kind: 'open' },
+  { lvl: 26, label: 'def is_prime(n):', text: 'def is_prime(n):', kind: 'open' },
+  { lvl: 26, label: 'return True', text: 'return True', kind: 'stmt' },
+  { lvl: 26, label: 'return False', text: 'return False', kind: 'stmt' },
+  { lvl: 28, label: 'if x in seen:', text: 'if x in seen:', kind: 'open' },
+  { lvl: 28, label: '.append()', text: '.append()', kind: 'raw', caret: 1 },
+  { lvl: 29, label: 'ask()', text: 'ask()', kind: 'raw', caret: 1 },
+  { lvl: 29, label: 'while True:', text: 'while True:', kind: 'open' },
+  { lvl: 29, label: 'break', text: 'break', kind: 'stmt' },
+  { lvl: 30, label: 'for i in range(1, len(data)):', text: 'for i in range(1, len(data)):', kind: 'open', caret: 2 },
+  { lvl: 30, label: 'len()', text: 'len()', kind: 'raw', caret: 1 },
 ];
 // Самые нужные кнопки всегда слева, остальные — от новых к старым.
 const CORE = new Set(['move()', 'turn_left()', 'turn_right()', 'take()']);
@@ -80,6 +105,14 @@ const CTL = [
   { label: '3', act: 'raw', text: '3' },
   { label: '4', act: 'raw', text: '4' },
   { label: '5', act: 'raw', text: '5' },
+  { label: '0', act: 'raw', text: '0', lvl: 21 },
+  { label: '( )', act: 'raw', text: '()', lvl: 21, caret: 1 },
+  { label: '[ ]', act: 'raw', text: '[]', lvl: 21, caret: 1 },
+  { label: ',', act: 'raw', text: ', ', lvl: 21 },
+  { label: '+=', act: 'raw', text: ' += ', lvl: 21 },
+  { label: '+ −', act: 'raw', text: ' + ', lvl: 21 },
+  { label: '%', act: 'raw', text: ' % ', lvl: 23 },
+  { label: '//', act: 'raw', text: ' // ', lvl: 24 },
 ];
 
 // ---------- состояние ----------
@@ -108,10 +141,23 @@ function say(html, autoHideMs = 0) {
 }
 
 // ---------- меню ----------
+const ACTS = [
+  { from: 1, title: 'Акт 1 · Пробуждение' },
+  { from: 10, title: 'Акт 2 · Мостик' },
+  { from: 19, title: 'Акт 3 · Нижние палубы' },
+];
+
 function buildMenu() {
   const box = $('levels');
   box.innerHTML = '';
   LEVELS.forEach((lv, i) => {
+    const act = ACTS.find((a) => a.from === lv.id);
+    if (act) {
+      const h = document.createElement('div');
+      h.className = 'act';
+      h.textContent = act.title;
+      box.appendChild(h);
+    }
     const stars = save.stars[lv.id] || 0;
     const unlocked = UNLOCK_ALL || i === 0 || (save.stars[LEVELS[i - 1].id] || 0) > 0;
     const b = document.createElement('button');
@@ -148,7 +194,7 @@ function buildChips(level) {
   const avail = CHIPS.filter((c) => c.lvl <= level.id);
   const rest = avail.filter((c) => !CORE.has(c.label)).sort((a, b) => b.lvl - a.lvl);
   for (const c of avail.filter((c) => CORE.has(c.label))) mk(c.label, '', () => applyChip(c));
-  for (const c of CTL) mk(c.label, c.title, () => applyCtl(c), 'ctl');
+  for (const c of CTL.filter((c) => !c.lvl || c.lvl <= level.id)) mk(c.label, c.title, () => applyCtl(c), 'ctl');
   for (const c of rest) mk(c.label, '', () => applyChip(c));
 }
 
@@ -166,9 +212,15 @@ function openLevel(i) {
   buildChips(lv);
   setStatus('');
   say(`<b>ИСКРА:</b> ${lv.story}`, 9000);
-  world.load(lv.map);
-  setEnergy(lv.energy ?? null);
+  restoreView();
   setRunning(false);
+}
+
+// Показать в 3D стартовую картинку уровня (видимая карта или данные).
+function restoreView() {
+  const lv = LEVELS[current];
+  world.show(initialView(lv));
+  setEnergy(lv.energy ?? null);
 }
 
 function setEnergy(v, max = LEVELS[current].energy) {
@@ -242,7 +294,7 @@ function newline(atEnd) {
 
 function applyCtl(c) {
   if (c.act === 'enter') return newline(true);
-  if (c.act === 'raw') return applyChip({ text: c.text, kind: 'raw' });
+  if (c.act === 'raw') return applyChip({ text: c.text, kind: 'raw', caret: c.caret });
   const { v, pos, ls, le, indent, blank } = lineInfo();
   if (c.act === 'indent') {
     return setCode(v.slice(0, ls) + '    ' + v.slice(ls), pos + 4);
@@ -279,51 +331,57 @@ async function run() {
   if (running || !py) return;
   const lv = LEVELS[current];
   const src = code.value;
-  if (!src.trim()) return setStatus('Сначала напиши программу — например, move(1).', 'err');
+  if (!src.trim()) {
+    return setStatus(modeOf(lv) === 'drone' ? 'Сначала напиши программу — например, move(1).' : 'Сначала напиши код.', 'err');
+  }
   $('result').classList.add('hidden');
   code.blur();
   say('');
   setRunning(true);
-  world.reset();
-  setEnergy(lv.energy ?? null);
+  restoreView();
   printed.length = 0;
 
-  const sim = new Sim(lv);
-  const res = runProgram(py, sim, src);
+  // Python выполняется сразу (и видимый случай, и скрытые проверки), потом 3D проигрывает журнал.
+  const verdict = judge(py, lv, src, () => printed.splice(0));
   const srcLines = src.split('\n');
-  const completed = await world.play(sim.actions, (a) => {
+  const onAction = (a) => {
     if (a.line) setStatus(`Строка ${a.line}:  ${srcLines[a.line - 1]?.trim() ?? ''}`);
     if (a.energy != null) setEnergy(a.energy);
-  });
-  if (!completed) return setRunning(false); // нажали «сброс» или ушли в меню
+  };
+  for (const [i, r] of verdict.runs.entries()) {
+    if (i > 0) {
+      setStatus('Проверка на скрытых данных… показываю, где сломалось.');
+      world.show(r.view);
+      setEnergy(r.view.energy ?? null);
+    }
+    const completed = await world.play(r.actions, onAction);
+    if (!completed) return setRunning(false); // нажали «сброс» или ушли в меню
+    if (i === 0 && r.printed.length) say(`<b>Дрон говорит:</b> ${r.printed.map(escapeHtml).join('<br>')}`);
+  }
 
-  if (printed.length) say(`<b>Дрон говорит:</b> ${printed.map(escapeHtml).join('<br>')}`);
-
-  if (!res.ok) {
-    setStatus(explainError(res, srcLines), 'err');
+  if (!verdict.ok) {
+    setStatus(verdict.message, 'err');
     return setRunning(false);
   }
-  const ev = sim.evaluate();
-  if (!ev.won) {
-    setStatus(ev.reason, 'err');
-    return setRunning(false);
-  }
-  setStatus('Маяк достигнут!', 'ok');
+  setStatus(
+    verdict.hidden ? `Готово! Скрытые проверки пройдены: ${verdict.hidden} из ${verdict.hidden} ✓` : 'Готово!',
+    'ok',
+  );
   await world.celebrate();
-  win(lv, codeLines(src));
+  win(lv, codeLines(src), verdict.hidden);
   setRunning(false);
 }
 
 const escapeHtml = (s) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
 
-function win(lv, lines) {
+function win(lv, lines, hidden = 0) {
   const stars = starsFor(lv, lines);
   save.stars[lv.id] = Math.max(save.stars[lv.id] || 0, stars);
   persist();
   $('stars').innerHTML = [1, 2, 3].map((n) => `<span class="${n <= stars ? '' : 'off'}">★</span>`).join('');
   $('result-title').textContent = 'Уровень пройден!';
   $('result-text').textContent =
-    `${lv.win}\nСтрок кода: ${lines}` +
+    `${lv.win}\n${hidden ? `Скрытых проверок пройдено: ${hidden}\n` : ''}Строк кода: ${lines}` +
     (lines > lv.par ? ` — а можно за ${lv.par}. Попробуй короче, чтобы получить 3 звезды!` : ' — идеально коротко!');
   $('result-text').style.whiteSpace = 'pre-line';
   $('r-next').classList.toggle('hidden', current >= LEVELS.length - 1);
@@ -333,8 +391,7 @@ function win(lv, lines) {
 // ---------- кнопки ----------
 $('run').onclick = run;
 $('reset').onclick = () => {
-  world.reset();
-  setEnergy(LEVELS[current].energy ?? null);
+  restoreView();
   setRunning(false);
   setStatus('');
 };
@@ -366,8 +423,7 @@ $('storybtn').onclick = () => say(`<b>ИСКРА:</b> ${LEVELS[current].story}`,
 $('r-menu').onclick = showMenu;
 $('r-retry').onclick = () => {
   $('result').classList.add('hidden');
-  world.reset();
-  setEnergy(LEVELS[current].energy ?? null);
+  restoreView();
   setStatus('');
 };
 $('r-next').onclick = () => openLevel(current + 1);

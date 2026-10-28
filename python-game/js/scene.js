@@ -31,6 +31,35 @@ const mat = {
   spark: new THREE.MeshBasicMaterial({ color: 0xffe08a }),
 };
 
+// Подпись над столбиком или дроном: рисуем текст на canvas и ставим как спрайт.
+function makeLabel(text, { color = '#ffffff', size = 0.9 } = {}) {
+  const cv = document.createElement('canvas');
+  cv.width = 256;
+  cv.height = 96;
+  const g = cv.getContext('2d');
+  let fs = 64;
+  g.font = `bold ${fs}px system-ui, sans-serif`;
+  while (g.measureText(text).width > 236 && fs > 20) {
+    fs -= 4;
+    g.font = `bold ${fs}px system-ui, sans-serif`;
+  }
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.lineWidth = 8;
+  g.strokeStyle = '#070a18';
+  g.strokeText(text, 128, 50);
+  g.fillStyle = color;
+  g.fillText(text, 128, 50);
+  const tex = new THREE.CanvasTexture(cv);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false }));
+  sp.scale.set(size, size * 0.375, 1);
+  sp.renderOrder = 10;
+  return sp;
+}
+
+const ROW_COLOR = { pos: 0x38e1ff, neg: 0x7a8cff, hidden: 0x555a7a, ok: 0x4dff9a, bad: 0xff3355 };
+const pillarGeo = new THREE.BoxGeometry(0.6, 1, 0.6);
+
 function makeDrone() {
   const g = new THREE.Group();
   const bodyMat = new THREE.MeshStandardMaterial({
@@ -102,6 +131,8 @@ export class World {
     this.pos = new THREE.Vector3();
     this.lift = 0;
     this.map = null;
+    this.row = [];
+    this.bubble = null;
 
     this.bindDrag();
     new ResizeObserver(() => this.resize()).observe(canvas.parentElement);
@@ -159,7 +190,7 @@ export class World {
     const radius = Math.hypot(this.map.w, this.map.h) / 2 + 0.7;
     const vHalf = (this.camera.fov * Math.PI) / 360;
     const hHalf = Math.atan(Math.tan(vHalf) * this.camera.aspect);
-    this.dist = (radius / Math.sin(Math.min(vHalf, hHalf))) * 0.82;
+    this.dist = (radius / Math.sin(Math.min(vHalf, hHalf))) * (this.row.length ? 0.74 : 0.82);
     this.placeCamera();
   }
 
@@ -179,6 +210,7 @@ export class World {
     this.crystals.clear();
     this.lasers = [];
     this.goalFx = [];
+    this.row = [];
     this.map = parseLevel(levelMap);
     const { w, h, cells } = this.map;
     this.cx = (w - 1) / 2;
@@ -221,6 +253,67 @@ export class World {
     this.fit();
   }
 
+  show(view) {
+    if (view.row) this.loadRow(view.row);
+    else this.load(view.map);
+  }
+
+  // Набор данных / тестов: ряд столбиков с подписями, слева стартовая площадка дрона.
+  loadRow(items) {
+    this.stop();
+    this.group.clear();
+    this.crystals.clear();
+    this.lasers = [];
+    this.goalFx = [];
+    this.row = [];
+    const n = items.length;
+    this.map = { w: n + 2, h: 1.6, cells: [[]], crystals: [], start: { x: 0, y: 0, dir: 1 }, goal: null };
+    this.cx = (n + 1) / 2;
+    this.cz = 0;
+    this.pitch = 0.95;
+    for (let x = 0; x <= n; x++) {
+      const t = new THREE.Mesh(tileGeo, x % 2 ? mat.floorA : mat.floorB);
+      const p = this.tile(x, 0);
+      t.position.set(p.x, -0.1, p.z);
+      t.add(new THREE.LineSegments(tileEdges, mat.edge));
+      this.group.add(t);
+    }
+    items.forEach((it, i) => {
+      const p = this.tile(i + 1, 0);
+      const h = 0.15 + (it.h ?? 0.2) * 1.5;
+      const color = it.hidden ? ROW_COLOR.hidden : it.neg ? ROW_COLOR.neg : ROW_COLOR.pos;
+      const m = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.25, roughness: 0.5, flatShading: true });
+      const pillar = new THREE.Mesh(pillarGeo, m);
+      pillar.scale.y = h;
+      pillar.position.set(p.x, h / 2, p.z);
+      this.group.add(pillar);
+      const entry = { pillar, m, h, base: color, label: null, text: it.label, hidden: !!it.hidden };
+      this.row.push(entry);
+      this.setRowLabel(entry, it.label);
+    });
+    this.resetDrone();
+    this.resize();
+    this.fit();
+  }
+
+  setRowLabel(entry, text) {
+    if (entry.label) this.group.remove(entry.label);
+    entry.label = makeLabel(text, { size: 1.05 });
+    entry.label.userData.text = text;
+    entry.label.position.set(entry.pillar.position.x, entry.h + 0.45, 0);
+    this.group.add(entry.label);
+  }
+
+  rowTile(i) {
+    return this.tile(i + 1, 0);
+  }
+
+  say(text) {
+    if (this.bubble) this.scene.remove(this.bubble);
+    this.bubble = text ? makeLabel(text, { color: '#ffe08a', size: 2 }) : null;
+    if (this.bubble) this.scene.add(this.bubble);
+  }
+
   addLaser(p) {
     const beam = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.05, 0.05), mat.laser);
     beam.position.set(p.x, 0.32, p.z);
@@ -252,6 +345,12 @@ export class World {
     this.drone.scale.setScalar(1);
     this.drone.rotation.set(0, this.heading, 0);
     this.drone.userData.bodyMat.emissive.setHex(0x000000);
+    this.say('');
+    for (const e of this.row) {
+      e.m.color.setHex(e.base);
+      e.m.emissive.setHex(e.base);
+      if (e.label.userData.text !== e.text) this.setRowLabel(e, e.text);
+    }
     for (const c of this.crystals.values()) {
       c.visible = true;
       c.scale.set(1, 1.6, 1);
@@ -316,6 +415,44 @@ export class World {
           this.lift = Math.sin(p * Math.PI) * 0.18;
           if (c) { c.scale.set(1 - p, (1 - p) * 1.6, 1 - p); c.position.y = 0.45 + p * 0.6; }
         }).then((ok) => { if (c) { c.visible = false; c.position.y = 0.45; } this.lift = 0; return ok; });
+      }
+      case 'scan': {
+        // дрон пролетает над всеми столбиками, подсвечивая каждый
+        const first = this.rowTile(0);
+        const s0 = this.pos.clone();
+        if (!(await this.tween(250, (p) => this.pos.lerpVectors(s0, first, ease(p))))) return false;
+        for (let i = 0; i < this.row.length; i++) {
+          const p0 = this.pos.clone();
+          const p1 = this.rowTile(i);
+          const e = this.row[i];
+          e.m.emissiveIntensity = 1;
+          if (!(await this.tween(i ? 220 : 80, (p) => this.pos.lerpVectors(p0, p1, ease(p))))) return false;
+          e.m.emissiveIntensity = 0.25;
+        }
+        return true;
+      }
+      case 'say':
+        this.say(a.text);
+        this.spark(this.pos);
+        return this.tween(500, (p) => { this.lift = Math.sin(p * Math.PI) * 0.2; }).then((ok) => { this.lift = 0; return ok; });
+      case 'ask':
+        this.say(`${a.n}? ${a.a < 0 ? 'меньше ▼' : a.a > 0 ? 'больше ▲' : 'верно!'}`);
+        if (a.a === 0) this.spark(this.pos);
+        return this.tween(450, (p) => { this.lift = Math.sin(p * Math.PI) * 0.15; }).then((ok) => { this.lift = 0; return ok; });
+      case 'case': {
+        const e = this.row[a.i];
+        if (!e) return true;
+        const p0 = this.pos.clone();
+        const p1 = this.rowTile(a.i);
+        if (!(await this.tween(260, (p) => this.pos.lerpVectors(p0, p1, ease(p))))) return false;
+        if (e.hidden) this.setRowLabel(e, a.label);
+        const col = a.ok ? ROW_COLOR.ok : ROW_COLOR.bad;
+        e.m.color.setHex(col);
+        e.m.emissive.setHex(col);
+        this.say(`${a.ok ? '✓' : '✗'} ${a.got}`);
+        if (a.ok) this.spark(this.pos);
+        else this.flash(0xaa1020);
+        return this.tween(380, () => {});
       }
       case 'miss':
         return this.tween(300, (p) => { d.rotation.z = Math.sin(p * Math.PI * 4) * 0.25 * (1 - p); });

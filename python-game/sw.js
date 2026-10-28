@@ -1,8 +1,8 @@
 // Кэш для работы без интернета: всё приложение (включая Python) сохраняется после первого запуска.
-const CACHE = 'kodonavt-v1';
+const CACHE = 'kodonavt-v2';
 const CORE = [
   './', 'index.html', 'style.css', 'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png',
-  'js/game.js', 'js/levels.js', 'js/runner.js', 'js/scene.js', 'js/sim.js',
+  'js/game.js', 'js/judge.js', 'js/levels.js', 'js/runner.js', 'js/scene.js', 'js/sim.js',
   'vendor/three.module.min.js',
   'vendor/pyodide/pyodide.js', 'vendor/pyodide/pyodide.asm.js', 'vendor/pyodide/pyodide.asm.wasm',
   'vendor/pyodide/python_stdlib.zip', 'vendor/pyodide/pyodide-lock.json',
